@@ -34,6 +34,8 @@ This check costs about five seconds. The class of bug it catches — eager impor
 3. Receive test files. Place them at the paths the plan specifies.
 4. Run the tests. They must fail. If any pass on first run, something is wrong — either the test isn't testing what it claims, or the production code already exists. Stop and investigate before continuing.
 
+If the tester returns **findings instead of tests**, do not work around them and do not re-invoke with a looser brief. Evaluate them per `.claude/references/findings-triage.md` (internal source). Most tester findings mean the plan's type signatures are wrong or incomplete — which is a `/checkpoint` amendment, not a build-time improvisation.
+
 ### Green
 
 1. Write the **minimum** implementation that makes the red tests pass. "Minimum" is literal — do not add fields, methods, branches, or error handling not required by a failing test. Speculative scope is bugs.
@@ -192,6 +194,7 @@ Invoke the architect at plan time when the layer-boundary question would otherwi
 - Tests fail in ways that suggest the spec is ambiguous.
 - A SOLID violation can only be fixed by a change wider than the current step.
 - A Clean Architecture boundary question that the architect subagent's recommendation doesn't resolve.
+- The `architect` returns a recommendation you believe is wrong. Disagreement is legitimate; silent deviation is not. Evaluate it per `.claude/references/findings-triage.md` and surface the disagreement with technical reasoning.
 - Any time you would otherwise guess at intent.
 
 The cost of asking is one round-trip. The cost of guessing wrong propagates through every subsequent step.
