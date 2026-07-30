@@ -115,6 +115,7 @@ Sections:
 - **Architectural notes.** Any ADRs the feature produced or affected. Cite by number; one or two lines of why-this-mattered. If the architect was invoked but no ADR resulted (recommendation was "follow precedent"), note that too — the consultation is itself project history.
 - **Dependency / manifest changes.** If the feature's commits touched a build manifest (`pyproject.toml`, `package.json`, `Cargo.toml`, or a lockfile), name the dependencies added, changed, or removed and why. (Mechanical: `git diff <mainline>..HEAD -- pyproject.toml package.json Cargo.toml` and the project's lockfile.) Cross-reference the security-reviewer's dependency-hygiene findings rather than repeating them. If no manifest changed, omit the section — most features don't touch deps.
 - **Security review notes.** The non-critical findings the security-reviewer surfaced (critical findings would have blocked the merge; medium/low/informational findings ship with the merge and are recorded here so they're not lost).
+- **Review notes.** In PR flow, what came out of review: findings accepted and fixed (one line each, with the `review:` commit sha), findings answered by citing the spec or an accepted ADR, and findings deferred to followups. Omit the section entirely for locally-merged features — most small features never have a review round. Unlike the rest of the summary, this section is amended by `/pr-review` as review proceeds rather than written once at merge.
 - **Followups.** Anything the spec listed as "Out" or "Risks / known trade-offs" that the merge defers to a future feature. Include "supersede" notes for any parked features the merging feature absorbed.
 
 ### Front-matter
@@ -159,6 +160,16 @@ If none of those apply, leave `docs/domains/` untouched. Don't generate a domain
 ### Summaries are immutable after a few days
 
 Per the discipline at the top of this skill, summaries are not edited beyond a brief window post-merge for late-discovered context. Get them right at merge time; treat them as history once they're a week old. If a follow-up feature reveals the summary was wrong, the right answer is to address it in the follow-up's summary, not retroactively rewrite history.
+
+### The summary as PR body (PR flow)
+
+`/feature-merge` builds the pull-request body from the summary you just wrote. That is *why* the summary is authored before the PR opens rather than at merge time — reviewers should have the contract in front of them, not have to go looking for it.
+
+Assemble: the **What shipped** section verbatim, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths.
+
+Do **not** include **Followups** or **Security review notes**. Followups invite scope debate inside the review — the reviewer starts arguing about work that was deliberately deferred. Security findings are for the user's judgment, not broadcast to the reviewer pool.
+
+The summary stays live during review. When an accepted finding changes shipped behavior, `/pr-review` proposes the **What shipped** amendment as part of its batch. The propose-before-writing discipline holds during the review window; it is not suspended for it.
 
 ## Status and lifecycle handling
 
