@@ -1,16 +1,34 @@
 ---
-description: Close out a feature: run three gates (tests pass → docs reconciled → security review clean) and, on success, author the summary doc, mark any superseded parked features, propose the merge mechanics, and clear `.claude/state.md`. Loads the `engineer` skill (Gate 1), the `documenter` skill (Gate 2 + summary authoring), and the `security-reviewer` subagent in fresh context (Gate 3). Halts on any gate failure; pauses for user confirmation before executing git operations.
+description: Close out a feature: run three gates (tests pass → docs reconciled → security review clean) and then either propose a local merge or open a pull request, depending on the project's flow. Re-runnable — in PR flow it transitions to `Phase: in-review`, re-validates the gates when review fixes land, and performs closeout once the PR merges (possibly asynchronously, by someone else). Loads the `engineer` skill (Gate 1), the `documenter` skill (Gate 2 + summary authoring), and the `security-reviewer` subagent in fresh context (Gate 3). Halts on any gate failure; pauses for user confirmation before executing any git or `gh` operation.
 ---
 
-Drive the three closeout gates and the merge-and-archive sequence for the active feature. One `/feature-merge` invocation completes a feature lifecycle (or halts at a gate and surfaces what blocked).
+Drive the three closeout gates and the integration sequence for the active feature.
 
-`/feature-merge` is the **gating** command, not the merge-script command. Even on the happy path, it proposes the git operations and waits for user confirmation before executing — merge is irreversible enough that explicit confirmation is the right friction.
+In **local-merge flow**, one invocation completes the feature lifecycle (or halts at a gate and surfaces what blocked). In **PR flow** it takes at least two: the first runs the gates and opens the PR, moving the feature to `Phase: in-review`; a later one performs closeout once the PR has merged. `/pr-review` handles everything in between.
+
+`/feature-merge` is the **gating** command, not the merge-script command. Even on the happy path, it proposes the git and `gh` operations and waits for user confirmation before executing — merging and opening a PR are both consequential enough that explicit confirmation is the right friction.
 
 ## Arguments
 
 `/feature-merge` takes no arguments. It operates on the active feature in `.claude/state.md`. To merge a parked feature, the user resumes it first (`/checkpoint` to update state, then `/feature-merge`).
 
 ## Preconditions
+
+`/feature-merge` is **re-runnable**. Read `.claude/state.md` first and branch on `Phase`:
+
+| Entry state | Behavior |
+|---|---|
+| `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
+| `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
+| `in-review`, PR open, no new commits since PR-open | Report review status and open-thread count. Point at `/pr-review`. Run no gates. |
+| `in-review`, PR open, new commits since PR-open | Re-run gates 1–3 — review fixes are code changes and need re-validation — then push. Do **not** re-create the PR. |
+| `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
+
+Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
+
+Merged-state detection is `gh pr view --json state,mergedAt`. If `gh` fails or is unauthenticated, **ask the user whether the PR merged** — do not guess, and do not treat a failed call as "not merged."
+
+The numbered preconditions below apply to the two `building` / `merging` rows. The `in-review` rows have their own precondition: `PR:` is set in state.md, or a PR is discoverable for the current branch.
 
 Read `.claude/state.md`. Verify:
 
@@ -79,6 +97,16 @@ Load the `documenter` skill again. Run the "Summary authoring" pattern (see the 
 
 Surface all proposed doc writes to the user before applying. The documenter skill's cardinal "propose before writing" discipline holds at merge time too.
 
+### Flow detection
+
+Before proposing anything, determine whether this project merges locally or through a PR. Same three-tier pattern as *Merge strategy* below, same no-silent-default rule:
+
+1. **`CLAUDE.md` convention.** If the project states a PR workflow (or states that it merges directly to mainline), follow it.
+2. **Infer from the repo.** A remote exists (`git remote -v`), `gh` is available and authenticated (`gh auth status`), and the mainline has merged PRs in its history (`gh pr list --state merged --limit 1`) → PR flow. A repo with **no remote is local-merge, unambiguously** — don't ask, and don't mention PRs.
+3. **Ask.** If neither is conclusive, ask. The wrong guess opens an unwanted PR or merges something that should have been reviewed.
+
+If `gh` is absent or unauthenticated but the project is otherwise PR-shaped, say so and offer the **draft-only path**: the pack prepares the branch, the summary, and a PR body, and the user opens the PR by hand. Same for non-GitHub forges — the pack does not shell out to `glab` or equivalents.
+
 ### Merge strategy
 
 The pack does not assume a merge strategy — squash, merge commit, and rebase are all legitimate, and the choice is a project convention, not a pack decision. Determine it in this fixed order:
@@ -100,11 +128,27 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Do not execute git merge ops without explicit go-ahead. Merge is the most irreversible action in this command; the friction is intentional.
 
+### PR creation (PR flow)
+
+Replaces *Merge proposal* when flow detection selected PR flow. The summary doc is already written at this point — that is deliberate, and it is what the PR body is built from.
+
+Propose, in one short message:
+
+- The push (`git push -u origin feature/<slug>`).
+- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths. Reviewers should arrive with the contract in front of them.
+- Whether the PR is a draft. Default is not-draft; honor a `CLAUDE.md` convention if one states otherwise.
+
+**Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
+
+On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review` and `PR: <url>`. **Do not clear state** — the feature is still active until the PR merges. Report the PR URL and point at `/pr-review`.
+
 ### After the merge
 
-Once the user confirms the merge has been executed (either by them or by you on their instruction):
+In PR flow this section runs on a **later invocation** — the one that found `Phase: in-review` with a merged PR. The merge may have been performed by someone else, days ago, in a session that no longer exists. Everything below applies unchanged; only the trigger differs.
 
-1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/Next step `—`. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
+Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
+
+1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/Next step `—`. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).
@@ -118,8 +162,12 @@ Stop and surface, without auto-recovering:
 - Gate 2 surfaces drift or coverage gap; user has not yet chosen a resolution path.
 - Gate 3 returns one or more critical findings.
 - The security-reviewer returns a finding it couldn't complete (e.g., couldn't read the diff — see the subagent's "When to return findings without completing the full review").
-- The user rejects the proposed merge mechanics (e.g., the project uses a tool — `gh pr create`, `bors`, `mergify` — instead of direct `git merge`).
-- The user declines to confirm the merge proposal.
+- The user rejects the proposed merge mechanics (e.g., the project routes merges through `bors` or `mergify` rather than either direct `git merge` or `gh pr create`, both of which this command supports).
+- The user declines to confirm the merge proposal, or the PR-creation proposal.
+- Flow detection is inconclusive and the user has not chosen a flow.
+- PR flow was selected but `gh` is unavailable or unauthenticated, and the user has not opted into the draft-only path.
+- `Phase: in-review` but no PR can be found for the branch — state and reality disagree. Surface both; do not silently re-open a PR or silently reset the phase.
+- `gh pr view` fails while checking merged state. Ask whether the PR merged; never treat a failed call as "not merged."
 
 After any halt, the user resolves; re-running `/feature-merge` picks up from the beginning (Gate 1). Re-running is cheap because gates 1 and 2 are mostly read-only and the security-reviewer's work is fresh-context per invocation — no harm in re-running the full sequence after a fix.
 
