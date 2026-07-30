@@ -35,7 +35,8 @@ History lives in git + `docs/validation/`. This section describes the pack as it
 
 - **Subagents:** `architect`, `tester`, `security-reviewer`
 - **Skills:** `engineer`, `documenter`, `pm`, `grill-me`
-- **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`
+- **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review`
+- **References:** `pack/references/` — `solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`
 - **Hook:** `doc-drift-detector` (`PostToolUse`; warns on edits outside the active spec's `owned_files`)
 - **Templates:** `pack/CLAUDE.md.template` (slim — defers orientation to a separate installed file), `pack/state.md.template`
 - **Pack orientation:** `pack/devkit-orientation.md` (memory layout, workflow commands, commit cadence, automated guards)
@@ -60,6 +61,9 @@ Target: `chungar` (Google ADK + LiteLLM personal-assistant agent at `/Users/brya
 ### Outstanding
 
 **Not yet dogfood-validated:**
+
+- **PR lifecycle + findings triage (slice 8)** — authored 2026-07-30; design in `docs/design/0003-pr-lifecycle-and-findings-triage.md`, plan in `docs/plans/slice-8-pr-lifecycle.md`, authoring record in `docs/validation/slice-8.md`. Net changes: new `pack/references/findings-triage.md` (the consumer-side discipline for evaluating any finding, internal or external) and `pack/commands/pr-review.md` (intake/triage/response across all three GitHub comment surfaces, re-runnable, nothing posts unseen); `/feature-merge` gains flow detection, a Phase-branch table making it re-runnable, the `gh pr create` path, and phase-aware async closeout; `state.md` gains `Phase: in-review` and a `PR:` field; documenter gains *Review notes* + *The summary as PR body*; engineer cites findings-triage for tester/architect output. No installer change needed (`TRACKED_DIRS` already covers `commands/` and `references/`). **Four behavioral predictions are recorded and unrun** — T6b (nothing posts to a PR before user confirmation) blocks the slice rather than merely revising it. Needs a GitHub-remote project with real reviewers.
+- **Slice 9 — scoped but not authored.** The `debugger` skill (the pack has no debugging discipline at all; `/build`'s halt conditions hand off to a process that doesn't exist) and a `reviewer` subagent as a pre-PR gate 4 covering the cross-step lens no current component owns. Both were scoped during the 0003 discussion and deliberately deferred; rationale in that ADR's *Context* and *Consequences*.
 
 - **Brownfield adoption (`/adopt`, slice 7)** — authored 2026-06-22; design in `docs/design/0002-brownfield-adoption.md`. Net changes: new housekeeping command `pack/commands/adopt.md` (surveys conventions into `CLAUDE.md`, discovers + confirms the existing domain map, writes terse `docs/domains/` baselines with an *as-built rationale* subsection, opt-in sparse ADRs; propose-before-write; `state.md` stays idle; incremental/idempotent; optional `<area>` scope); `pm` research-phase edit to cite captured `CLAUDE.md` conventions instead of re-deriving; `install.sh` closing-message pointer; `devkit-orientation.md` housekeeping entry; slice-7 section in `inventory-and-build-order.md`. Resolved design forks: no manufactured retroactive ADRs (as-built rationale lives in domain docs); thin-base-then-grow; plan-time dedup via citation. **The second-project install is its dogfood** — running `/adopt` on a non-chungar project validates the command *and* closes the standing "second-project install" item below.
 - **Commit-discipline edits** (engineer skill Verify substep 5, `/build` halt condition, `/feature-start` Phase H, `/plan` Phase G, `/checkpoint` propose-then-decline, `CLAUDE.md.template` commit-cadence section). Validates the next time a real `/build` runs against an updated install.

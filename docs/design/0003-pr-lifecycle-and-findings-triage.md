@@ -205,7 +205,8 @@ This is **slice 8**. It precedes the debugging/correctness work (slice 9) becaus
 - Edit `pack/skills/documenter/SKILL.md` — summary gains review-notes; PR-body derivation guidance.
 - Edit `pack/skills/engineer/SKILL.md` — cite `findings-triage.md` for tester findings and architect recommendations.
 - Edit `pack/CLAUDE.md.template` — a PR-workflow convention line alongside merge strategy.
-- Edit `install.sh` + `install_lib.py` — manifest entries for the two new files.
+- **No installer change needed.** `install_lib.py:46` declares `TRACKED_DIRS = ("skills", "agents", "commands", "hooks", "references")`, and `iter_tracked_pack_files` (`install_lib.py:55-71`) `rglob`s each one, so both new files are tracked, hashed, and installed automatically. `install.sh:443` already creates both directories. Confirmed empirically during the build: the dry-run file count went 19 → 21 with no packaging change. *(Correction, 2026-07-30: the original build list called for manifest entries. The manifest is generated from a directory walk, not hand-maintained.)*
+- Edit `README.md` — the components map (slash-command row + references row), walkthrough steps 8–9, and the Review/Ship rows of the lifecycle table. *(Correction, 2026-07-30: omitted from the original build list. The README carries three separate command inventories that go stale silently.)*
 - Edit `pack/devkit-orientation.md` — `/pr-review` in the command list; Review/Ship lifecycle mapping.
 - Follow-up doc edits (design-currency): slice-8 section in `docs/design/inventory-and-build-order.md`; status update in this project's `CLAUDE.md`.
 
