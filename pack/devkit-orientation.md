@@ -26,7 +26,7 @@ The engineering rules (TDD discipline, SOLID checklist, Clean Architecture layer
 
 ## Workflow commands
 
-The pack's five commands cover the standard six-phase software-delivery lifecycle (Define → Plan → Build → Verify → Review → Ship). `/build` covers both Build and Verify (per-step tester + verify substep); `/feature-merge` covers Review and Ship (three gates plus the merge proposal). The command names are the workflow vocabulary; this paragraph exists for cross-framework orientation only.
+The pack's six commands cover the standard six-phase software-delivery lifecycle (Define → Plan → Build → Verify → Review → Ship). `/build` covers both Build and Verify (per-step tester + verify substep); `/feature-merge` covers Review and Ship (three gates, then either a merge proposal or a pull request); `/pr-review` covers Review again once humans and agents weigh in on the PR. The command names are the workflow vocabulary; this paragraph exists for cross-framework orientation only.
 
 Available now:
 
@@ -39,6 +39,8 @@ Available now:
 - **`/checkpoint <description>`** — mid-feature doc-sync and amendments. Loads the documenter skill to propose (never silently apply) changes to specs, plans, ADRs, and state.md. Three modes: with a description (amendment), `/checkpoint park` (park the feature without merging), or no args (interactive: ask what changed or run a lightweight drift-reconciliation pass).
 
 - **`/feature-merge`** — close out a feature. Three gates in fixed order: (1) tests pass; (2) docs reconciliation (Pattern D + acceptance-criteria coverage); (3) security review by the `security-reviewer` subagent in fresh context. On success, documenter writes `docs/summaries/<feature>.md`, updates domain docs if applicable, marks any parked features as superseded, proposes the merge mechanics, waits for user confirmation, then clears state.md. Halts on any gate failure; merge is always proposed (never auto-executed).
+
+- **`/pr-review`** — intake and respond to pull-request review feedback. Fetches all three GitHub comment surfaces (inline threads, review bodies, top-level comments), classifies each finding per `.claude/references/findings-triage.md`, fixes accepted in-scope items under `engineer` discipline with their own `review:` commits, routes out-of-scope ones to `/checkpoint`, and proposes every reply as one batch — nothing posts to the PR without your confirmation. Re-runnable as comments land; skips threads already answered (`/pr-review all` re-triages everything). Only meaningful while `Phase: in-review`.
 
 ### Housekeeping commands
 
@@ -61,7 +63,9 @@ Each workflow command proposes its own commit before pausing; you confirm or dec
 | Each plan step | end of `/build` (engineer Verify substep 5) | `step N: <step heading>` |
 | Each amendment | end of `/checkpoint` | `/checkpoint A: <description>` (or B/C/D variant) |
 | Summary + domain doc + state.md transition | inside `/feature-merge` | `/feature-merge: summary + state.md to idle` |
-| Merge to mainline | end of `/feature-merge` (your confirmation) | `Merge feature/<slug> into <mainline>` |
+| PR opened (PR flow) | end of `/feature-merge` (your confirmation) | *(no commit — pushes the branch and opens the PR)* |
+| Each accepted review finding | end of `/pr-review` Phase D | `review: <short summary>` |
+| Merge to mainline | end of `/feature-merge` (your confirmation), or the PR merging on the forge | `Merge feature/<slug> into <mainline>` |
 
 Two rules apply everywhere:
 
