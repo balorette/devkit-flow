@@ -19,6 +19,8 @@ Two sources of truth, addressed differently:
 
 Fill in the things a fresh Claude Code session would otherwise have to infer: language + version, package manager, framework choices, test runner, code style rules, branch naming, anything else that's load-bearing.
 
+State your **merge flow** explicitly — direct merge to mainline, or pull request (and whether PRs open as drafts). `/feature-merge` reads this first; without it the pack has to infer from the repo or ask you every time.
+
 ## When in doubt
 
 1. Read `.claude/state.md` for orientation.

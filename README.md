@@ -109,12 +109,12 @@ If the script doesn't fit your environment, copy `pack/skills/*`, `pack/agents/*
 
 | Component | Purpose |
 |---|---|
-| **Skills** (`pack/skills/`) | `pm` (brainstorm-to-spec discipline + plan-time research), `engineer` (TDD loop + SOLID/Clean Arch + commit cadence), `documenter` (amends specs/plans/ADRs/state.md; authors summaries at merge) |
+| **Skills** (`pack/skills/`) | `pm` (brainstorm-to-spec discipline + plan-time research), `engineer` (TDD loop + SOLID/Clean Arch + commit cadence), `documenter` (amends specs/plans/ADRs/state.md; authors summaries at merge), `grill-me` (interviews you until the decision tree is resolved) |
 | **Subagents** (`pack/agents/`) | `architect` (fresh-context architectural recommendations + ADR drafts), `tester` (fresh-context red-phase test authoring), `security-reviewer` (fresh-context security pass at merge) |
-| **Slash commands** (`pack/commands/`) | `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge` — one per workflow lifecycle phase |
+| **Slash commands** (`pack/commands/`) | `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review` — one per workflow lifecycle phase |
 | **Housekeeping commands** (`pack/commands/`) | `/adopt` — bootstrap baseline memory (conventions + domain docs) when an existing codebase adopts the pack; `/claude-md-merge` — interactive reconciliation of an existing `CLAUDE.md` against the canonical devkit-compliant structure. Neither is gated on an active feature; both usable anytime. |
 | **Hook** (`pack/hooks/`) | `doc-drift-detector.py` — `PostToolUse` warning when an edit touches files outside the active feature's `owned_files` glob |
-| **References** (`pack/references/`) | On-demand checklists cited from skills (`solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`). Not loaded automatically; opened when the skill that cites them points at them. |
+| **References** (`pack/references/`) | On-demand checklists cited from skills and commands (`solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`). Not loaded automatically; opened when the skill or command that cites them points at them. |
 | **Orientation doc** (`pack/devkit-orientation.md`) | Pack-owned reference: memory layout, workflow commands, commit cadence, automated guards. Installs to `.claude/devkit-orientation.md`; auto-updated; referenced from your `CLAUDE.md`. |
 | **CLAUDE.md template** | Project-side: title, description, project-specific conventions slot, "when in doubt" pointer + one-line reference to the orientation doc. Slim — most pack content lives in the orientation doc, not here. |
 
@@ -134,7 +134,9 @@ A complete feature, end to end:
 4. **Approve the plan.** Same shape as spec approval: flip `status` to `approved`, commit (`approve plan: <slug>`).
 5. **`/build`** — Executes one plan step under TDD discipline. The `tester` subagent writes failing tests in fresh context; the `engineer` brings them green; SOLID + Clean Arch checks run per diff; `state.md` is updated; a commit is proposed for the step (`step N: <heading>`). Repeat for each plan step.
 6. **`/checkpoint`** (optional, mid-feature) — When something needs amending: `/checkpoint <description>` for a user-described change, `/checkpoint park` to park the feature, or `/checkpoint` with no args for a drift-reconciliation pass. The `documenter` proposes (never silently applies) the amendment; on confirm, applies and proposes a commit.
-7. **`/feature-merge`** — Three gates in fixed order: (1) full test suite green, (2) docs reconciliation + acceptance-criteria coverage, (3) `security-reviewer` subagent fresh-context pass. On success: `documenter` authors `docs/summaries/<slug>.md`, updates `docs/domains/<domain>.md` if applicable, marks any superseded parked features, then proposes the merge mechanics and waits for your explicit confirmation before any git history change.
+7. **`/feature-merge`** — Three gates in fixed order: (1) full test suite green, (2) docs reconciliation + acceptance-criteria coverage, (3) `security-reviewer` subagent fresh-context pass. On success: `documenter` authors `docs/summaries/<slug>.md`, updates `docs/domains/<domain>.md` if applicable, marks any superseded parked features, then — depending on your project's merge flow — either proposes the merge mechanics or pushes and opens a pull request whose body is built from the summary. Either way it waits for your explicit confirmation first. In PR flow the feature moves to `Phase: in-review` and `state.md` is **not** cleared; the feature is still live.
+8. **`/pr-review`** (PR flow only) — When reviewers comment, fetches all three GitHub comment surfaces and classifies each finding per `.claude/references/findings-triage.md`. Accepted in-scope findings are fixed under `engineer` discipline with their own `review:` commits; out-of-scope ones route to `/checkpoint`; findings already answered by the spec or an accepted ADR get a reply citing it. Every reply is proposed as one batch — nothing posts to the PR without your confirmation. Re-run as comments land.
+9. **`/feature-merge`** again — once to re-validate the gates against the review fixes, and a final time after the PR merges (possibly by someone else, days later) to clear `state.md` and record the merge.
 
 The full commit cadence is documented in `CLAUDE.md`'s "Commit cadence" section after install.
 
@@ -146,8 +148,8 @@ If you're arriving from another framework that uses the more common six-phase li
 | Plan | `/plan` |
 | Build | `/build` (one step per invocation) |
 | Verify | `/build` (per-step `tester` invocation + engineer's Verify substep) + `/checkpoint` (on-demand reconciliation) |
-| Review | `/feature-merge` Gate 2 (docs reconciliation) + Gate 3 (`security-reviewer` fresh-context pass) |
-| Ship | `/feature-merge` Gate 1 (tests green) + the merge proposal and mainline integration |
+| Review | `/feature-merge` Gate 2 (docs reconciliation) + Gate 3 (`security-reviewer` fresh-context pass) + `/pr-review` (human and agent review feedback) |
+| Ship | `/feature-merge` Gate 1 (tests green), then the merge proposal or `gh pr create`; closeout once the PR merges |
 
 devkit doesn't rename the commands to match the lifecycle — the command names *are* the workflow vocabulary the pack uses internally. The mapping is here to help orient, not to replace.
 
