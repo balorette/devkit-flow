@@ -22,7 +22,7 @@
 | `documenter` | Loaded by `/checkpoint`, `/feature-merge`; on-demand when hook surfaces drift | All of `docs/`, `.claude/state.md`, current diff | Spec amendments, plan amendments, ADRs, summaries, domain doc updates, state.md | Always proposes before writing. Never auto-edits docs without user confirmation. Owns the doc-currency invariant in practice |
 | `pm` | Loaded by `/feature-start` for brainstorm + decomposition; by `/plan` for plan generation | `docs/domains/`, `docs/specs/` (for shape consistency), user input | Spec drafts, plan drafts, state.md updates | Owns the brainstorm-to-spec dialogue pattern and the domain-decomposition heuristic. Invokes architect when design questions surface |
 
-### Slash commands (5)
+### Slash commands (6)
 
 | Name | Purpose | Preconditions | Postconditions |
 |---|---|---|---|
@@ -30,7 +30,8 @@
 | `/plan` | Convert approved spec into implementation plan | Active feature; spec status = approved | Plan drafted (status: draft), state.md updated |
 | `/build` | Execute the approved plan under TDD | Active feature; plan status = approved | One or more plan steps completed; source/tests committed; state.md updated per step |
 | `/checkpoint` | Mid-feature doc-sync and spec/plan amendment | Active feature in any phase | Documenter has reconciled docs against repo state; user-requested amendments applied; state.md updated |
-| `/feature-merge` | Close out the feature: tests + docs + security → merge → archive | Active feature; plan complete; tests green | Summary doc generated, domain docs updated if applicable, branch merged to main, branch archived, state.md cleared |
+| `/feature-merge` | Close out the feature: tests + docs + security → merge or open a PR → archive. Re-runnable | Active feature; plan complete; tests green. For closeout: `Phase: in-review` with a merged PR | Local flow: summary generated, domain docs updated, branch merged, state.md cleared. PR flow: summary generated, branch pushed, PR opened, `Phase: in-review` and `PR:` set, state.md **not** cleared until a later closeout run |
+| `/pr-review [all]` | Intake, triage, and respond to PR review feedback | `Phase: in-review` with `PR:` set (or a PR discoverable for the branch); `gh` authenticated, else paste-in fallback | Accepted in-scope findings fixed with `review:` commits; out-of-scope findings routed to `/checkpoint` or followups; replies posted after user confirmation; summary *Review notes* amended; state.md Open questions updated |
 
 ### Hook (1)
 
@@ -226,6 +227,31 @@ Install the pack into a mature project and reach the same "solid base" a greenfi
 **Dogfood task:** Run `/adopt` on a real second project (not Enterprise Agent). Verify: Phase A conventions carry `file:line` evidence; the proposed domain map is useful and correctable; domain docs are terse and accurate; no ADRs unless a decision is flagged; a subsequent `/feature-start` orients against the produced docs and `/plan` cites the captured conventions. Re-run and confirm idempotence (deltas, not duplicates). This run doubles as the standing "second-project install" validation.
 
 **Why slice 7 last:** Adoption only pays off if the lifecycle that reads the base exists and is validated. Building it earlier would mean dogfooding a base with nothing to read it. Full rationale and the resolved design forks: `docs/design/0002-brownfield-adoption.md`.
+
+---
+
+### Slice 8 — PR lifecycle and findings triage (post-core)
+
+The lifecycle ended at a local merge performed synchronously by the user. In a pull-request workflow `/feature-merge` ran its three gates and then hit a *designed halt condition* (`gh pr create` was listed as a reason to stop), handing off everything after that point — opening the PR, receiving review, responding, landing the merge, closing out state. This slice closes that gap and, in doing so, adds the consumer-side findings discipline the pack had never written down for *any* source.
+
+**Build:**
+- `pack/references/findings-triage.md` — the shared evaluation discipline. Internal (`tester`, `architect`, `security-reviewer`) and external (humans, review agents) sources fail in opposite directions, so the default posture differs. Five classification buckets; five devkit rules.
+- `pack/commands/pr-review.md` — fetch across all three GitHub comment surfaces, triage, remediate, respond. Re-runnable; skips already-answered threads.
+- `pack/commands/feature-merge.md` — flow detection, a Phase-branch table making the command re-runnable, the `gh pr create` path, phase-aware closeout, four new halt conditions.
+- `pack/state.md.template` — `Phase: in-review`, a `PR:` field, Open questions doubling as the accepted-but-unfixed ledger.
+- `pack/skills/documenter/SKILL.md` — *Review notes* summary section; *The summary as PR body* derivation.
+- `pack/skills/engineer/SKILL.md` — cites `findings-triage.md` for tester findings and architect recommendations.
+- `pack/CLAUDE.md.template`, `pack/devkit-orientation.md`, `README.md` — surface the new command and the merge-flow convention.
+- **No installer change.** `TRACKED_DIRS` already covers `commands/` and `references/`; both new files install automatically (verified: dry-run 19 → 21).
+
+**What you can do after this slice:**
+Run a feature end to end in a PR-based team workflow without leaving the pack — gates run *before* the PR opens so human reviewers spend attention on what machines can't catch, review feedback is triaged against the spec rather than implemented reflexively, and the feature's state survives the days between opening the PR and someone else merging it.
+
+**Dogfood task:** A real feature on a GitHub-remote project: `/feature-start` → `/plan` → `/build` → `/feature-merge` (PR path) → human or agent review → `/pr-review` → merge on GitHub → `/feature-merge` (closeout). Seed the review with one out-of-scope suggestion and one spec-contradicting suggestion so those buckets are exercised. Verify the PR body links the spec; `Phase: in-review` survives a session restart; all three comment surfaces are fetched; no reply posts without confirmation; re-running `/pr-review` skips answered threads; closeout detects the async merge and clears both `Phase` and `PR:`.
+
+**Why slice 8 here:** it precedes the debugging/correctness work (slice 9) because the PR halt sits on the daily path, and because findings triage is required for external review regardless of whether an internal `reviewer` subagent exists. Full rationale and the four resolved forks: `docs/design/0003-pr-lifecycle-and-findings-triage.md`.
+
+**Deferred to slice 9:** a `debugger` skill (the pack has no debugging discipline — `/build`'s halt conditions hand off to a process that doesn't exist) and a `reviewer` subagent as a pre-PR gate 4 covering the cross-step lens no current component owns. Both were scoped during the 0003 discussion; neither is required for the PR lifecycle to work.
 
 ---
 
