@@ -5,6 +5,7 @@
 **Phase:** idle
 **Spec:** —
 **Plan:** —
+**PR:** —
 **Next step:** —
 
 ## Last merge
@@ -29,12 +30,19 @@ Field meanings:
   Active feature  short slug matching docs/specs/<slug>.md, or "none"
   Active branch   current git branch, or "main" when idle
   Phase           one of: idle | spec-draft | spec-approved | plan-draft |
-                  plan-approved | building | checkpoint | merging
+                  plan-approved | building | checkpoint | merging | in-review
   Spec / Plan     paths to the active spec and plan, or "—" when idle
+  PR              URL or owner/repo#N while Phase is in-review; "—" otherwise.
+                  Set by /feature-merge when it opens the PR; cleared at
+                  closeout once the PR has merged.
   Next step       short pointer to the next plan step when phase = building
 
 The Open questions section captures things deferred mid-feature that need
-the user's input. /checkpoint reads and helps resolve these.
+the user's input. /checkpoint reads and helps resolve these. During
+Phase: in-review it is also the ledger for review findings that were
+accepted but not yet fixed — /pr-review appends them and clears them when
+the fix lands. Already-answered review threads are NOT tracked here; the
+forge itself is that ledger (a thread the pack has replied in is handled).
 
 The Parked features section tracks features whose branch exists but whose
 active state has been cleared so a different feature can run. The
