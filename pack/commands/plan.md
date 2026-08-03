@@ -36,7 +36,7 @@ Read, in this order:
 - `docs/specs/` for one or two recent merged specs — gives shape context.
 - `docs/plans/` for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like.
 - `docs/domains/<domain>.md` for each domain the spec touches.
-- `docs/adr/` titles; read in full any ADR named in the spec's `related_adrs` front-matter or any whose title is keyword-relevant to the feature.
+- The project's ADR titles (location per `CLAUDE.md` conventions; `docs/adr/` is the default, not the assumption); read in full any named in the spec's `related_adrs` front-matter or whose title is keyword-relevant.
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
@@ -56,7 +56,7 @@ After research, audit the project-firsts you identified in Phase B against the p
 
 For each first-of-kind cross-cutting decision found, **invoke the `architect` subagent in fresh context** before drafting it into the plan. See "Invoking the architect" below for the invocation mechanic. Surface the architect's recommendation to the user; do not silently apply.
 
-If the architect drafts an ADR, write it under `docs/adr/NNNN-<short-name>.md` with the next free number and reference it in the plan's front-matter `related_adrs`.
+If the architect drafts an ADR, write it to the **discovered** ADR registry — location, format, and next free number per `CLAUDE.md` conventions (recorded by `/adopt`) or the same discovery scan `/feature-start` Phase E runs. `docs/adr/NNNN-<short-name>.md` is the default only when no registry exists. Reference it in the plan's front-matter `related_adrs`. Allocating here without discovering is the same duplicate-registry bug, one command over.
 
 This is the slice-2 forward-reference: the pm skill almost missed a cross-cutting pattern at spec time; the same risk applies even more sharply at plan time when decisions get baked into multiple steps.
 
@@ -143,7 +143,7 @@ Pass the architect:
 
 - The question framed in one sentence.
 - The trade-offs you've already considered.
-- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant `docs/adr/NNNN-*.md` files.
+- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant ADR files from the project's registry.
 - Pointers to source files the architect should sample.
 
 The architect returns a recommendation, rationale, trade-offs, precedent, and (if warranted) an ADR draft. Reflect the recommendation back to the user before accepting; the user's confirmation is the gate before applying it to the plan or writing an ADR.

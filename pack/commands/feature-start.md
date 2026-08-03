@@ -31,7 +31,7 @@ The phases below mirror the `pm` skill's loop. The skill is the source of truth 
 
 ### Phase A — Orient and confirm
 
-PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, `docs/adr/` titles). Then:
+PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, the findings ledger, and the project's ADR titles — location per `CLAUDE.md` conventions, not assumed to be `docs/adr/`). Then:
 
 1. Propose the slug derived from the user's argument. Confirm with the user.
 2. Confirm the feature framing back to the user in one or two sentences before brainstorming. ("My read: you want X so that Y. Right?")
@@ -74,7 +74,7 @@ If the architect was invoked during brainstorm and drafted an ADR:
 
 1. **Discover the registry before allocating.** If `CLAUDE.md` conventions already record an ADR location and high-water mark (written by `/adopt`), use it. Otherwise scan:
    - **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
-   - **Match:** `ADR[-_ ]?0*\d+`, case-insensitive.
+   - **Match, two patterns.** In file *contents*: `ADR[-_ ]?0*\d+`, case-insensitive. In *filenames*: `^0*\d+[-_]` under any directory whose name suggests decision records (`adr`, `adrs`, `decisions`, `rfc`, `rfcs`). The second is not optional — a project using the pack's own `docs/adr/0012-name.md` convention need never write the string "ADR" inside the file, so a contents-only scan finds nothing and allocates `0001` over an existing registry.
    - **Rank definitions above mentions.** A *definition* is a heading (`## ADR-012: …`) or a filename (`0012-*.md`). A *mention* is inline prose — a summary citing `ADR-007`, a changelog line. Take the high-water mark from definitions when any exist; mentions are a lower-confidence fallback and must be reported as such.
 2. **Report what was found** — location, format (directory-of-files vs single-file log), highest number, and whether it came from definitions or mentions. A bare number is not something the user can check.
 3. **Allocate floor + 1.** If the registry sits outside `docs/adr/`, or definitions appear in more than one location, **ask**: continue numbering in place, or start `docs/adr/` above the high-water mark. **Never silently allocate `0001` when any registry exists** — a duplicate ADR number means two documents claim the same decision ID, and the `architect` starts blind to every prior decision it might contradict.
