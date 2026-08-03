@@ -107,6 +107,21 @@ Update `.claude/state.md`:
 
 Leave `## Open questions` alone unless the research or architect invocation surfaced something to defer.
 
+### Phase F2 — Conformance review
+
+Invoke the `conformance-reviewer` subagent in fresh context. Pass **only** two paths: the approved spec and the plan you just wrote. It has no tools to reach the codebase, deliberately.
+
+It answers one question — does the plan contradict the spec? — which is not the question Phase E asked. Acceptance mapping checks that every criterion is *covered*; it cannot see a step that covers a criterion while violating it. A plan can map every criterion to a step and still return `200` where the spec says `409`, or expose through an update schema a state change the spec says must hard-block.
+
+The reviewer returns findings at two severities:
+
+- **Blocking** — a direct contradiction: a stated value, path, name, signature, or prohibition differs. **Resolve before the plan is approved.** Either revise the plan, or amend the spec via `/checkpoint` if the plan's version is the one that's right. Do not approve and fix later: the spec is the contract every later gate reads.
+- **Advisory** — the spec is silent and the plan chose. Surface to the user; the plan can be approved with these outstanding.
+
+Surface the full findings document either way, including a clean result. A conformance review that found nothing is information about the plan, not an empty formality.
+
+You wrote this plan. That is exactly why you are not the one checking it — the fresh-context reviewer has not spent the last hour making these choices sound reasonable.
+
 ### Phase G — Commit and hand off
 
 Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, and any spec front-matter `related_adrs` amendment Phase C made. Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
@@ -142,6 +157,7 @@ Stop and surface to the user (do not auto-recover) if:
 - The architect returns a recommendation that conflicts with what the spec commits to (the spec may need amendment via `/checkpoint`).
 - Acceptance mapping leaves a spec criterion unable to map to any step or deliberate-omission (suggests the spec criterion is unimplementable as stated).
 - The user rejects an architect recommendation but has no alternative direction — surface the disagreement, don't proceed with either option.
+- The `conformance-reviewer` returns **blocking** findings that are not yet resolved. Hand off with the plan still `status: draft` and the contradictions named. A plan approved over a known contradiction makes the spec stop describing the system, silently, from that moment on.
 - The proposed commit cannot be staged (e.g., a file Phase C/F expected isn't on disk, or `git add` errors out). Surface; do not work around it.
 
 Plan generation is not a one-shot script; if any of these conditions surface, halting and asking is cheaper than producing a plan that has to be redone.
