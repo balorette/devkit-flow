@@ -73,6 +73,18 @@ Categories borrow Astraeus's axis, mapped to devkit's producers:
 
 Owned by `documenter`. Written at `/feature-merge` and `/pr-review`. **Survives the merge** — that is the entire point.
 
+> **Amendment (2026-08-03) — the ledger is a *discovered* artifact, not an owned one.**
+>
+> As first written, this section had `docs/findings.md` created unconditionally. On Astraeus that produces a **fifth** review system beside a working one — `docs/reviews/` with 97 closed issues and a `CQ`/`SD`/`AR`/`TD` taxonomy — which is precisely the mistake [ADR-0005](0005-brownfield-portability.md) exists to prevent, committed while writing its sibling. The evidence for the ledger came *from* that system; proposing to duplicate it was the wrong conclusion to draw from it.
+>
+> Per [ADR-0007](0007-artifact-dispositions.md), the ledger takes the **discovered** disposition:
+>
+> - `/adopt` discovers an existing review or issue system and records its location and shape in `.claude/.devkit-config.json`.
+> - Where one exists, **ask**: adopt the project's format, or keep devkit's ledger alongside with an explicit note on which answers what. Never write into another team's issue schema by inference.
+> - `docs/findings.md` is created **only when nothing exists** — the greenfield case, where the thin-table shape below still applies unchanged.
+>
+> The read side is unaffected: whatever the ledger's location, `pm` reads it at orient (§ Build slice), and that remains the condition on which this whole component is worth having.
+
 ### C. Gate 2 gains a conformance question
 
 Three lines: Gate 2 currently asks whether every criterion is covered; it gains *"does any completed work contradict a criterion?"* This closes the same blind spot for drift introduced during the build rather than at plan time.

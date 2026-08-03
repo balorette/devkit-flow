@@ -770,7 +770,71 @@ git commit -m "docs: slice-9 currency — validation record, inventory, README, 
 
 ---
 
-## Dogfood (after Task 20)
+## Task 21: Interim seeded-file migrations
+
+The manual precursor to [ADR-0007](../design/0007-artifact-dispositions.md)'s mechanism. Without it, **no existing install receives `Gated baseline:`** — `.claude/state.md` is stamped once at fresh install and never updated afterwards, customized or not (`install_lib.py:141-151`: *"Template plan — never auto-applied, only surfaced as advisory"*). `--force` does not reach it; it operates on tracked files only.
+
+**Files:**
+- Create: `pack/MIGRATIONS.md`
+- Modify: `install.sh` (the `TEMPLATE-CHANGED` advisory text)
+
+**Interfaces:**
+- Consumes: the `Gated baseline:` field from Task 8.
+- Produces: the migrations format slice 10 automates. Keep it hand-writable — slice 10 generalizes this shape, so a shape that is awkward by hand will be awkward automated.
+
+- [ ] **Step 1: Author `pack/MIGRATIONS.md`**
+
+```markdown
+# Migrations
+
+Structural changes to **seeded** files — ones the pack stamps once at install and the user owns
+thereafter (`.claude/state.md`, `CLAUDE.md`). The installer never rewrites them, so changes arrive
+here and are applied deliberately.
+
+Apply the entries newer than your installed version (`.claude/.devkit-version`). Each is a proposal:
+read the live file, place the change where it belongs in *your* copy, and keep your own additions.
+
+## 0.10.0
+
+### `.claude/state.md`
+
+- Add `**Gated baseline:** —` immediately after the `**PR:**` line.
+  Records the last `HEAD` that passed gates 1–3. `/feature-merge` compares it against the PR tip to
+  decide whether a rerun needs the gates; without it, a rerun after a `/pr-review` fix can skip
+  tests, docs reconciliation, and security review entirely. (ADR-0003 § Corrections, F5.)
+
+- In the trailing HTML comment, add `Gated baseline` to the field-meanings list.
+
+## 0.9.0
+
+### `.claude/state.md`
+
+- Add `**PR:** —` after `**Plan:**`, and `in-review` to the `Phase` enum in the field-meanings
+  comment. Installs stamped at 0.9.0 or later already have both. (ADR-0003.)
+```
+
+- [ ] **Step 2: Point the advisory at it**
+
+`install.sh`'s `TEMPLATE-CHANGED` block currently reports that a template changed. Extend the message to name `MIGRATIONS.md` and the installed version, so the user has an action rather than a fact:
+
+```
+!  state.md.template changed since your install (0.9.0).
+   Your .claude/state.md is yours — the installer never rewrites it.
+   Apply the entries above 0.9.0 in .claude/MIGRATIONS.md.
+```
+
+- [ ] **Step 3: Ship `MIGRATIONS.md` into the target.** Add it to `TRACKED_TOP_FILES` in `install_lib.py` (`("MIGRATIONS.md", ".claude/MIGRATIONS.md")`) so the advisory can reference a file the user actually has. This is the slice's **only** installer change — verify with check A that the tracked count rises by exactly one.
+
+- [ ] **Step 4: Run checks A and B. Commit**
+
+```bash
+git add pack/MIGRATIONS.md install.sh install_lib.py
+git commit -m "pack: hand-written seeded-file migrations, interim to ADR-0007 (slice 9, task 21)"
+```
+
+---
+
+## Dogfood (after Task 21)
 
 Not a task — the gate that closes the slice, per `CLAUDE.md` working principle 2.
 
@@ -778,7 +842,7 @@ Re-run `install.sh` against Astraeus (picks up all of Phase 1–3), then run **o
 
 Verify P1, P2, P4, P5, plus: `## Conventions` written into without a rename; GSD sentinels named and untouched; the `diff-cover` gate present in Gate 1; a `SEC` or `REV` row surviving the merge and read by the *next* `/feature-start`.
 
-**Known update-path issue to confirm:** Astraeus's `.claude/state.md` is customized (the two-state-files note), so the update will **SKIP** it — meaning `PR:` and `Gated baseline:` won't arrive. Confirm the TEMPLATE-CHANGED advisory names both fields precisely enough to add by hand, since `--force` would discard the customization.
+**Known update-path issue to confirm.** Astraeus's `.claude/state.md` will not receive `Gated baseline:` from the update — **not** because it is customized, but because seeded files are never updated at all (`install_lib.py:141-151`). Its customization (the two-state-files note) is irrelevant to that, and `--force` would not help since it never reaches templates. Confirm Task 21's migration entry is precise enough to apply by hand against a file whose header the user has already added to, and that `PR:` is correctly reported as already-present — Astraeus was stamped fresh at 0.9.0, so it has that field and needs only the 0.10.0 entry.
 
 ---
 
