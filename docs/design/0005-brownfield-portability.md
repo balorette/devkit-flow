@@ -54,13 +54,16 @@ This promotes the ad-hoc cross-reference check used during slice 8 into an enfor
 
 ### Fix 2 — ADR registry discovery (Finding 2)
 
-`/feature-start` Phase E must **discover before allocating**:
+`/feature-start` Phase E must **discover before allocating**, and discovery is a **token scan** rather than a list of known locations. A fixed alternates list only ever finds the layouts its author thought of; Enterprise API's `docs/ai/decisions.md` would not have been on a list written before seeing it.
 
-1. `docs/adr/*.md` — the canonical location.
-2. Common alternates — `docs/decisions/`, `docs/adr.md`, `docs/decisions.md`, `docs/ai/decisions.md`.
-3. A token scan across `docs/**/*.md` for `ADR-0*\d+`.
+The scan is made cheap and precise rather than exhaustive:
 
-The highest number found **anywhere** is the floor; the next allocation is floor + 1. If a registry is detected outside the canonical location, **surface it and ask** — continue numbering in place, or start `docs/adr/` above the existing high-water mark. Never silently allocate `0001` when any registry exists.
+1. **Scope** — `*.md` under `docs/` plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or any path in `.gitignore`.
+2. **Match** — `ADR[-_ ]?0*\d+`, case-insensitive.
+3. **Rank definitions above mentions.** A *definition* is a heading (`## ADR-012: …`) or a filename (`0012-*.md`). A *mention* is inline prose — a summary citing `ADR-007`, a changelog line. The high-water mark comes from definitions when any exist; mentions are the fallback and are reported as lower-confidence.
+4. **Report, don't just decide.** Surface where the registry was found, its format (directory-of-files vs single-file log), and its highest number.
+
+The highest number found is the floor; the next allocation is floor + 1. If a registry is detected outside `docs/adr/`, **surface it and ask** — continue numbering in place, or start `docs/adr/` above the existing high-water mark. If the scan finds definitions in more than one location, ask rather than picking. **Never silently allocate `0001` when any registry exists.**
 
 `/adopt` gains a **discovery** step that records where ADRs live and the highest number, into `CLAUDE.md`'s conventions section. Discovery is not authoring: **ADR-0002 Decision 1 stands unchanged** — no retroactive ADRs are manufactured. The pack learns the registry exists without pretending to have written it.
 
@@ -120,10 +123,13 @@ The Gate 1 half of this fix is sequenced with the slice-8 defect work, since it 
 - Sentinel handling adds real complexity to two commands, for a case only some projects have. Justified by the silence of the failure — writing into another tool's region is destructive and invisible until regeneration.
 - The pack grows two reference files. Both are extractions of existing content, not new material.
 
+**Resolved during review (2026-08-03):**
+- **The Fix 1 guard runs in tests only**, not in `install.sh`. The installer should not fail on the pack author's mistake at the user's machine.
+- **Fix 2 discovery is a token scan, not an alternates list** — made precise by scoping, definition-vs-mention ranking, and reporting rather than by enumerating known layouts. A fixed list only finds the layouts its author anticipated.
+
 **Open questions:**
-- Should the guard in Fix 1 run in `install.sh` as well as in tests? Leaning: tests only — the installer should not fail on the pack author's mistake at the user's machine.
-- Is the alternates list in Fix 2 sufficient, or should discovery be a repo-wide token scan from the start? Leaning: alternates first, token scan as the fallback that already covers the tail.
 - Does `/adopt` need to re-run discovery when a project's structure changes later? Leaning: yes, and it is already idempotent by design.
+- Should the definition/mention ranking be exposed to the user, or only used internally to pick the floor? Leaning: expose it — "found 12 definitions in `docs/ai/decisions.md`" is more trustworthy than a bare number.
 
 ## Build slice
 
