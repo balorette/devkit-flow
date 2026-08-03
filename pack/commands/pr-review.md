@@ -31,7 +31,17 @@ Three surfaces carry findings. Fetch all three — a reviewer's most substantive
 | Review submission bodies (`APPROVED` / `CHANGES_REQUESTED` / `COMMENTED`) | `gh pr view --json reviews` | Not repliable in-thread → `gh pr comment` |
 | Top-level conversation comments | `gh pr view --json comments` | `gh pr comment` |
 
-Skip inline threads the pack has already replied in — a thread containing a reply authored by the PR author, keyed by `in_reply_to_id`. **Report the skipped count.** Silent omission is precisely the failure this guard is meant to prevent; a number the user can sanity-check is the whole point. `/pr-review all` disables the skip.
+**Skip what the pack has already answered — on all three surfaces.** Every reply the pack posts ends with a marker:
+
+```html
+<!-- devkit:pr-review handled:<comment-id> -->
+```
+
+An item is handled when a marker naming its id exists anywhere on the PR. Search all three surfaces for markers, build the handled set, then skip those items. **Report the skipped count** — silent omission is precisely the failure this guard prevents, and a number the user can sanity-check is the whole point. `/pr-review all` disables the skip.
+
+ADR-0003 chose the forge as the triage ledger — no local state — and that choice stands. What failed was the *detection*: `in_reply_to_id` exists only on inline review comments, so replies to review bodies and top-level comments recorded nothing, and a second pass re-fetched both the original item **and** the pack's own reply, then offered to answer it again. A marker the pack writes itself works on every surface and still requires no local bookkeeping.
+
+If a thread has a reply from the PR author but **no** marker, the user answered it by hand. Treat it as unhandled but say so — the user may want it skipped, and that is their call rather than an inference.
 
 Also read the active spec, the plan, and any ADRs named in their front-matter. You cannot classify a finding as "already answered by the spec" without having read the spec.
 

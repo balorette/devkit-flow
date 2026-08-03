@@ -28,6 +28,10 @@ The two sources fail in opposite directions, so the default posture differs.
 
 An external reviewer not having read the spec is a fact about their **access**, not a judgment about them. Cite the spec; don't condescend to it. (If your PR body doesn't link the spec, fix that before blaming the review.)
 
+**Tracking what you've already answered.** External findings arrive repeatedly — a review pass is re-run as new comments land. Every reply the pack posts to a forge ends with `<!-- devkit:pr-review handled:<comment-id> -->`, so a later pass can tell the reviewer's item from the pack's own answer to it. The forge holds that record, not a local file: it survives session boundaries and context compaction, and there is nothing to keep in sync.
+
+The general rule this instance illustrates: **when you act on a finding, leave the record where the finding lives.** Inferring "did I already handle this?" from surrounding state fails as soon as your own action is one of the things that changed that state.
+
 ## Classification buckets
 
 Every item lands in exactly one.
