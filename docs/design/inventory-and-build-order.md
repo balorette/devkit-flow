@@ -6,21 +6,23 @@
 
 ## Inventory
 
-### Subagents (3)
+### Subagents (4)
 
 | Name | Trigger | Reads | Writes | Notes |
 |---|---|---|---|---|
 | `architect` | Invoked by PM skill during `/feature-start` brainstorm when design questions arise; by Engineer skill during `/build` when Clean Architecture boundary is ambiguous | Active spec, `docs/domains/`, `docs/adr/`, relevant source | Returns a recommendation + ADR draft to the calling context | Fresh context. Sees the question, not the implementation. Outputs are advisory; caller decides whether to accept |
 | `tester` | Invoked by Engineer skill at the start of each `/build` step | Active spec, plan's test list for the current step, type signatures of code-under-test, **not** implementation source | Test files only | Fresh context is load-bearing here. Cannot see implementation while writing tests. This is the TDD integrity guarantee |
 | `security-reviewer` | Invoked by `/feature-merge` as gate 3 | Diff of the feature branch vs main, active spec, `docs/adr/` | Review notes (structured findings + severity) to the calling context | Fresh context. No prior conversation about the implementation choices |
+| `conformance-reviewer` | Invoked by `/plan` (Phase F2) before the plan is approved | Approved spec + draft plan **only** — no source; it has neither `Bash` nor `Glob` | Contradictions by severity (blocking / advisory) to the calling context | Fresh context. The plan's author is anchored on choices just made; a contradiction between contract and proposal is invisible to whoever introduced it. Catching it pre-approval costs a plan revision instead of a build |
 
-### Skills (3)
+### Skills (4)
 
 | Name | Trigger | Reads | Writes | Notes |
 |---|---|---|---|---|
 | `engineer` | Loaded by `/build`; also by `/plan` for planning-time discipline | Active plan, current step, existing source for context | Source files, test files (after tester returns), commits | Encodes TDD red-green-refactor loop, SOLID checklist, Clean Architecture layering rules, Karpathy-style small reversible steps. The pack's largest skill by content volume |
 | `documenter` | Loaded by `/checkpoint`, `/feature-merge`; on-demand when hook surfaces drift | All of `docs/`, `.claude/state.md`, current diff | Spec amendments, plan amendments, ADRs, summaries, domain doc updates, state.md | Always proposes before writing. Never auto-edits docs without user confirmation. Owns the doc-currency invariant in practice |
 | `pm` | Loaded by `/feature-start` for brainstorm + decomposition; by `/plan` for plan generation | `docs/domains/`, `docs/specs/` (for shape consistency), user input | Spec drafts, plan drafts, state.md updates | Owns the brainstorm-to-spec dialogue pattern and the domain-decomposition heuristic. Invokes architect when design questions surface |
+| `grill-me` | Auto-invoked by `/feature-start` (brainstorm) and `/plan` when user-facing decisions surface; on request ("grill me", "stress-test this") | The plan or design under discussion; the codebase, when a question can be answered by exploring instead of asking | Nothing — it interviews; the caller writes | No isolated context needed, so a skill rather than a subagent. Walks parents before children and reflects each answer back; silent inference is the failure mode it exists to prevent |
 
 ### Slash commands (6)
 
@@ -252,6 +254,24 @@ Run a feature end to end in a PR-based team workflow without leaving the pack �
 **Why slice 8 here:** it precedes the debugging/correctness work (slice 9) because the PR halt sits on the daily path, and because findings triage is required for external review regardless of whether an internal `reviewer` subagent exists. Full rationale and the four resolved forks: `docs/design/0003-pr-lifecycle-and-findings-triage.md`.
 
 **Deferred to slice 9:** a `debugger` skill (the pack has no debugging discipline — `/build`'s halt conditions hand off to a process that doesn't exist) and a `reviewer` subagent as a pre-PR gate 4 covering the cross-step lens no current component owns. Both were scoped during the 0003 discussion; neither is required for the PR lifecycle to work.
+
+---
+
+### Slice 9 — Enterprise API findings (post-core)
+
+The first brownfield install produced twelve findings before a single feature ran. Three phases, sequenced in **lifecycle order** rather than priority order: phase 1 unblocks *starting* a dogfood on a target shaped unlike devkit's own, phase 2 unblocks *finishing* the same run, phase 3 extends the design with what that project's review corpus proved was missing.
+
+**Phase 1 — brownfield portability** ([ADR-0005](0005-brownfield-portability.md)). One principle, five fixes: **read flexibly, write conservatively.** Adaptation buys tolerance on input, never licence on output. `references/spec-and-plan-depth.md` and `references/claude-md-elements.md` extracted (the second makes the `/adopt` ↔ `/claude-md-merge` deadlock impossible by construction rather than patching both sides); ADR-registry discovery by token scan before allocation; machine-owned-region detection so devkit never writes inside another tool's sentinels; host CI-gate discovery. Plus `tests/test_pack_references_resolve.py`, which makes the install-completeness class non-recurring.
+
+**Phase 2 — slice-8 defect fixes** ([ADR-0003 § Corrections](0003-pr-lifecycle-and-findings-triage.md)). Six defects found by slice 8's first external scrutiny, two of which contradicted decisions that ADR recorded as resolved: a gated-baseline SHA so reruns cannot skip the gates; closeout docs committed before integration and post-merge state written on mainline; the merge-base diff (five sites, not one); a reply marker that works on all three PR surfaces; push-verify-then-reply; and Gate 1 running the project's discovered gate set. Plus `pack/MIGRATIONS.md` — without it the new `state.md` field reaches no existing install.
+
+**Phase 3 — findings ledger and plan conformance** ([ADR-0006](0006-findings-ledger-and-plan-conformance.md)). The `conformance-reviewer` subagent, running at `/plan` before approval on documents alone. Gate 2 gains the conformance question it never asked. Findings gain a durable home — as a *discovered* artifact, so devkit never becomes the fifth review system on a project that already has one. `debugger` folds into `engineer` rather than becoming a fifth skill.
+
+**What you can do after this slice:** install into a mature codebase whose ADRs, conventions, plans, and review system are already somewhere devkit didn't choose, and run a feature end to end through a PR reviewed by other people — without the pack overwriting what it found, allocating over an existing registry, or skipping a gate on the commits that actually merge.
+
+**Dogfood task:** see `docs/validation/slice-9.md`. Four behavioural predictions are recorded there **unrun**.
+
+**Why slice 9 here:** it is entirely reactive. Every item traces to a defect a real install exposed — which is the build order working as intended: slices 1–8 were designed, slice 9 was discovered.
 
 ---
 

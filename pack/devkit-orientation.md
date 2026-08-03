@@ -11,12 +11,16 @@ docs/
   adr/NNNN-<name>.md       architecture decisions (immutable once accepted)
   domains/<domain>.md      living domain model
   summaries/<feature>.md   feature retrospectives (written at merge)
+  findings.md              findings that outlive their feature (or your existing
+                           review system — the location is discovered, not assumed)
 .claude/
-  state.md                 active branch / feature / phase / pointers
+  state.md                 active branch / feature / phase / pointers  (seeded: yours)
   devkit-orientation.md    this file (pack-owned)
+  MIGRATIONS.md            how to hand-apply changes to the seeded files
   skills/, agents/,        the devkit pack itself
   commands/, hooks/
-  references/              checklists loaded on demand (SOLID, Clean Arch, security categories)
+  references/              checklists loaded on demand (SOLID, Clean Arch, security
+                           categories, findings triage, spec/plan depth, CLAUDE.md elements)
 CLAUDE.md                  project index + project-specific conventions
 ```
 
@@ -32,7 +36,7 @@ Available now:
 
 - **`/feature-start "<short description>"`** — begin a feature. PM skill brainstorms with you (visible, interactive); proposes a domain decomposition; invokes the architect subagent for genuinely architectural questions; drafts a typical-depth spec at `docs/specs/<slug>.md`; creates `feature/<slug>` branch; updates state.md to `Phase: spec-draft`. You review and approve the spec by flipping its front-matter `status` from `draft` to `approved`.
 
-- **`/plan`** — convert the approved spec into an implementation plan. PM and engineer skills together produce a research-grounded plan with conventions, per-step type signatures for the tester, and acceptance-criteria mapping. Architect may be invoked when research surfaces a first-of-kind cross-cutting decision. Writes `docs/plans/<slug>.md` with `status: draft`; updates state.md to `Phase: plan-draft`. You review and approve by flipping the plan's front-matter `status` to `approved`.
+- **`/plan`** — convert the approved spec into an implementation plan. PM and engineer skills together produce a research-grounded plan with conventions, per-step type signatures for the tester, and acceptance-criteria mapping. Architect may be invoked when research surfaces a first-of-kind cross-cutting decision. Before handing off, the `conformance-reviewer` subagent checks in fresh context whether the plan *contradicts* the spec — a different question from whether every criterion is covered; blocking findings are resolved before approval. Writes `docs/plans/<slug>.md` with `status: draft`; updates state.md to `Phase: plan-draft`. You review and approve by flipping the plan's front-matter `status` to `approved`.
 
 - **`/build`** — execute the approved plan under TDD. Reads `.claude/state.md` for the active feature and plan. Loops per plan step: tester subagent writes failing tests in fresh context → engineer writes implementation to green → SOLID + Clean Architecture checks → state.md updated. One `/build` invocation completes one step and pauses.
 
