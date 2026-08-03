@@ -122,10 +122,12 @@ Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring
 **Discovery first, and it is not authoring.** Before anything else in this phase, find out whether the project already keeps decision records, and where:
 
 - **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
-- **Match, two patterns.** In file *contents*: `ADR[-_ ]?0*\d+`, case-insensitive. In *filenames*: `^0*\d+[-_]` under any directory whose name suggests decision records (`adr`, `adrs`, `decisions`, `rfc`, `rfcs`). A numbered-filename registry may never spell "ADR" in its contents at all.
+- **Match, two patterns.** In file *contents*: `ADR[-_ ]?0*\d+`, case-insensitive. In *filenames*: `^0*\d{1,4}[-_]` under any directory whose name suggests decision records (`adr`, `adrs`, `decisions`, `rfc`, `rfcs`), **excluding date-prefixed names** matching `^\d{4}-\d{2}-\d{2}` — dated notes are not ADR numbers, and treating `2026-04-15-review.md` as one sets the high-water mark in the thousands. A numbered-filename registry may never spell "ADR" in its contents at all.
 - **Rank definitions above mentions** — a heading (`## ADR-012: …`) or a filename (`0012-*.md`) is a definition; inline prose citing `ADR-007` is a mention. Report which kind the high-water mark came from.
 
-Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* `/feature-start` reads that instead of re-scanning every feature.
+Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."*
+
+The **location** is the durable part. The recorded number is a snapshot, not an authority: `/feature-start` and `/plan` both re-scan for the current highest before every allocation, because features allocate continuously while this record is written once. Recording it is still worth doing — it makes the registry's shape visible to a human reading `CLAUDE.md` — but nothing allocates from it.
 
 Registries turn up in shapes a fixed list would miss — the first brownfield target kept `ADR-001 … ADR-012` as headings inside a **single decisions log**, not a directory of files. Without this step `/feature-start` would have found no `docs/adr/`, started at `0001`, and created a second document claiming `ADR-001`.
 
