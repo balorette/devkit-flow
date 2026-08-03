@@ -38,6 +38,7 @@ History lives in git + `docs/validation/`. This section describes the pack as it
 - **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review`
 - **References:** `pack/references/` — `solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`
 - **Hook:** `doc-drift-detector` (`PostToolUse`; warns on edits outside the active spec's `owned_files`)
+- **Tests:** `tests/test_doc_drift_detector.py` — the repo's only automated tests, covering the pack's only executable code. Stdlib `unittest`, no pytest (the pack installs into arbitrary projects and can't assume a runner). Run with `python3 -m unittest discover -s tests`. Everything else in this repo is markdown, verified by behavioral prediction + fresh-session run per working principle 4.
 - **Templates:** `pack/CLAUDE.md.template` (slim — defers orientation to a separate installed file), `pack/state.md.template`
 - **Pack orientation:** `pack/devkit-orientation.md` (memory layout, workflow commands, commit cadence, automated guards)
 - **Installer:** `install.sh` + `install_lib.py`. Idempotent. Manifest-based update path with customization detection, default-skip on user-modified files, `--force` overwrite with backup to `.devkit-bak/`, template-change advisories, `--dry-run`. Flags: `--project-name`, `--description`, `--mainline`, `--force`, `--dry-run`.
@@ -141,6 +142,8 @@ These are non-negotiable for the *authoring work*, not just the eventual pack:
 │   └── hooks/
 │       ├── doc-drift-detector.py
 │       └── settings.json.fragment
+├── tests/                          (stdlib unittest; covers the drift hook — the only executable code)
+│   └── test_doc_drift_detector.py
 └── examples/                       (fabricated example projects used for dogfood)
 ```
 

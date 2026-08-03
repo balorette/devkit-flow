@@ -1,0 +1,3 @@
+# Python bytecode — this repo executes Python only for tests/ and the drift hook.
+__pycache__/
+*.py[cod]
