@@ -137,7 +137,7 @@ The manifest's `tracked` / `templates` split becomes a disposition per artifact,
 
 ## Build slice
 
-**Slice 10.** A manifest schema change, a new command, and a migrations file is not something to bolt onto slice 9, which is already twenty tasks.
+**Slice 10.** A manifest schema change, a new command, and a migrations file is not something to bolt onto slice 9, which is already twenty-one tasks.
 
 **Build:**
 - `pack/MIGRATIONS.md` — the format, seeded with the 0.9.x → 0.10.0 entries.

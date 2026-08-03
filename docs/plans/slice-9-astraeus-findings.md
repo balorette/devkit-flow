@@ -848,7 +848,7 @@ Verify P1, P2, P4, P5, plus: `## Conventions` written into without a rename; GSD
 
 ## Self-review
 
-**Design coverage** — all twelve findings mapped: F1 → T1, T2 · F2 → T4 · F3 → T3 · F4 → already fixed (`fd5cafd`) · F5 → T8 · F6, F7 → T9 · F8 → T10 · F9 → T11 · F10 → T12 · F11 → T6 (discovery) + T13 (execution) · F12 → T7 Step 2 (the generalizable lesson; the `# noqa: T201` residue is deliberately **not** actioned, since devkit does not currently lint the hook). ADR-0005 Fix 4 (sentinels) → T5. ADR-0006 A → T14, T15 · B → T16, T17, T18 · C → T17 Step 1 · D → T19 + T20.
+**Design coverage** — all twelve findings mapped: F1 → T1, T2 · F2 → T4 · F3 → T3 · F4 → already fixed (`fd5cafd`) · F5 → T8 · F6, F7 → T9 · F8 → T10 · F9 → T11 · F10 → T12 · F11 → T6 (discovery) + T13 (execution) · F12 → T7 Step 2 (the generalizable lesson; the `# noqa: T201` residue is deliberately **not** actioned, since devkit does not currently lint the hook). ADR-0005 Fix 4 (sentinels) → T5. ADR-0006 A → T14, T15 · B → T16, T17, T18 · C → T17 Step 1 · D → T19 + T20. ADR-0007's interim (seeded-file migrations, so Task 8's field reaches existing installs) → T21; its full mechanism is slice 10 and deliberately out of scope here.
 
 **Placeholder scan** — clean. Task 1 Step 1 and Task 14 Step 2 specify *what to extract/author* rather than quoting final prose, because both are extractions from sources the implementer must read; every other step carries literal replacement text and an exact anchor.
 
@@ -856,4 +856,4 @@ Verify P1, P2, P4, P5, plus: `## Conventions` written into without a rename; GSD
 
 **Ordering** — no task consumes an interface a later task produces. T2's guard runs after T1 removes the two known violations and before T3 removes the third (T3 Step 5 re-runs it). T13 consumes T6's recorded gate list. T17 consumes T16's row format. T18 consumes T16.
 
-**Scope check** — 20 tasks across three phases is large for one plan, and the phases are separable: each ends in a coherent, independently valuable state. If execution stalls, Phase 1 alone unblocks brownfield adoption and is worth landing on its own.
+**Scope check** — 21 tasks across three phases plus one interim task is large for one plan, and the phases are separable: each ends in a coherent, independently valuable state. If execution stalls, Phase 1 alone unblocks brownfield adoption and is worth landing on its own. Task 21 is the exception to phase separability — it must ship with Phase 2, since it is the only route by which Task 8's `Gated baseline:` reaches an existing install.
