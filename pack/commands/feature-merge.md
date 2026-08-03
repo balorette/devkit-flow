@@ -79,7 +79,7 @@ The user picks. Don't proceed past Gate 2 with a coverage gap silently.
 ### Gate 3 — Security review
 
 Invoke the `security-reviewer` subagent in fresh context. Pass:
-- The diff command (`git diff <mainline>..HEAD`) for the subagent to run itself.
+- The diff command (`git diff <mainline>...HEAD` — **three dots**) for the subagent to run itself. The three-dot form diffs against the merge base, which is what "what this feature changed" means. With two dots, every commit that landed on mainline after this branch diverged renders as a *removal* in the feature's diff — so the `security-reviewer` can report, or block on, changes this feature never made. The longer the branch lives, the worse it gets.
 - Path to the active spec.
 - Paths to related ADRs from the spec/plan front-matter.
 - Path to the active plan (intent context only; not authoritative for security).
