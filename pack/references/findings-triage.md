@@ -44,6 +44,10 @@ Every item lands in exactly one.
 | **Technically disagree** | Reply with technical reasoning. Surface to the user before it goes anywhere public. |
 | **Unclear** | Ask. Implement nothing else in that cluster until answered. |
 
+**Every disposition except "already answered" leaves a record.** A finding accepted and fixed is recorded by its commit. A finding accepted but deferred, or disagreed with and let go, needs somewhere durable — that is the findings ledger (see the `documenter` skill's *The findings ledger*). Parking it in `state.md`'s `## Open questions` only works for something resolved *within* the current feature, because `/feature-merge` clears that section.
+
+The failure this prevents is quiet: a finding evaluated, judged real, deferred deliberately — and then gone at merge, so the next feature rediscovers it as a bug.
+
 ## The five devkit rules
 
 1. **A finding that contradicts an approved spec is a spec question, not a code fix.** The spec was approved; a reviewer's preference does not override it in passing. Route to `/checkpoint` and let the amendment be explicit and dated.

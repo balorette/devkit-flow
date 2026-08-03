@@ -71,6 +71,7 @@ Load the `documenter` skill. Run a final-pass version of Pattern D (see the docu
 
 - **Pattern D checks:** `owned_files` coherence (any commits touching files outside scope?); state.md coherence (Spec/Plan paths exist; Phase makes sense for a feature about to merge); spec/plan front-matter coherence.
 - **Acceptance-criteria coverage:** read the spec's "Acceptance criteria" section. For each criterion, identify which plan step (or completed work) satisfies it. Any criterion not mapped to completed work is a coverage gap. The plan's "Acceptance mapping" table (per the pm skill's plan-time guidance) is the primary source; the documenter cross-references against the plan's Completed steps in state.md.
+- **Acceptance-criteria conformance:** for each criterion, does any completed work *contradict* it? Ask this separately and explicitly — coverage and conformance are different questions, and the coverage check is structurally blind to the difference. A step can satisfy the mapping while violating the criterion it maps to: a schema field that reopens a path the spec says must be blocked is *covered* and *wrong*. `/plan`'s `conformance-reviewer` catches this class before the build; this is the same question asked of the code that actually got written, which may have drifted from the plan.
 
 If all checks pass: proceed to Gate 3.
 
@@ -92,7 +93,7 @@ Invoke the `security-reviewer` subagent in fresh context. Pass:
 
 The subagent returns a structured findings document with severity-bucketed entries (critical / high / medium / low / informational).
 
-- **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block.
+- **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
 - **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Re-run Gate 3 (or the full sequence from Gate 1, since fixes touch code) after resolution.
 
 ### After all three gates pass — Summary and supersede

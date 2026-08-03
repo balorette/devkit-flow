@@ -69,7 +69,7 @@ Strict order. Each stage completes before the next begins.
 
 1. **Code fixes**, one at a time, each under the `engineer` skill's Verify discipline: tests green, lint and type-check clean, its own commit. Subject `review: <short summary>`. Stage explicitly; never `git add -A`. A review fix that cannot be brought green is not a fix — halt and surface it.
 2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. Through the `documenter` skill, propose-before-write as always.
-3. **`.claude/state.md`** — append accepted-but-unfixed items to `## Open questions`; remove entries whose fix just landed.
+3. **The findings ledger and `.claude/state.md`.** Anything accepted but deferred past this feature goes in the ledger as a `REV` row (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). `state.md`'s `## Open questions` holds only what must be resolved *within this feature* — `/feature-merge` clears that section, so a finding parked there and not fixed before merge is a finding silently discarded. Remove entries whose fix just landed.
 4. **Push — and verify the remote tip actually contains the fix commits** (`gh pr view --json headRefOid`, compared against your local `HEAD`).
 5. **Replies**, only after that verification passes.
 
