@@ -6,7 +6,7 @@ Bring an existing project to "a solid base" — the durable memory the devkit li
 
 `/adopt` is **housekeeping**, not feature work. It is not gated on an active feature. Run it once after `install.sh` on a mature codebase, before your first `/feature-start`. Re-run it later to deepen coverage or document a new area.
 
-Why it exists: every orient phase in the pack assumes durable memory already exists — the `pm` skill reads `docs/domains/` to ground decomposition, `/plan` cites `CLAUDE.md` conventions, the `architect` checks `docs/adr/` for contradictions. On a project that grew the pack organically, that memory accretes feature by feature. On a project adopting the pack mid-life, it's empty. `/adopt` fills the spine so the first feature is as well-grounded as the tenth. Rationale: `docs/design/0002-brownfield-adoption.md`.
+Why it exists: every orient phase in the pack assumes durable memory already exists — the `pm` skill reads `docs/domains/` to ground decomposition, `/plan` cites `CLAUDE.md` conventions, the `architect` checks `docs/adr/` for contradictions. On a project that grew the pack organically, that memory accretes feature by feature. On a project adopting the pack mid-life, it's empty. `/adopt` fills the spine so the first feature is as well-grounded as the tenth.
 
 ## Arguments
 
@@ -88,8 +88,10 @@ For each **confirmed** domain, draft a terse `docs/domains/<slug>.md` and propos
 ## As-built rationale
 
 <Why it's shaped this way — the decision context that would otherwise be lost.
-This subsection is where "why" lives at adoption time, NOT a retroactive ADR
-(see Decision 1 in docs/design/0002). Keep it to what's genuinely load-bearing.>
+This subsection is where "why" lives at adoption time, NOT a retroactive ADR.
+Do not manufacture ADRs for decisions already made — an ADR is written only for
+a decision you flag as load-bearing AND plausibly reversible. Keep this to what's
+genuinely load-bearing.>
 ```
 
 Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-run), propose a **delta** against it — don't overwrite; add what's missing or deepen a thin section.
