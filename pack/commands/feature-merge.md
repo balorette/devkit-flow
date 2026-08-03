@@ -20,9 +20,11 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 |---|---|
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
-| `in-review`, PR open, no new commits since PR-open | Report review status and open-thread count. Point at `/pr-review`. Run no gates. |
-| `in-review`, PR open, new commits since PR-open | Re-run gates 1–3 — review fixes are code changes and need re-validation — then push. Do **not** re-create the PR. |
+| `in-review`, PR open, **PR tip == `Gated baseline`** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this exact commit already passed them. |
+| `in-review`, PR open, **PR tip != `Gated baseline`** | Re-run gates 1–3 — the PR contains commits that have never been gated — then push and update `Gated baseline`. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
+
+**The discriminator is `Gated baseline` versus the PR tip — never local tip versus remote tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on tip equality would take the *nothing changed* path and skip tests, docs reconciliation, and security review on precisely the code that is about to merge. Read the PR tip with `gh pr view --json headRefOid`.
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
@@ -140,7 +142,9 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
 
-On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review` and `PR: <url>`. **Do not clear state** — the feature is still active until the PR merges. Report the PR URL and point at `/pr-review`.
+On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the SHA that just passed gates 1–3>`**. **Do not clear state** — the feature is still active until the PR merges. Report the PR URL and point at `/pr-review`.
+
+Update `Gated baseline` again after **every** successful gate rerun, to the SHA those gates ran against. A stale baseline is worse than none: it makes ungated commits look gated.
 
 ### After the merge
 

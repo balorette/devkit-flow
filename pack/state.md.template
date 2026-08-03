@@ -6,6 +6,7 @@
 **Spec:** —
 **Plan:** —
 **PR:** —
+**Gated baseline:** —
 **Next step:** —
 
 ## Last merge
@@ -35,6 +36,12 @@ Field meanings:
   PR              URL or owner/repo#N while Phase is in-review; "—" otherwise.
                   Set by /feature-merge when it opens the PR; cleared at
                   closeout once the PR has merged.
+  Gated baseline  the last commit SHA that passed gates 1-3. Set when the PR
+                  opens and after every successful gate rerun. /feature-merge
+                  compares it against the PR tip to decide whether a rerun
+                  needs the gates -- comparing local vs remote tips cannot
+                  work, because /pr-review pushes its fixes and makes them
+                  agree.
   Next step       short pointer to the next plan step when phase = building
 
 The Open questions section captures things deferred mid-feature that need
