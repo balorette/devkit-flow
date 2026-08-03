@@ -37,7 +37,14 @@ Three surfaces carry findings. Fetch all three — a reviewer's most substantive
 <!-- devkit:pr-review handled:<comment-id> -->
 ```
 
-An item is handled when a marker naming its id exists anywhere on the PR. Search all three surfaces for markers, build the handled set, then skip those items. **Report the skipped count** — silent omission is precisely the failure this guard prevents, and a number the user can sanity-check is the whole point. `/pr-review all` disables the skip.
+Skip an item if **either** is true:
+
+1. **A marker names its id.** Some reply on the PR carries `handled:<this item's id>` — the item has been answered.
+2. **The item itself contains a marker.** It is one of the pack's own replies.
+
+Both conditions are required, and the second is easy to miss. A reply's marker names the *original* comment's id, while the reply is itself a comment with a *different* id that no marker names. Condition 1 alone would therefore skip the original and treat the pack's own answer as a new item to respond to — proposing replies to its own replies, growing by one every pass. This is the same defect as the `in_reply_to_id` bug it replaced, recurring one level up: the pack's own actions are among the things that changed the state it is reading.
+
+Search all three surfaces for markers, build the handled set, then skip. **Report the skipped count** — silent omission is precisely the failure this guard prevents, and a number the user can sanity-check is the whole point. `/pr-review all` disables the skip.
 
 ADR-0003 chose the forge as the triage ledger — no local state — and that choice stands. What failed was the *detection*: `in_reply_to_id` exists only on inline review comments, so replies to review bodies and top-level comments recorded nothing, and a second pass re-fetched both the original item **and** the pack's own reply, then offered to answer it again. A marker the pack writes itself works on every surface and still requires no local bookkeeping.
 
@@ -79,7 +86,7 @@ An earlier version of this command had replies last, reasoning that *"a reply sa
 
 ### Phase E — Hand off
 
-One short report: items per bucket, commits made, replies posted, items parked in Open questions, threads skipped as already-answered.
+One short report: items per bucket, commits made, replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.
 
 If every thread is answered and the working tree is clean, suggest re-running `/feature-merge`. New commits mean gates 1–3 need re-validation against the code that will actually merge.
 
