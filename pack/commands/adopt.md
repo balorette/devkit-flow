@@ -98,9 +98,13 @@ Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-r
 
 ### Phase D — Conventions into CLAUDE.md
 
-Propose writing the Phase A block into `CLAUDE.md`'s `## Project conventions` section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
+**Resolve the conventions section using `.claude/references/claude-md-elements.md` — element 5, including its equivalence set.** A section named `## Conventions`, `## Setup`, `## Stack`, or similar **is** the conventions section. Write into it. Do not propose a rename: an equivalent element is a satisfied element.
 
-If `CLAUDE.md` is not yet devkit-shaped (no `## Project conventions` section, no orientation reference), **stop this phase and route through `/claude-md-merge` first** — that command owns canonical-structure reconciliation. Then return and write the conventions into the section it created. Don't force structure here; `/adopt` fills the conventions slot, `/claude-md-merge` builds the slot.
+Propose writing the Phase A block into that resolved section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
+
+**Before writing, check for machine-owned regions** per that reference's *Machine-owned regions* section. If the resolved section sits inside another tool's sentinel pair, write **adjacent** to the region rather than inside it, and say why — that text may be regenerated from a source file at any time, silently discarding whatever devkit put there.
+
+Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
 
 ### Phase E — Contested decisions → ADRs (opt-in, sparse)
 

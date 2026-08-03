@@ -27,32 +27,15 @@ Read the full `CLAUDE.md`. Note: line count, top-level headings (`#` and `##`), 
 
 ### Phase 2 — Detect
 
-The canonical devkit-compliant `CLAUDE.md` has six elements, in this order:
+Read `.claude/references/claude-md-elements.md`. It defines the six canonical elements, their recognition cues, the four classifications (present-exact / present-equivalent / partial / absent), and the placement defaults. **It is the single definition** — this command does not restate it, because two commands holding two copies is exactly what produced an unresolvable loop with `/adopt`.
 
-| # | Element | Recognition cue |
-|---|---|---|
-| 1 | **Title** — h1 with the project name | First non-blank line is `# <something>`. |
-| 2 | **One-line description** — short paragraph immediately after the title | Non-blank line(s) after the h1, before the first `##`. |
-| 3 | **`## How to read this project`** — explains the two sources of truth (`docs/` vs `.claude/state.md`) | An `##` heading named "how to read" / "orient" / "navigation" / similar, AND content mentions both `docs/` and `.claude/state.md`. |
-| 4 | **Orientation reference blockquote** — `> **devkit pack:** see \`.claude/devkit-orientation.md\` for ...` | A blockquote anywhere in the file containing the literal string `.claude/devkit-orientation.md`. Exact wording may drift between pack versions; presence of the path is the test. |
-| 5 | **`## Project conventions`** — section the user fills with project-specific load-bearing rules | An `##` heading named "Project conventions" / "Conventions" / "Setup" / "Stack" / similar, holding language/runtime/test-runner/style/branch-naming content. |
-| 6 | **`## When in doubt`** — orientation pointer with a numbered list of "read X first" steps | An `##` heading named "When in doubt" / "Getting started" / "Orientation" / similar, containing an ordered list pointing at `.claude/state.md` and the active spec. |
+Classify each of the six elements against the target's `CLAUDE.md`.
 
-Classify each element:
-
-- **Present (exact).** Element exists at the expected place with content that satisfies the canonical role. No change proposed.
-- **Present (equivalent).** Element exists under a different heading or in a different location but conceptually covers the role. Name the existing section in your finding; default to leaving as-is unless the equivalence is partial. Gratuitous heading renames create churn — propose them only if the user benefits from canonical naming (e.g., they're new to devkit and the heading is significantly misleading).
-- **Partial.** Some of the canonical content is present, some is missing. Propose adding only what's missing; do not rewrite what's there.
-- **Absent.** No equivalent exists. Propose adding it at the canonical position (see *Placement defaults* below).
+**Before proposing any write, detect machine-owned regions** per that reference's *Machine-owned regions* section. Never write inside another tool's sentinel pair; write adjacent and say why. Name every detected region in your findings, including ones you did not need to touch.
 
 ### Phase 3 — Propose chunk-by-chunk
 
-**Placement defaults.** Use these when proposing additions (override only if the existing file's structure makes a different placement obviously better):
-
-- **Orientation reference (4)** — between the description (2) and the first existing `##` heading. If there's no description, immediately after the title. **Never at the bottom** — the reference is orientation content; it belongs near the top where it's read first.
-- **`## How to read this project` (3)** — directly after the orientation reference. Together they form the orient block.
-- **`## Project conventions` (5)** — after the orient block, before any user-authored content sections. If the user has a `## Setup` or `## Stack` section that covers similar ground, propose equivalence rather than adding a duplicate.
-- **`## When in doubt` (6)** — last `##` heading in the file. End-of-file is the conventional spot for a closing-pointer section.
+**Placement defaults** are defined in `.claude/references/claude-md-elements.md`. Override one only where the existing file's structure makes a different placement obviously better — and say so in the proposal.
 
 **Proposal shape.** For each element classified as partial or absent (and equivalent elements where you're proposing a non-trivial reconciliation), produce a proposal of this shape:
 
