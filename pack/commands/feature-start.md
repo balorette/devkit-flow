@@ -72,11 +72,16 @@ Write the spec to the path. If `docs/specs/` doesn't exist, create it. If a spec
 
 If the architect was invoked during brainstorm and drafted an ADR:
 
-1. Find the next free ADR number by listing `docs/adr/*.md` and incrementing the highest.
-2. Write the ADR to `docs/adr/NNNN-<short-name>.md`.
-3. Update the spec's front-matter `related_adrs` to include the new number.
+1. **Discover the registry before allocating.** If `CLAUDE.md` conventions already record an ADR location and high-water mark (written by `/adopt`), use it. Otherwise scan:
+   - **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
+   - **Match:** `ADR[-_ ]?0*\d+`, case-insensitive.
+   - **Rank definitions above mentions.** A *definition* is a heading (`## ADR-012: …`) or a filename (`0012-*.md`). A *mention* is inline prose — a summary citing `ADR-007`, a changelog line. Take the high-water mark from definitions when any exist; mentions are a lower-confidence fallback and must be reported as such.
+2. **Report what was found** — location, format (directory-of-files vs single-file log), highest number, and whether it came from definitions or mentions. A bare number is not something the user can check.
+3. **Allocate floor + 1.** If the registry sits outside `docs/adr/`, or definitions appear in more than one location, **ask**: continue numbering in place, or start `docs/adr/` above the high-water mark. **Never silently allocate `0001` when any registry exists** — a duplicate ADR number means two documents claim the same decision ID, and the `architect` starts blind to every prior decision it might contradict.
+4. Write the ADR to the confirmed location, in that registry's format. Create `docs/adr/` only when discovery found nothing anywhere.
+5. Update the spec's front-matter `related_adrs` to include the new number.
 
-If `docs/adr/` doesn't exist, create it.
+A fixed list of known locations would only ever find the layouts its author thought of. The first brownfield target kept twelve ADRs as headings inside a **single decisions log** rather than a directory of files, under a docs subdirectory no such list would have contained.
 
 ### Phase F — Branch
 

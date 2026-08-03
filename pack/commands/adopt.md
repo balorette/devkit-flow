@@ -106,9 +106,21 @@ Propose writing the Phase A block into that resolved section (replacing the `{{L
 
 Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
 
-### Phase E — Contested decisions → ADRs (opt-in, sparse)
+### Phase E — Discover the ADR registry, then contested decisions (opt-in, sparse)
 
-Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C), not in reconstructed ADRs — manufacturing retroactive ADRs wholesale is the bloat this command avoids (Decision 1).
+**Discovery first, and it is not authoring.** Before anything else in this phase, find out whether the project already keeps decision records, and where:
+
+- **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
+- **Match:** `ADR[-_ ]?0*\d+`, case-insensitive.
+- **Rank definitions above mentions** — a heading (`## ADR-012: …`) or a filename (`0012-*.md`) is a definition; inline prose citing `ADR-007` is a mention. Report which kind the high-water mark came from.
+
+Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* `/feature-start` reads that instead of re-scanning every feature.
+
+Registries turn up in shapes a fixed list would miss — the first brownfield target kept `ADR-001 … ADR-012` as headings inside a **single decisions log**, not a directory of files. Without this step `/feature-start` would have found no `docs/adr/`, started at `0001`, and created a second document claiming `ADR-001`.
+
+**Discovery records; it does not write ADRs.** The default below is unchanged.
+
+Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C), not in reconstructed ADRs — manufacturing retroactive ADRs wholesale is the bloat this command avoids.
 
 Write an ADR **only** when, during the run, the user flags an existing decision as both *load-bearing* and *plausibly reversible* (a future feature might want to revisit it). For each such case:
 
