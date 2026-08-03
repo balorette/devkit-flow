@@ -120,6 +120,8 @@ The reviewer returns findings at two severities:
 
 Surface the full findings document either way, including a clean result. A conformance review that found nothing is information about the plan, not an empty formality.
 
+**Record every advisory the user leaves outstanding as a `CONF` row in the findings ledger** (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). Advisories do not block approval, which is exactly why they evaporate — the `/plan` conversation ends and the finding goes with it. The ledger defines `CONF` for this producer specifically so a deliberate deferral is still readable by the next `/feature-start`.
+
 You wrote this plan. That is exactly why you are not the one checking it — the fresh-context reviewer has not spent the last hour making these choices sound reasonable.
 
 ### Phase G — Commit and hand off

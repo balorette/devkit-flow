@@ -45,11 +45,16 @@ Field meanings:
   Next step       short pointer to the next plan step when phase = building
 
 The Open questions section captures things deferred mid-feature that need
-the user's input. /checkpoint reads and helps resolve these. During
-Phase: in-review it is also the ledger for review findings that were
-accepted but not yet fixed — /pr-review appends them and clears them when
-the fix lands. Already-answered review threads are NOT tracked here; the
-forge itself is that ledger (a thread the pack has replied in is handled).
+the user's input. /checkpoint reads and helps resolve these.
+
+During Phase: in-review it holds review findings accepted for THIS
+feature and not yet fixed. It is cleared at /feature-merge, so anything
+deferred PAST this feature must go to the findings ledger instead --
+/pr-review routes cross-feature deferrals there as REV rows. Parking a
+durable finding here discards it at merge.
+
+Already-answered review threads are NOT tracked here; the forge itself is
+that ledger (a reply carrying the pack's marker means handled).
 
 The Parked features section tracks features whose branch exists but whose
 active state has been cleared so a different feature can run. The
