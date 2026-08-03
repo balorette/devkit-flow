@@ -52,7 +52,13 @@ The three gates run in fixed order: tests → docs → security. Each gate's fai
 
 ### Gate 1 — Tests pass
 
-Load the `engineer` skill. Identify the test runner from the plan's "Approach" section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`). Run the full test suite (not just the feature's tests — regressions matter at merge time).
+Load the `engineer` skill.
+
+**Run the project's own gate set if it has one.** If `CLAUDE.md` conventions record a **Blocking gates** list (written by `/adopt`), run exactly that, in order. Only when no such list exists do you infer the runner from the plan's "Approach" section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`) — and when you infer, **say that you are inferring**.
+
+The distinction is not cosmetic. Any project with a CI config has already defined what "tests pass" means, and that definition routinely includes gates a plain test run cannot see — coverage deltas, diff-coverage thresholds, migration checks, lint profiles that differ from the local one. The first brownfield target had four blocking gates where the pack checked three; the fourth was a coverage-delta check. Gate 1 would have passed and opened a PR that CI failed on the first push, which is worse than no gate: it spends a reviewer's attention to discover something the pack could have.
+
+Run the full suite, not just the feature's tests — regressions matter at merge time.
 
 - **Suite green:** proceed to Gate 2.
 - **Suite red:** halt. Surface the failing tests' names and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red suite invalidates downstream assumptions.
