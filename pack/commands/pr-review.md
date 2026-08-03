@@ -70,8 +70,12 @@ Strict order. Each stage completes before the next begins.
 1. **Code fixes**, one at a time, each under the `engineer` skill's Verify discipline: tests green, lint and type-check clean, its own commit. Subject `review: <short summary>`. Stage explicitly; never `git add -A`. A review fix that cannot be brought green is not a fix — halt and surface it.
 2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. Through the `documenter` skill, propose-before-write as always.
 3. **`.claude/state.md`** — append accepted-but-unfixed items to `## Open questions`; remove entries whose fix just landed.
-4. **Replies**, last — so a reply that says "fixed in `<sha>`" is true at the moment it posts.
-5. **Push.**
+4. **Push — and verify the remote tip actually contains the fix commits** (`gh pr view --json headRefOid`, compared against your local `HEAD`).
+5. **Replies**, only after that verification passes.
+
+**Push before replying.** A reply citing a SHA is a public, unrecallable claim about the remote — and until the push succeeds that SHA does not exist there. If the push then fails (auth, network, a rejected non-fast-forward because someone else pushed), the PR is left carrying citations to code it does not contain, in comments addressed to the reviewers who will go looking.
+
+An earlier version of this command had replies last, reasoning that *"a reply saying 'fixed in `<sha>`' is true when it posts."* That reads as correct and is exactly backwards: the SHA is true **locally**, and the reply is a statement about the remote. Verifying the tip — rather than assuming a successful `git push` implies it — closes the remaining gap where the push reports success against a stale remote ref.
 
 ### Phase E — Hand off
 
@@ -96,6 +100,7 @@ Stop and surface to the user (do not auto-recover) if:
 - A failing CI check is reported on the PR. Surface it and stop — CI diagnosis is out of scope for this command.
 - The user declines the proposed batch without providing a revision.
 - A reply fails to post (`gh` error, thread locked, PR closed mid-run). Report which replies landed and which did not; never retry blindly into a PR whose state you no longer know.
+- **The push fails, or the remote tip does not contain the fix commits after it.** Report which commits are local-only, **post nothing**, and stop. Fixes that exist only on your machine plus replies announcing them is the worst state this command can leave a PR in — the reviewer sees claims they cannot verify and code that has not changed.
 
 ## Common rationalizations
 
