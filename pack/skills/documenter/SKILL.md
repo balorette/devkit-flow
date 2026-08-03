@@ -189,7 +189,7 @@ For ADRs: do **not** edit accepted ADRs. If an ADR needs revisiting, write a new
 
 ## Section-depth preservation
 
-The pm skill establishes typical-depth section checklists for specs and plans (see `docs/authoring-notes/spec-and-plan-depth.md` and the pm skill's "Default to typical depth" section). Amendments must not degrade those checklists:
+The pm skill establishes typical-depth section checklists for specs and plans (see `.claude/references/spec-and-plan-depth.md` and the pm skill's "Default to typical depth" section). Amendments must not degrade those checklists:
 
 - Adding requirements to a spec: extend Functional requirements, Error handling, Acceptance criteria. Don't add a requirement that has no acceptance criterion.
 - Adding a step to a plan: include all required-entry items (Files, type signatures, test list, conventions applied, why-this-order, SOLID notes). Don't add a step with just a title and a test list.
