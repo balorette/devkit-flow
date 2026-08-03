@@ -110,7 +110,7 @@ Surface all proposed doc writes to the user before applying. The documenter skil
 
 Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
 
-Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, and `.claude/state.md`. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
 Skip this and the failure is quiet in both flows. In PR flow the body assembles correctly from a summary that **is not in the branch**, so reviewers get a description of a file the PR does not contain. In local-merge flow the merge succeeds and leaves the summary sitting untracked in the working directory, belonging to a feature that no longer has an active state.
 
@@ -159,7 +159,11 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
 
-On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the SHA that just passed gates 1–3>`**. **Do not clear state** — the feature is still active until the PR merges. Report the PR URL and point at `/pr-review`.
+On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the SHA that just passed gates 1–3>`**. **Do not clear state** — the feature is still active until the PR merges.
+
+**Then commit and push that transition.** Subject: `/feature-merge: in-review (PR #<n>)`, staging `.claude/state.md` only. It is written *after* the closeout commit and after the push, so without this step the tracked file is left dirty and the remote branch still says `Phase: building` with no PR and no baseline. Review is explicitly asynchronous — another session, clone, or worktree resuming the feature would read `building`, take the PR-creation path a second time, and open a duplicate PR. A later closeout in the original worktree can also fail outright, because checking out mainline over a dirty tracked `state.md` is exactly what its own preconditions forbid.
+
+Report the PR URL and point at `/pr-review`.
 
 Update `Gated baseline` again after **every** successful gate rerun, to the SHA those gates ran against. A stale baseline is worse than none: it makes ungated commits look gated.
 
@@ -171,7 +175,7 @@ In PR flow this section runs on a **later invocation** — the one that found `P
 
 Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
 
-1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/Next step `—`. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
+1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).

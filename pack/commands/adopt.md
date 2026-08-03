@@ -42,7 +42,7 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Branch naming, commit conventions, anything else load-bearing.
 - **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
 
-**Blocking gates.** Read `.github/workflows/*.yml` (and `.gitlab-ci.yml`, plus `Makefile` targets named `ci` / `check` / `verify` if present) and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
+**Blocking gates.** Read `.github/workflows/*.yml` **and `*.yaml`** (GitHub Actions accepts both, and a project using `.yaml` would otherwise look like it has no CI at all), plus `.gitlab-ci.yml` / `.gitlab-ci.yaml` and `Makefile` targets named `ci` / `check` / `verify` if present and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
 
 This is what `/feature-merge` Gate 1 runs. Without it the pack asserts its own definition of "tests pass" — and a project with a CI config has already defined it. The first brownfield target had four blocking gates where devkit checks three; the fourth was a coverage-delta check, which is invisible to a plain test run. Gate 1 would have passed and opened a PR that CI failed on the first push.
 
