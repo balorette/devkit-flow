@@ -74,6 +74,16 @@ Two rules apply everywhere:
 
 A clean feature history reads as one line per logical moment — bisectable, revertable per step. A feature that landed in one mega-commit ignored the cadence; the next feature is a chance to course-correct.
 
+## `.claude/` is pack-owned
+
+Everything under `.claude/` is vendored from the devkit pack and versioned by it, not by this repository's conventions.
+
+Your linters, reviewers, and CI will see those files and may file findings against them under your project's rules. The drift hook's `print(..., file=sys.stderr)` is the common one — that stderr line **is** the hook's channel back to the model, so routing it through a logging framework would break it, and the hook is deliberately stdlib-only. Expect findings of this shape on every install.
+
+Treat them as pack issues rather than project issues, and report them upstream instead of editing in place. A local edit is what the installer's customization detection will `SKIP` on your next update — you keep your change and stop receiving improvements to that file, silently.
+
+The exceptions are the files the pack **seeds** rather than owns: `.claude/state.md` and your `CLAUDE.md` are yours to edit freely. The installer never rewrites them; changes to their shape arrive as entries in `.claude/MIGRATIONS.md`.
+
 ## Automated guards
 
 - **`doc-drift-detector` hook** (`PostToolUse`) — fires after every `Edit`, `Write`, `NotebookEdit`, or `MultiEdit` tool call. Reads the active feature's spec front-matter `owned_files` globs from `.claude/state.md`; if the edited file path matches no glob, surfaces a warning so the model can address it. Does not block; warning is informational. Resolution: amend the spec's scope via `/checkpoint <description>` if the edit belongs in the feature, or move the change to a different feature.
