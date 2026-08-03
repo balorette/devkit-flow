@@ -25,7 +25,7 @@ If a question can be answered from those four docs, answer it from those four do
 
 **Hook (1):** `doc-drift-detector` — `PostToolUse` warning system for edits outside active spec scope.
 
-**Memory layout:** `docs/` for durable human-first artifacts (specs, plans, ADRs, domains, summaries) + `.claude/state.md` as the machine-first working pointer.
+**Memory layout:** `docs/` for durable human-first artifacts (specs, plans, ADRs, domains, summaries, findings) + `.claude/state.md` as the machine-first working pointer.
 
 ## Status
 
@@ -33,11 +33,13 @@ History lives in git + `docs/validation/`. This section describes the pack as it
 
 ### Shipped
 
-- **Subagents:** `architect`, `tester`, `security-reviewer`
+- **Subagents:** `architect`, `tester`, `security-reviewer`, `conformance-reviewer`
 - **Skills:** `engineer`, `documenter`, `pm`, `grill-me`
-- **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review`
-- **References:** `pack/references/` — `solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`
+- **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review` (+ housekeeping: `/adopt`, `/claude-md-merge`)
+- **References:** `pack/references/` — `solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`, `spec-and-plan-depth.md`, `claude-md-elements.md`
+- **Migrations:** `pack/MIGRATIONS.md` — structural changes to the *seeded* files (`state.md`, `CLAUDE.md`), which the installer never rewrites
 - **Hook:** `doc-drift-detector` (`PostToolUse`; warns on edits outside the active spec's `owned_files`)
+- **Tests:** `tests/test_doc_drift_detector.py` (drift-hook behaviour) and `tests/test_pack_references_resolve.py` (no installed pack file may cite a path that won't resolve in a target — an enforced invariant, not a convention). Stdlib `unittest`, no pytest (the pack installs into arbitrary projects and can't assume a runner). Run with `python3 -m unittest discover -s tests`. Everything else in this repo is markdown, verified by behavioral prediction + fresh-session run per working principle 4.
 - **Templates:** `pack/CLAUDE.md.template` (slim — defers orientation to a separate installed file), `pack/state.md.template`
 - **Pack orientation:** `pack/devkit-orientation.md` (memory layout, workflow commands, commit cadence, automated guards)
 - **Installer:** `install.sh` + `install_lib.py`. Idempotent. Manifest-based update path with customization detection, default-skip on user-modified files, `--force` overwrite with backup to `.devkit-bak/`, template-change advisories, `--dry-run`. Flags: `--project-name`, `--description`, `--mainline`, `--force`, `--dry-run`.
@@ -61,6 +63,9 @@ Target: `chungar` (Google ADK + LiteLLM personal-assistant agent at `/Users/brya
 ### Outstanding
 
 **Not yet dogfood-validated:**
+
+- **Slice 9 — Astraeus findings (2026-08-03).** All twelve findings from the first brownfield install, in three phases: brownfield portability ([ADR-0005](docs/design/0005-brownfield-portability.md)), the six slice-8 defect fixes ([ADR-0003 § Corrections](docs/design/0003-pr-lifecycle-and-findings-triage.md)), and the findings ledger + `conformance-reviewer` ([ADR-0006](docs/design/0006-findings-ledger-and-plan-conformance.md)), plus a hand-written `MIGRATIONS.md` as the interim for [ADR-0007](docs/design/0007-artifact-dispositions.md). **Four behavioural predictions are recorded and unrun** in `docs/validation/slice-9.md`. Needs the full end-to-end dogfood on the brownfield target — install, `/adopt`, then one feature through to PR closeout.
+- **Slice 10 — artifact dispositions.** Designed in ADR-0007, unplanned. Generalises what slice 9's task 21 did by hand: owned/seeded/discovered as declared dispositions, a `/devkit-reconcile` command, and a disposition-aware manifest. Until it lands, every seeded-file change must be hand-written into `MIGRATIONS.md` or it silently ships to nobody — the same defect, relocated.
 
 - **PR lifecycle + findings triage (slice 8)** — authored 2026-07-30; design in `docs/design/0003-pr-lifecycle-and-findings-triage.md`, plan in `docs/plans/slice-8-pr-lifecycle.md`, authoring record in `docs/validation/slice-8.md`. Net changes: new `pack/references/findings-triage.md` (the consumer-side discipline for evaluating any finding, internal or external) and `pack/commands/pr-review.md` (intake/triage/response across all three GitHub comment surfaces, re-runnable, nothing posts unseen); `/feature-merge` gains flow detection, a Phase-branch table making it re-runnable, the `gh pr create` path, and phase-aware async closeout; `state.md` gains `Phase: in-review` and a `PR:` field; documenter gains *Review notes* + *The summary as PR body*; engineer cites findings-triage for tester/architect output. No installer change needed (`TRACKED_DIRS` already covers `commands/` and `references/`). **Four behavioral predictions are recorded and unrun** — T6b (nothing posts to a PR before user confirmation) blocks the slice rather than merely revising it. Needs a GitHub-remote project with real reviewers.
 - **Slice 9 — scoped but not authored.** The `debugger` skill (the pack has no debugging discipline at all; `/build`'s halt conditions hand off to a process that doesn't exist) and a `reviewer` subagent as a pre-PR gate 4 covering the cross-step lens no current component owns. Both were scoped during the 0003 discussion and deliberately deferred; rationale in that ADR's *Context* and *Consequences*.
@@ -141,6 +146,8 @@ These are non-negotiable for the *authoring work*, not just the eventual pack:
 │   └── hooks/
 │       ├── doc-drift-detector.py
 │       └── settings.json.fragment
+├── tests/                          (stdlib unittest; covers the drift hook — the only executable code)
+│   └── test_doc_drift_detector.py
 └── examples/                       (fabricated example projects used for dogfood)
 ```
 

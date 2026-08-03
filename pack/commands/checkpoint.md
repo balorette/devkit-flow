@@ -34,7 +34,7 @@ Read, in this order:
 - The active spec (path from state.md).
 - The active plan if it exists.
 - Any ADRs named in spec/plan front-matter `related_adrs`.
-- The feature branch's commit log since divergence from mainline (`git log mainline..HEAD --oneline`) and the diff (`git diff mainline..HEAD --stat`) to ground the reconciliation in actual code changes. Skip if the working tree is clean and the branch is at the mainline tip (rare in practice).
+- The feature branch's commit log since divergence from mainline (`git log mainline..HEAD --oneline`) and the diff (`git diff mainline...HEAD --stat` — three dots, against the merge base) to ground the reconciliation in actual code changes. Skip if the working tree is clean and the branch is at the mainline tip (rare in practice).
 
 If the active feature's spec or plan can't be read, surface that and stop — checkpoint can't propose amendments against missing docs.
 

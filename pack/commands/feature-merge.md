@@ -20,9 +20,11 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 |---|---|
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
-| `in-review`, PR open, no new commits since PR-open | Report review status and open-thread count. Point at `/pr-review`. Run no gates. |
-| `in-review`, PR open, new commits since PR-open | Re-run gates 1–3 — review fixes are code changes and need re-validation — then push. Do **not** re-create the PR. |
+| `in-review`, PR open, **PR tip == `Gated baseline`** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this exact commit already passed them. |
+| `in-review`, PR open, **PR tip != `Gated baseline`** | Re-run gates 1–3 — the PR contains commits that have never been gated — then push and update `Gated baseline`. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
+
+**The discriminator is `Gated baseline` versus the PR tip — never local tip versus remote tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on tip equality would take the *nothing changed* path and skip tests, docs reconciliation, and security review on precisely the code that is about to merge. Read the PR tip with `gh pr view --json headRefOid`.
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
@@ -50,12 +52,18 @@ The three gates run in fixed order: tests → docs → security. Each gate's fai
 
 ### Gate 1 — Tests pass
 
-Load the `engineer` skill. Identify the test runner from the plan's "Approach" section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`). Run the full test suite (not just the feature's tests — regressions matter at merge time).
+Load the `engineer` skill.
 
-- **Suite green:** proceed to Gate 2.
-- **Suite red:** halt. Surface the failing tests' names and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red suite invalidates downstream assumptions.
+**Run the project's own gate set if it has one.** If `CLAUDE.md` conventions record a **Blocking gates** list (written by `/adopt`), run exactly that, in order. Only when no such list exists do you infer the runner from the plan's "Approach" section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`) — and when you infer, **say that you are inferring**.
 
-Also run linter / type-checker if the project has them configured. Their failures are merge-blocking at the same severity as red tests; same halt behavior.
+The distinction is not cosmetic. Any project with a CI config has already defined what "tests pass" means, and that definition routinely includes gates a plain test run cannot see — coverage deltas, diff-coverage thresholds, migration checks, lint profiles that differ from the local one. The first brownfield target had four blocking gates where the pack checked three; the fourth was a coverage-delta check. Gate 1 would have passed and opened a PR that CI failed on the first push, which is worse than no gate: it spends a reviewer's attention to discover something the pack could have.
+
+**When a recorded gate list exists, it is the whole of Gate 1.** Run exactly those commands and nothing extra — the list already contains whatever lint and type-checking the project blocks on, and adding your own risks running a *different* lint profile than CI does, or running the same step twice.
+
+**When inferring** (no recorded list), run the full suite — not just the feature's tests, since regressions matter at merge time — plus the linter and type-checker if the project has them configured.
+
+- **Green:** proceed to Gate 2.
+- **Red:** halt. Surface what failed and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red result invalidates downstream assumptions. Lint and type-check failures block at the same severity as failing tests.
 
 ### Gate 2 — Docs reconciliation
 
@@ -63,6 +71,7 @@ Load the `documenter` skill. Run a final-pass version of Pattern D (see the docu
 
 - **Pattern D checks:** `owned_files` coherence (any commits touching files outside scope?); state.md coherence (Spec/Plan paths exist; Phase makes sense for a feature about to merge); spec/plan front-matter coherence.
 - **Acceptance-criteria coverage:** read the spec's "Acceptance criteria" section. For each criterion, identify which plan step (or completed work) satisfies it. Any criterion not mapped to completed work is a coverage gap. The plan's "Acceptance mapping" table (per the pm skill's plan-time guidance) is the primary source; the documenter cross-references against the plan's Completed steps in state.md.
+- **Acceptance-criteria conformance:** for each criterion, does any completed work *contradict* it? Ask this separately and explicitly — coverage and conformance are different questions, and the coverage check is structurally blind to the difference. A step can satisfy the mapping while violating the criterion it maps to: a schema field that reopens a path the spec says must be blocked is *covered* and *wrong*. `/plan`'s `conformance-reviewer` catches this class before the build; this is the same question asked of the code that actually got written, which may have drifted from the plan.
 
 If all checks pass: proceed to Gate 3.
 
@@ -77,14 +86,14 @@ The user picks. Don't proceed past Gate 2 with a coverage gap silently.
 ### Gate 3 — Security review
 
 Invoke the `security-reviewer` subagent in fresh context. Pass:
-- The diff command (`git diff <mainline>..HEAD`) for the subagent to run itself.
+- The diff command (`git diff <mainline>...HEAD` — **three dots**) for the subagent to run itself. The three-dot form diffs against the merge base, which is what "what this feature changed" means. With two dots, every commit that landed on mainline after this branch diverged renders as a *removal* in the feature's diff — so the `security-reviewer` can report, or block on, changes this feature never made. The longer the branch lives, the worse it gets.
 - Path to the active spec.
 - Paths to related ADRs from the spec/plan front-matter.
 - Path to the active plan (intent context only; not authoritative for security).
 
 The subagent returns a structured findings document with severity-bucketed entries (critical / high / medium / low / informational).
 
-- **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block.
+- **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
 - **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Re-run Gate 3 (or the full sequence from Gate 1, since fixes touch code) after resolution.
 
 ### After all three gates pass — Summary and supersede
@@ -96,6 +105,16 @@ Load the `documenter` skill again. Run the "Summary authoring" pattern (see the 
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
 Surface all proposed doc writes to the user before applying. The documenter skill's cardinal "propose before writing" discipline holds at merge time too.
+
+### Commit the closeout docs — before proposing any integration
+
+Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
+
+Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+
+Skip this and the failure is quiet in both flows. In PR flow the body assembles correctly from a summary that **is not in the branch**, so reviewers get a description of a file the PR does not contain. In local-merge flow the merge succeeds and leaves the summary sitting untracked in the working directory, belonging to a feature that no longer has an active state.
+
+Only after this commit lands do you proceed to *Merge proposal* or *PR creation*.
 
 ### Flow detection
 
@@ -140,15 +159,23 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
 
-On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review` and `PR: <url>`. **Do not clear state** — the feature is still active until the PR merges. Report the PR URL and point at `/pr-review`.
+On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the SHA that just passed gates 1–3>`**. **Do not clear state** — the feature is still active until the PR merges.
+
+**Then commit and push that transition.** Subject: `/feature-merge: in-review (PR #<n>)`, staging `.claude/state.md` only. It is written *after* the closeout commit and after the push, so without this step the tracked file is left dirty and the remote branch still says `Phase: building` with no PR and no baseline. Review is explicitly asynchronous — another session, clone, or worktree resuming the feature would read `building`, take the PR-creation path a second time, and open a duplicate PR. A later closeout in the original worktree can also fail outright, because checking out mainline over a dirty tracked `state.md` is exactly what its own preconditions forbid.
+
+Report the PR URL and point at `/pr-review`.
+
+Update `Gated baseline` again after **every** successful gate rerun, to the SHA those gates ran against. A stale baseline is worse than none: it makes ungated commits look gated.
 
 ### After the merge
 
 In PR flow this section runs on a **later invocation** — the one that found `Phase: in-review` with a merged PR. The merge may have been performed by someone else, days ago, in a session that no longer exists. Everything below applies unchanged; only the trigger differs.
 
+**Check out mainline before writing anything.** PR creation never leaves the feature branch, so a closeout invocation is normally still on `feature/<slug>`. Writing the idle transition there strands it on a branch that is about to be deleted, while mainline keeps the feature's stale `building` state — and the next `/feature-start` orients against that. Order: `git checkout <mainline>`, `git pull` (the merge happened remotely), write the state transition, **commit it**, then propose any push.
+
 Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
 
-1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/Next step `—`. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
+1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).

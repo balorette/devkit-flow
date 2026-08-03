@@ -186,3 +186,48 @@ Honest list:
 - **Steps 3–7 of the chungar plan are unbuilt.** Not slice-5's concern.
 
 These should be exercised in slice 6 or a future session as natural cases surface.
+
+---
+
+## Post-validation defects (2026-08-03)
+
+Two defects were found in `doc-drift-detector.py` **after** this report marked the hook validated. Both were reported by the user reading the source, then reproduced before being accepted.
+
+### Defect 1 — edited paths were anchored to the hook process's cwd, not the payload's
+
+`main()` built `project_root` from the payload's `cwd` field but then resolved the edited path with a bare `Path(edited_path).resolve()`, which anchors a *relative* path to whatever directory the harness launched the hook process in. When the two differed, one of two things happened, both silent:
+
+| Hook cwd | Relative out-of-scope edit | Old behaviour |
+|---|---|---|
+| Outside the project | `other/out_of_scope.py` | `relative_to` raised `ValueError` → caught → `return 0`, **no warning** |
+| A project *subdirectory* (`src/`) | `other/out_of_scope.py` | Resolved to `src/other/out_of_scope.py` → **matched `src/**`** → judged in scope |
+
+The second is the worse one: no exception, an affirmative match against the wrong glob. **Fail-open** — a drift detector that silently reports nothing is indistinguishable from one that is working.
+
+**Exposure was conditional, severity was not.** Claude Code's Edit/Write schemas require an absolute `file_path`, and hooks normally run with cwd at the project root, so both assumptions masked the defect in practice. It would go live on a worktree, a monorepo, an `--add-dir` session, or a harness change.
+
+**Fix:** anchor a non-absolute path to `project_root` before resolving.
+
+### Defect 2 — valid-but-non-object JSON crashed the hook
+
+A payload of `[]` is valid JSON, so it passed the `JSONDecodeError` guard and then raised `AttributeError` on `payload.get(...)` — traceback, **exit 1**. That directly violates the hook's own stated design constraint: *"Survives malformed inputs gracefully; never crashes the harness."*
+
+Found by the new test suite on its first run, not by inspection.
+
+**Fix:** `if not isinstance(payload, dict): return 0`.
+
+### What this says about Finding 1
+
+Finding 1 above reads *"Hook behavior is correct across all five scenarios."* That statement was true for the scenarios tested — and the scenario space was under-sampled. The dogfood varied **which path** was edited (in scope, out of scope, excluded prefix) but never varied **path form** (absolute vs relative) or **hook cwd**. Neither dimension appeared in the test matrix, so neither could fail.
+
+The general lesson is about the shape of the matrix rather than this hook: enumerating cases along the dimension you were thinking about produces confident coverage of one axis and none of the others.
+
+### Remediation
+
+`tests/test_doc_drift_detector.py` — the repo's first automated tests. Stdlib `unittest` only (no pytest), matching the hook's own no-dependency posture, since the pack installs into arbitrary projects. Tests drive the hook as a **subprocess** — stdin JSON in, stderr out, exit code asserted — because that is the real contract with the harness; testing internals would not have caught either defect.
+
+14 cases covering path anchoring (6), plus guards for behaviour that already worked (exclusions, non-edit tools, no active feature, missing spec, parenthetical `Spec:` annotations, out-of-project paths, malformed JSON, glob forms). Verified red-green: **3 failures against the unfixed hook, 14/14 after.**
+
+```
+python3 -m unittest discover -s tests
+```

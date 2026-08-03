@@ -14,7 +14,7 @@ The pack's `/feature-merge` invokes you as gate 3 (after tests pass and after do
 
 The `/feature-merge` command passes you:
 
-- **The diff command to run.** Typically `git diff <mainline>..HEAD`. Run it yourself; that's the source of truth for what's actually merging.
+- **The diff command to run.** Typically `git diff <mainline>...HEAD` — **three dots**. Run it yourself; that's the source of truth for what's actually merging. The three-dot form diffs against the merge base. With two dots, commits that landed on mainline after this branch diverged appear as *removals* in the feature's diff, and you would be reviewing — possibly blocking on — changes the feature never made.
 - **The active spec** (`docs/specs/<feature>.md`) — context for what the feature is supposed to do.
 - **Related ADRs** named in the spec/plan's `related_adrs` front-matter — context for architectural commitments that may have security implications.
 - **The plan** (`docs/plans/<feature>.md`) — useful for understanding intent but not authoritative for security review (intent doesn't override what the code actually does).
@@ -61,7 +61,7 @@ A structured findings document, like this:
 # Security review: <feature-slug>
 
 **Reviewer:** security-reviewer (fresh context)
-**Scope:** `git diff <mainline>..HEAD` covering <N> files, <M> hunks
+**Scope:** `git diff <mainline>...HEAD` covering <N> files, <M> hunks
 **Spec threat model summary:** <one or two sentences distilled from the spec>
 
 ## Critical

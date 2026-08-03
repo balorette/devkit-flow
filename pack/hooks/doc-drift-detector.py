@@ -55,6 +55,13 @@ def main() -> int:
         # Never crash on malformed input — the harness's contract isn't ours to police.
         return 0
 
+    # Valid JSON is not necessarily a JSON *object*. A bare list or scalar would
+    # sail past the decode guard and then blow up on `.get`, which would violate
+    # this hook's "never crashes the harness" constraint via a traceback and a
+    # non-zero exit.
+    if not isinstance(payload, dict):
+        return 0
+
     tool_name = payload.get("tool_name", "")
     if tool_name not in EDIT_TOOLS:
         return 0
@@ -68,8 +75,20 @@ def main() -> int:
     project_root = Path(cwd_str).resolve()
 
     # Make path project-relative; bail if it lives outside the project.
+    #
+    # A relative tool path is relative to the *project* (payload `cwd`), not to
+    # whatever directory the harness happened to launch this hook process in.
+    # Anchoring it explicitly matters because the two can differ (worktrees,
+    # monorepos, `--add-dir`), and every failure here is silent: an unanchored
+    # relative path either raises `ValueError` (caught below → no warning) or,
+    # worse, resolves under a *different* subtree and matches the wrong glob —
+    # reporting "in scope" for a file that isn't. A drift detector that fails
+    # open is indistinguishable from one that's working.
+    edited = Path(edited_path)
+    if not edited.is_absolute():
+        edited = project_root / edited
     try:
-        rel_path = Path(edited_path).resolve().relative_to(project_root)
+        rel_path = edited.resolve().relative_to(project_root)
     except (ValueError, OSError):
         return 0
 

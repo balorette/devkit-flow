@@ -11,12 +11,16 @@ docs/
   adr/NNNN-<name>.md       architecture decisions (immutable once accepted)
   domains/<domain>.md      living domain model
   summaries/<feature>.md   feature retrospectives (written at merge)
+  findings.md              findings that outlive their feature (or your existing
+                           review system — the location is discovered, not assumed)
 .claude/
-  state.md                 active branch / feature / phase / pointers
+  state.md                 active branch / feature / phase / pointers  (seeded: yours)
   devkit-orientation.md    this file (pack-owned)
+  MIGRATIONS.md            how to hand-apply changes to the seeded files
   skills/, agents/,        the devkit pack itself
   commands/, hooks/
-  references/              checklists loaded on demand (SOLID, Clean Arch, security categories)
+  references/              checklists loaded on demand (SOLID, Clean Arch, security
+                           categories, findings triage, spec/plan depth, CLAUDE.md elements)
 CLAUDE.md                  project index + project-specific conventions
 ```
 
@@ -32,7 +36,7 @@ Available now:
 
 - **`/feature-start "<short description>"`** — begin a feature. PM skill brainstorms with you (visible, interactive); proposes a domain decomposition; invokes the architect subagent for genuinely architectural questions; drafts a typical-depth spec at `docs/specs/<slug>.md`; creates `feature/<slug>` branch; updates state.md to `Phase: spec-draft`. You review and approve the spec by flipping its front-matter `status` from `draft` to `approved`.
 
-- **`/plan`** — convert the approved spec into an implementation plan. PM and engineer skills together produce a research-grounded plan with conventions, per-step type signatures for the tester, and acceptance-criteria mapping. Architect may be invoked when research surfaces a first-of-kind cross-cutting decision. Writes `docs/plans/<slug>.md` with `status: draft`; updates state.md to `Phase: plan-draft`. You review and approve by flipping the plan's front-matter `status` to `approved`.
+- **`/plan`** — convert the approved spec into an implementation plan. PM and engineer skills together produce a research-grounded plan with conventions, per-step type signatures for the tester, and acceptance-criteria mapping. Architect may be invoked when research surfaces a first-of-kind cross-cutting decision. Before handing off, the `conformance-reviewer` subagent checks in fresh context whether the plan *contradicts* the spec — a different question from whether every criterion is covered; blocking findings are resolved before approval. Writes `docs/plans/<slug>.md` with `status: draft`; updates state.md to `Phase: plan-draft`. You review and approve by flipping the plan's front-matter `status` to `approved`.
 
 - **`/build`** — execute the approved plan under TDD. Reads `.claude/state.md` for the active feature and plan. Loops per plan step: tester subagent writes failing tests in fresh context → engineer writes implementation to green → SOLID + Clean Architecture checks → state.md updated. One `/build` invocation completes one step and pauses.
 
@@ -73,6 +77,16 @@ Two rules apply everywhere:
 - **Propose, never silent.** Every commit moment above is a proposal you can decline. Declining is a legitimate signal (review further, batch, or amend the plan via `/checkpoint`). What the pack never does is commit silently or skip the proposal entirely.
 
 A clean feature history reads as one line per logical moment — bisectable, revertable per step. A feature that landed in one mega-commit ignored the cadence; the next feature is a chance to course-correct.
+
+## `.claude/` is pack-owned
+
+Everything under `.claude/` is vendored from the devkit pack and versioned by it, not by this repository's conventions.
+
+Your linters, reviewers, and CI will see those files and may file findings against them under your project's rules. The drift hook's `print(..., file=sys.stderr)` is the common one — that stderr line **is** the hook's channel back to the model, so routing it through a logging framework would break it, and the hook is deliberately stdlib-only. Expect findings of this shape on every install.
+
+Treat them as pack issues rather than project issues, and report them upstream instead of editing in place. A local edit is what the installer's customization detection will `SKIP` on your next update — you keep your change and stop receiving improvements to that file, silently.
+
+The exceptions are the files the pack **seeds** rather than owns: `.claude/state.md` and your `CLAUDE.md` are yours to edit freely. The installer never rewrites them; changes to their shape arrive as entries in `.claude/MIGRATIONS.md`.
 
 ## Automated guards
 

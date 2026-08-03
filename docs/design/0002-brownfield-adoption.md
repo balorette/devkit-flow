@@ -115,3 +115,19 @@ This is **slice 7**, added after the six-slice core (it can only be validated on
 **Dogfood task:** Run `/adopt` on a real second project (not chungar). Verify: Phase A conventions carry `file:line` evidence; the proposed domain map is genuinely useful and correctable; domain docs are terse and accurate; no ADRs written unless a decision is flagged; a subsequent `/feature-start` on that project orients against the produced docs and a `/plan` cites the captured conventions rather than re-deriving them. Re-run `/adopt` and confirm idempotence (proposes deltas, not duplicates).
 
 **Why slice 7 last:** Adoption only pays off if the lifecycle that consumes the base exists and is validated. Building it earlier would mean dogfooding a base with nothing to read it.
+
+---
+
+## Amendment (2026-08-03) — findings from the first real brownfield install
+
+`/adopt` was dogfooded on Astraeus, a mature FastAPI backend. Three high-severity defects hit **before any feature work began**, on a target this ADR describes as its ideal case. Full analysis in [`docs/validation/brownfield-install-astraeus.md`](../validation/brownfield-install-astraeus.md); the design response is [ADR-0005](0005-brownfield-portability.md).
+
+What this ADR got right and wrong:
+
+- **The premise held.** A mature project's durable memory does start empty, and bootstrapping it is the right shape of work.
+- **The premise was incomplete.** A mature project's memory is not empty — **it is full, and shaped differently.** This ADR planned for absence and met divergence. `/adopt` required a literal `## Project conventions` heading; the target had `## Conventions`, inside a region owned by a retired predecessor framework.
+- **Decision 1 stands, unchanged.** No retroactive ADRs are manufactured; as-built rationale still lives in the domain doc. But it left *discovery* unaddressed, and that gap was load-bearing: the target kept twelve ADRs in a single decisions log, so `/feature-start` would have allocated `0001` over an existing `ADR-001`. ADR-0005 separates the two — **discovery records where decisions live; it does not author them.** Phase E now discovers before it considers writing.
+- **Phase D's routing was a deadlock.** Requiring the canonical heading while `/claude-md-merge` treated equivalents as satisfied gave the loop no exit. Resolved by one shared definition (`references/claude-md-elements.md`) rather than by patching both sides to agree.
+- **Phase A under-surveyed.** Conventions were captured; the project's *blocking CI gates* were not, so `/feature-merge` Gate 1 asserted its own definition of "tests pass" against a project that had already defined one.
+
+The generalisation, now ADR-0005's governing principle: **read flexibly, write conservatively.** Adaptation buys tolerance on input, never licence on output.

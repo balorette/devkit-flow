@@ -38,6 +38,7 @@ The pack's memory layout has each document owning a different facet of project m
 | `docs/summaries/<feature>.md` | Feature retrospective (one per merged feature) | Authored at `/feature-merge`; amended only to add late-discovered context within a couple of days of merge | After "soon after merge" passes, the summary is history; further commentary belongs in the next feature's spec |
 | `docs/domains/<domain>.md` | Living domain model: vocabulary, bounded contexts, ubiquitous language | When a feature adds, renames, or shifts a domain concept | Adding implementation details (those belong in the spec/plan or in code comments) |
 | `.claude/state.md` | Working pointer: active feature/branch/phase/spec/plan, Open questions, Parked features | Continuously (Phase + Next step are routine); substantively when transitioning lifecycle (park, resume, etc.) | n/a — state.md is always live |
+| `docs/findings.md` *(or the project's existing review system — see below)* | Findings that outlive their feature: security, conformance, external review, architect recommendations without an ADR | A finding is recorded, or an existing one is resolved | Anything scoped to one feature — that belongs in the spec, plan, or summary |
 | `CLAUDE.md` | Project-specific conventions | Rarely. When a project convention shifts (test runner, style rules, branch naming, etc.) | Per-feature notes (those go in the spec/plan/summary); pack-owned memory-layout content (that lives in `.claude/devkit-orientation.md` and is pack-managed) |
 | `.claude/devkit-orientation.md` | Pack-owned memory layout, workflow commands, commit cadence, automated guards | Almost never — this file is pack-owned and overwritten by the devkit installer. Edit only if you're customizing the pack itself; otherwise change to pack templates flow back via update | Project-specific anything (that goes in CLAUDE.md) |
 
@@ -113,7 +114,7 @@ Sections:
 - **What shipped.** One or two paragraphs distilling the merged behavior. Concrete enough that a reader can predict what `read_note("known-id")` returns without opening the spec.
 - **What changed mid-feature.** Every `> **Amendment YYYY-MM-DD ...** ...` blockquote you find in the merged spec, plan, or both. Summarize each in one line with the date and the reason. This is the rolling change-log the spec/plan amendments produced. (Mechanical: grep the merged docs for `> **Amendment`; surface each as a bullet.)
 - **Architectural notes.** Any ADRs the feature produced or affected. Cite by number; one or two lines of why-this-mattered. If the architect was invoked but no ADR resulted (recommendation was "follow precedent"), note that too — the consultation is itself project history.
-- **Dependency / manifest changes.** If the feature's commits touched a build manifest (`pyproject.toml`, `package.json`, `Cargo.toml`, or a lockfile), name the dependencies added, changed, or removed and why. (Mechanical: `git diff <mainline>..HEAD -- pyproject.toml package.json Cargo.toml` and the project's lockfile.) Cross-reference the security-reviewer's dependency-hygiene findings rather than repeating them. If no manifest changed, omit the section — most features don't touch deps.
+- **Dependency / manifest changes.** If the feature's commits touched a build manifest (`pyproject.toml`, `package.json`, `Cargo.toml`, or a lockfile), name the dependencies added, changed, or removed and why. (Mechanical: `git diff <mainline>...HEAD -- pyproject.toml package.json Cargo.toml` and the project's lockfile — three dots, so an upstream dependency bump on mainline isn't reported as this feature removing it.) Cross-reference the security-reviewer's dependency-hygiene findings rather than repeating them. If no manifest changed, omit the section — most features don't touch deps.
 - **Security review notes.** The non-critical findings the security-reviewer surfaced (critical findings would have blocked the merge; medium/low/informational findings ship with the merge and are recorded here so they're not lost).
 - **Review notes.** In PR flow, what came out of review: findings accepted and fixed (one line each, with the `review:` commit sha), findings answered by citing the spec or an accepted ADR, and findings deferred to followups. Omit the section entirely for locally-merged features — most small features never have a review round. Unlike the rest of the summary, this section is amended by `/pr-review` as review proceeds rather than written once at merge.
 - **Followups.** Anything the spec listed as "Out" or "Risks / known trade-offs" that the merge defers to a future feature. Include "supersede" notes for any parked features the merging feature absorbed.
@@ -171,6 +172,34 @@ Do **not** include **Followups** or **Security review notes**. Followups invite 
 
 The summary stays live during review. When an accepted finding changes shipped behavior, `/pr-review` proposes the **What shipped** amendment as part of its batch. The propose-before-writing discipline holds during the review window; it is not suspended for it.
 
+## The findings ledger
+
+Findings outlive the feature that produced them. `security-reviewer`'s non-critical items, external review feedback accepted but deferred, `architect` recommendations that produced no ADR — all of these used to land in a summary doc nobody reopens, or in `state.md`'s `## Open questions`, which `/feature-merge` **clears**. The pack claims project-scope memory as a differentiator; findings are project-scope memory.
+
+### Its location is discovered, not assumed
+
+**Do not create a findings file on a project that already tracks findings.** Many mature projects have a review or issue system — a `docs/reviews/` tree, an issues directory, a tracker convention. `/adopt` discovers it and records the location; a second parallel ledger beside a working one is the exact duplication the pack's brownfield discipline exists to prevent.
+
+- **An existing system was found** → **ask**. Adopt its format, or keep devkit's alongside with an explicit note on which answers what. Never write into another team's issue schema by inferring their conventions from examples — you will get it subtly wrong in a file their team reads.
+- **Nothing exists** → create `docs/findings.md` in the shape below.
+
+### The shape
+
+One append-only table. A finding earns its own file only when a row cannot hold it.
+
+| ID | Category | Severity | Source | Status | Where |
+|----|----------|----------|--------|--------|-------|
+| SEC-001 | security | medium | security-reviewer · notes-write | open | `src/notes/repo.py:88` |
+| CONF-001 | conformance | advisory | conformance-reviewer · notes-write | closed | spec §5.7 vs plan step 4 |
+
+Categories map to producers: **`CONF`** (conformance-reviewer), **`SEC`** (security-reviewer), **`ARCH`** (an architect recommendation that produced no ADR), **`REV`** (external PR review).
+
+### Two rules
+
+**Rows are never closed automatically.** `/checkpoint` and `/feature-merge` *propose* closure; the user confirms. Same cardinal discipline as every other durable doc — and a finding auto-closed because its file changed is a finding nobody actually resolved.
+
+**A ledger nobody reads is worse than none.** `pm` reads it during `/feature-start`'s orient phase, so open findings in the area of new work surface as prior art. If that stops happening, this file is a graveyard that costs maintenance and returns nothing — delete it rather than maintain it.
+
 ## Status and lifecycle handling
 
 Specs and plans have `status:` front-matter that tracks lifecycle. Amendments must update status correctly:
@@ -189,7 +218,7 @@ For ADRs: do **not** edit accepted ADRs. If an ADR needs revisiting, write a new
 
 ## Section-depth preservation
 
-The pm skill establishes typical-depth section checklists for specs and plans (see `docs/authoring-notes/spec-and-plan-depth.md` and the pm skill's "Default to typical depth" section). Amendments must not degrade those checklists:
+The pm skill establishes typical-depth section checklists for specs and plans (see `.claude/references/spec-and-plan-depth.md` and the pm skill's "Default to typical depth" section). Amendments must not degrade those checklists:
 
 - Adding requirements to a spec: extend Functional requirements, Error handling, Acceptance criteria. Don't add a requirement that has no acceptance criterion.
 - Adding a step to a plan: include all required-entry items (Files, type signatures, test list, conventions applied, why-this-order, SOLID notes). Don't add a step with just a title and a test list.

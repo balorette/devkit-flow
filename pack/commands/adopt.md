@@ -6,7 +6,7 @@ Bring an existing project to "a solid base" — the durable memory the devkit li
 
 `/adopt` is **housekeeping**, not feature work. It is not gated on an active feature. Run it once after `install.sh` on a mature codebase, before your first `/feature-start`. Re-run it later to deepen coverage or document a new area.
 
-Why it exists: every orient phase in the pack assumes durable memory already exists — the `pm` skill reads `docs/domains/` to ground decomposition, `/plan` cites `CLAUDE.md` conventions, the `architect` checks `docs/adr/` for contradictions. On a project that grew the pack organically, that memory accretes feature by feature. On a project adopting the pack mid-life, it's empty. `/adopt` fills the spine so the first feature is as well-grounded as the tenth. Rationale: `docs/design/0002-brownfield-adoption.md`.
+Why it exists: every orient phase in the pack assumes durable memory already exists — the `pm` skill reads `docs/domains/` to ground decomposition, `/plan` cites `CLAUDE.md` conventions, the `architect` checks the project's ADRs for contradictions. On a project that grew the pack organically, that memory accretes feature by feature. On a project adopting the pack mid-life, it's empty. `/adopt` fills the spine so the first feature is as well-grounded as the tenth.
 
 ## Arguments
 
@@ -40,6 +40,17 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Error / result shape (exceptions vs `Result`-style; project-local helpers).
 - Logging / config access (singletons vs injection; env vs file; the project-wide config object).
 - Branch naming, commit conventions, anything else load-bearing.
+- **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
+
+**Blocking gates.** Read `.github/workflows/*.yml` **and `*.yaml`** (GitHub Actions accepts both, and a project using `.yaml` would otherwise look like it has no CI at all), plus `.gitlab-ci.yml` / `.gitlab-ci.yaml` and `Makefile` targets named `ci` / `check` / `verify` if present and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
+
+This is what `/feature-merge` Gate 1 runs. Without it the pack asserts its own definition of "tests pass" — and a project with a CI config has already defined it. The first brownfield target had four blocking gates where devkit checks three; the fourth was a coverage-delta check, which is invisible to a plain test run. Gate 1 would have passed and opened a PR that CI failed on the first push.
+
+If no CI config exists, say so and record nothing — Gate 1 falls back to the runner it infers, and should say that it is inferring.
+
+**Existing review / findings system.** Look for somewhere the project already tracks findings that outlive a single change: a `docs/reviews/` tree, an `issues/` directory, a `docs/**/*review*` corpus, or a stated tracker convention in `CLAUDE.md` or `CONTRIBUTING.md`. Record the location and its shape (per-finding files vs a single table vs an external tracker), and whether it uses its own ID scheme.
+
+`documenter` writes findings to whatever this records. If it finds nothing, the pack creates `docs/findings.md`; if it finds something, `/feature-merge` and `/pr-review` **ask** whether to adopt that format or sit alongside it. Skipping this step is how devkit becomes the fifth review system on a project that already had a working one — the duplication the pack's whole brownfield posture exists to prevent.
 
 **Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge. The format is the evidence table the `pm` skill already uses:
 
@@ -88,26 +99,46 @@ For each **confirmed** domain, draft a terse `docs/domains/<slug>.md` and propos
 ## As-built rationale
 
 <Why it's shaped this way — the decision context that would otherwise be lost.
-This subsection is where "why" lives at adoption time, NOT a retroactive ADR
-(see Decision 1 in docs/design/0002). Keep it to what's genuinely load-bearing.>
+This subsection is where "why" lives at adoption time, NOT a retroactive ADR.
+Do not manufacture ADRs for decisions already made — an ADR is written only for
+a decision you flag as load-bearing AND plausibly reversible. Keep this to what's
+genuinely load-bearing.>
 ```
 
 Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-run), propose a **delta** against it — don't overwrite; add what's missing or deepen a thin section.
 
 ### Phase D — Conventions into CLAUDE.md
 
-Propose writing the Phase A block into `CLAUDE.md`'s `## Project conventions` section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
+**Resolve the conventions section using `.claude/references/claude-md-elements.md` — element 5, including its equivalence set.** A section named `## Conventions`, `## Setup`, `## Stack`, or similar **is** the conventions section. Write into it. Do not propose a rename: an equivalent element is a satisfied element.
 
-If `CLAUDE.md` is not yet devkit-shaped (no `## Project conventions` section, no orientation reference), **stop this phase and route through `/claude-md-merge` first** — that command owns canonical-structure reconciliation. Then return and write the conventions into the section it created. Don't force structure here; `/adopt` fills the conventions slot, `/claude-md-merge` builds the slot.
+Propose writing the Phase A block into that resolved section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
 
-### Phase E — Contested decisions → ADRs (opt-in, sparse)
+**Before writing, check for machine-owned regions** per that reference's *Machine-owned regions* section. If the resolved section sits inside another tool's sentinel pair, write **adjacent** to the region rather than inside it, and say why — that text may be regenerated from a source file at any time, silently discarding whatever devkit put there.
 
-Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C), not in reconstructed ADRs — manufacturing retroactive ADRs wholesale is the bloat this command avoids (Decision 1).
+Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
+
+### Phase E — Discover the ADR registry, then contested decisions (opt-in, sparse)
+
+**Discovery first, and it is not authoring.** Before anything else in this phase, find out whether the project already keeps decision records, and where:
+
+- **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
+- **Match, two patterns.** In file *contents*: `ADR[-_ ]?0*\d+`, case-insensitive. In *filenames*: `^0*\d{1,4}[-_]` under any directory whose name suggests decision records (`adr`, `adrs`, `decisions`, `rfc`, `rfcs`), **excluding date-prefixed names** matching `^\d{4}-\d{2}-\d{2}` — dated notes are not ADR numbers, and treating `2026-04-15-review.md` as one sets the high-water mark in the thousands. A numbered-filename registry may never spell "ADR" in its contents at all.
+- **Rank definitions above mentions** — a heading (`## ADR-012: …`) or a filename (`0012-*.md`) is a definition; inline prose citing `ADR-007` is a mention. Report which kind the high-water mark came from.
+
+Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."*
+
+The **location** is the durable part. The recorded number is a snapshot, not an authority: `/feature-start` and `/plan` both re-scan for the current highest before every allocation, because features allocate continuously while this record is written once. Recording it is still worth doing — it makes the registry's shape visible to a human reading `CLAUDE.md` — but nothing allocates from it.
+
+Registries turn up in shapes a fixed list would miss — the first brownfield target kept `ADR-001 … ADR-012` as headings inside a **single decisions log**, not a directory of files. Without this step `/feature-start` would have found no `docs/adr/`, started at `0001`, and created a second document claiming `ADR-001`.
+
+**Discovery records; it does not write ADRs.** The default below is unchanged.
+
+Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C), not in reconstructed ADRs — manufacturing retroactive ADRs wholesale is the bloat this command avoids.
 
 Write an ADR **only** when, during the run, the user flags an existing decision as both *load-bearing* and *plausibly reversible* (a future feature might want to revisit it). For each such case:
 
 1. Invoke the `architect` to frame the decision, its alternatives, and the trade-offs as they stand today.
-2. Write `docs/adr/NNNN-<short-name>.md` (next free number) with `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
+2. Write the ADR **to the registry discovered above**, in that registry's format and at its next free number — `docs/adr/NNNN-<short-name>.md` only when discovery found nothing. Use `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
 3. Reference it from the relevant domain doc.
 
 If nothing is flagged, skip this phase entirely and say so.
