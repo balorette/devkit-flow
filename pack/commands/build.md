@@ -47,7 +47,7 @@ Stop and surface to the user (do not auto-recover) if:
 
 - The `tester` returns findings instead of tests.
 - Red tests pass on first run.
-- Green tests regress after a refactor and the cause is not obvious.
+- Green tests regress after a refactor and the cause is not obvious after working the engineer skill's *When something breaks* procedure. "Not obvious" means a stated hypothesis has failed, not that the answer wasn't immediate.
 - The linter or type-checker reports an issue that cannot be resolved within the current step.
 - A precondition is violated mid-run.
 - The engineer's proposed commit cannot be staged (e.g., a file the engineer expected to exist isn't present, or `git add` errors out). Surface the failure; do not work around it by staging a different file set or by skipping the commit.
