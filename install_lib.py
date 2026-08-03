@@ -114,7 +114,14 @@ def cmd_plan(args: list[str]) -> int:
     target_dir = Path(target_dir_s)
     manifest_path = Path(manifest_path_s)
 
-    manifest = read_manifest(manifest_path) or {}
+    manifest_raw = read_manifest(manifest_path)
+    # No manifest at all is a third state, distinct from both fresh install and
+    # update: pack files may exist in the target, but nothing records which
+    # version we put there — so "differs from the new pack" cannot be read as
+    # "the user customized it." Saying SKIP would be a guess wearing the costume
+    # of a decision.
+    has_manifest = manifest_raw is not None
+    manifest = manifest_raw or {}
     tracked_old: dict[str, str] = manifest.get("tracked", {})
     templates_old: dict[str, str] = manifest.get("templates", {})
 
@@ -132,9 +139,14 @@ def cmd_plan(args: list[str]) -> int:
             continue
         manifest_hash = tracked_old.get(target_rel)
         if manifest_hash is None:
-            # File exists but wasn't in manifest — treat as customized (we can't
-            # prove the user didn't create it on purpose).
-            print(f"SKIP {target_rel}")
+            if not has_manifest:
+                # Unclassifiable, not customized. Reported separately so the
+                # summary cannot be mistaken for a routine update.
+                print(f"UNMANAGED {target_rel}")
+            else:
+                # File exists but wasn't in this manifest — treat as customized
+                # (we can't prove the user didn't create it on purpose).
+                print(f"SKIP {target_rel}")
         elif current_hash == manifest_hash:
             # File matches what we installed; safe to update to new version.
             print(f"UPDATE {target_rel}")
