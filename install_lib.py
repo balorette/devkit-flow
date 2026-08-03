@@ -49,6 +49,10 @@ EXCLUDED_PACK_FILES = ("hooks/settings.json.fragment",)
 # Each entry: (pack-relative-path, target-relative-path).
 TRACKED_TOP_FILES = (
     ("devkit-orientation.md", ".claude/devkit-orientation.md"),
+    # Pack-owned, so it updates automatically — which matters, because it is the
+    # file that tells the user how to hand-apply changes to the *seeded* files
+    # the installer deliberately never rewrites.
+    ("MIGRATIONS.md", ".claude/MIGRATIONS.md"),
 )
 
 

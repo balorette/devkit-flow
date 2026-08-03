@@ -405,8 +405,12 @@ EOF
         ;;
       state.md.template)
         cat <<EOF
-  ! state.md.template changed; your .claude/state.md is not auto-modified
-    (it's your active working pointer). Compare manually if curious:
+  ! state.md.template changed since your install ($INSTALLED_VERSION).
+    Your .claude/state.md is yours — the installer never rewrites it, so new
+    fields do NOT arrive on their own.
+      -> Apply the entries above $INSTALLED_VERSION in .claude/MIGRATIONS.md
+         (a Claude Code session can do this; it proposes before writing).
+    Or compare by hand:
       diff $CLAUDE_DIR/state.md $PACK_DIR/state.md.template
 
 EOF
