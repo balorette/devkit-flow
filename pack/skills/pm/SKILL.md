@@ -43,7 +43,8 @@ Before asking the user a single question:
 - Read `CLAUDE.md` for project conventions.
 - Read `docs/domains/` to understand the project's existing vocabulary and bounded contexts.
 - Skim `docs/specs/` for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*).
-- Skim `docs/adr/` titles. If any ADRs are obviously relevant to the feature idea, read them in full. Decisions already made constrain the spec.
+- Skim the project's ADRs. If any are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec. Their location is recorded in `CLAUDE.md` conventions by `/adopt`; `docs/adr/` is the default, not the assumption.
+- **Read the findings ledger** (`docs/findings.md`, or the existing review system `CLAUDE.md` names). Open rows touching the area this feature will change are prior art, and they cut two ways: some are fix-now candidates that belong in this feature's scope, and the rest are known hazards to design around. A deferred security or conformance finding in the code you're about to extend is exactly the context a brainstorm should start from — rediscovering it as a bug three features later is the failure this ledger exists to prevent.
 - Read `.claude/state.md` to confirm no active feature is in progress.
 
 If an active feature exists in state.md, **stop and surface that**. `/feature-start` requires a clean slate; the user resolves the prior feature (merge, abandon, or branch out explicitly) before starting a new one.
