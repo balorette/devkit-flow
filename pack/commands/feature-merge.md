@@ -99,6 +99,16 @@ Load the `documenter` skill again. Run the "Summary authoring" pattern (see the 
 
 Surface all proposed doc writes to the user before applying. The documenter skill's cardinal "propose before writing" discipline holds at merge time too.
 
+### Commit the closeout docs — before proposing any integration
+
+Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
+
+Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, and `.claude/state.md`. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+
+Skip this and the failure is quiet in both flows. In PR flow the body assembles correctly from a summary that **is not in the branch**, so reviewers get a description of a file the PR does not contain. In local-merge flow the merge succeeds and leaves the summary sitting untracked in the working directory, belonging to a feature that no longer has an active state.
+
+Only after this commit lands do you proceed to *Merge proposal* or *PR creation*.
+
 ### Flow detection
 
 Before proposing anything, determine whether this project merges locally or through a PR. Same three-tier pattern as *Merge strategy* below, same no-silent-default rule:
@@ -149,6 +159,8 @@ Update `Gated baseline` again after **every** successful gate rerun, to the SHA 
 ### After the merge
 
 In PR flow this section runs on a **later invocation** — the one that found `Phase: in-review` with a merged PR. The merge may have been performed by someone else, days ago, in a session that no longer exists. Everything below applies unchanged; only the trigger differs.
+
+**Check out mainline before writing anything.** PR creation never leaves the feature branch, so a closeout invocation is normally still on `feature/<slug>`. Writing the idle transition there strands it on a branch that is about to be deleted, while mainline keeps the feature's stale `building` state — and the next `/feature-start` orients against that. Order: `git checkout <mainline>`, `git pull` (the merge happened remotely), write the state transition, **commit it**, then propose any push.
 
 Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
 
