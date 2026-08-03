@@ -58,12 +58,12 @@ Load the `engineer` skill.
 
 The distinction is not cosmetic. Any project with a CI config has already defined what "tests pass" means, and that definition routinely includes gates a plain test run cannot see — coverage deltas, diff-coverage thresholds, migration checks, lint profiles that differ from the local one. The first brownfield target had four blocking gates where the pack checked three; the fourth was a coverage-delta check. Gate 1 would have passed and opened a PR that CI failed on the first push, which is worse than no gate: it spends a reviewer's attention to discover something the pack could have.
 
-Run the full suite, not just the feature's tests — regressions matter at merge time.
+**When a recorded gate list exists, it is the whole of Gate 1.** Run exactly those commands and nothing extra — the list already contains whatever lint and type-checking the project blocks on, and adding your own risks running a *different* lint profile than CI does, or running the same step twice.
 
-- **Suite green:** proceed to Gate 2.
-- **Suite red:** halt. Surface the failing tests' names and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red suite invalidates downstream assumptions.
+**When inferring** (no recorded list), run the full suite — not just the feature's tests, since regressions matter at merge time — plus the linter and type-checker if the project has them configured.
 
-Also run linter / type-checker if the project has them configured. Their failures are merge-blocking at the same severity as red tests; same halt behavior.
+- **Green:** proceed to Gate 2.
+- **Red:** halt. Surface what failed and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red result invalidates downstream assumptions. Lint and type-check failures block at the same severity as failing tests.
 
 ### Gate 2 — Docs reconciliation
 
