@@ -128,11 +128,18 @@ fi
 # --- Auto-detect mainline branch -----------------------------------------------
 if [[ -z "$MAINLINE" ]]; then
   if [[ -d "$TARGET/.git" ]]; then
-    MAINLINE="$(git -C "$TARGET" symbolic-ref --short HEAD 2>/dev/null || true)"
-    if [[ -z "$MAINLINE" || "$MAINLINE" == "HEAD" ]]; then
+    # Preference order matters: installing while a feature branch is checked out
+    # is normal, and taking HEAD would record that branch as the project's
+    # mainline — silently poisoning every merge target and diff base the pack
+    # computes. Ask the remote first, then the conventional local names, and
+    # only fall back to HEAD when the repo offers nothing better.
+    MAINLINE="$(git -C "$TARGET" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || true)"
+    if [[ -z "$MAINLINE" ]]; then
       if   git -C "$TARGET" show-ref --verify --quiet refs/heads/main;   then MAINLINE="main"
       elif git -C "$TARGET" show-ref --verify --quiet refs/heads/master; then MAINLINE="master"
-      else MAINLINE="main"
+      else
+        MAINLINE="$(git -C "$TARGET" symbolic-ref --short HEAD 2>/dev/null || true)"
+        [[ -z "$MAINLINE" || "$MAINLINE" == "HEAD" ]] && MAINLINE="main"
       fi
     fi
   else
@@ -342,7 +349,7 @@ PLAN="$(python3 "$LIB" plan "$PACK_DIR" "$TARGET" "$MANIFEST" "$PACK_VERSION")"
 
 # --- Categorize plan -----------------------------------------------------------
 # Pre-init as empty arrays (set -u + bash 3.2 trips on `declare -a` alone).
-FILES_UPDATE=(); FILES_SKIP=(); FILES_NEW=(); FILES_UNCHANGED=()
+FILES_UPDATE=(); FILES_SKIP=(); FILES_NEW=(); FILES_UNCHANGED=(); FILES_UNMANAGED=()
 TEMPLATES_CHANGED=(); TEMPLATES_UNCHANGED=()
 
 while IFS= read -r line; do
@@ -352,6 +359,7 @@ while IFS= read -r line; do
   case "$verb" in
     UPDATE)             FILES_UPDATE+=("$payload") ;;
     SKIP)               FILES_SKIP+=("$payload") ;;
+    UNMANAGED)          FILES_UNMANAGED+=("$payload") ;;
     NEW)                FILES_NEW+=("$payload") ;;
     UNCHANGED)          FILES_UNCHANGED+=("$payload") ;;
     TEMPLATE-CHANGED)   TEMPLATES_CHANGED+=("$payload") ;;
@@ -369,6 +377,7 @@ print_count "update"    "${#FILES_UPDATE[@]}"
 print_count "new"       "${#FILES_NEW[@]}"
 print_count "skip"      "${#FILES_SKIP[@]}"
 print_count "unchanged" "${#FILES_UNCHANGED[@]}"
+if [[ ${#FILES_UNMANAGED[@]} -gt 0 ]]; then print_count "unmanaged" "${#FILES_UNMANAGED[@]}"; fi
 echo ""
 
 if [[ ${#FILES_NEW[@]} -gt 0 ]]; then
@@ -385,6 +394,37 @@ if [[ ${#FILES_SKIP[@]} -gt 0 ]]; then
     echo "  Locally-modified — will be SKIPPED (pass --force to overwrite):"
     for f in "${FILES_SKIP[@]}"; do echo "    - $f"; done; echo ""
   fi
+fi
+
+if [[ ${#FILES_UNMANAGED[@]} -gt 0 ]]; then
+  cat <<EOF
+  ================================================================
+  !! NO MANIFEST — ${#FILES_UNMANAGED[@]} existing pack file(s) cannot be classified.
+  ================================================================
+  This target has devkit files but no .claude/.devkit-manifest.json, so
+  there is no record of which pack version installed them. That makes
+  "differs from the new pack" unreadable: it could mean you customized
+  the file, or simply that the file is old.
+
+  These are NOT being reported as "customized" — that would be a guess
+  presented as a decision, and it would silently withhold every update.
+
+EOF
+  for f in "${FILES_UNMANAGED[@]}"; do echo "    ? $f"; done
+  cat <<EOF
+
+  To resolve, pick one:
+    (a) Your .claude/ is unmodified (the common case — e.g. it was
+        installed by copying, or the manifest was never committed):
+          git -C "$TARGET" diff --stat -- .claude/     # confirm it's clean
+          ./install.sh "$TARGET" --force               # backs up to .devkit-bak/
+    (b) You DID customize pack files: diff them against this pack version
+        first, port your changes, then re-run with --force.
+
+  Either way a manifest is written afterward, and later updates classify
+  correctly.
+
+EOF
 fi
 
 # Template advisories
@@ -471,6 +511,9 @@ if [[ ${#FILES_NEW[@]}    -gt 0 ]]; then for rel in "${FILES_NEW[@]}";    do wri
 if [[ ${#FILES_UPDATE[@]} -gt 0 ]]; then for rel in "${FILES_UPDATE[@]}"; do write_one "$rel" 0; done; fi
 if [[ "$FORCE" -eq 1 && ${#FILES_SKIP[@]} -gt 0 ]]; then
   for rel in "${FILES_SKIP[@]}"; do write_one "$rel" 1; done
+fi
+if [[ "$FORCE" -eq 1 && ${#FILES_UNMANAGED[@]} -gt 0 ]]; then
+  for rel in "${FILES_UNMANAGED[@]}"; do write_one "$rel" 1; done
 fi
 
 # These steps run on both modes; they're individually idempotent.

@@ -34,7 +34,7 @@ Flags:
 
 - `--project-name NAME` — fills `{{PROJECT_NAME}}` in `CLAUDE.md` (default: target dir basename).
 - `--description TEXT` — fills `{{ONE_LINE_PROJECT_DESCRIPTION}}` (default: a placeholder you're prompted to edit).
-- `--mainline BRANCH` — overrides auto-detected default branch.
+- `--mainline BRANCH` — overrides the auto-detected default branch. Detection prefers `origin/HEAD`, then a local `main` or `master`, and only falls back to the checked-out branch — installing while a feature branch is checked out must not record that branch as the project's mainline.
 - `--force` — in update mode, overwrite locally-modified files (with backup).
 - `--dry-run` — show the plan and exit without writing.
 - `--claude-md-only` — skip the pack file install; only re-run the CLAUDE.md handling step (preview + Y/n prompt to add the orientation reference). For richer reconciliation — heading renames, semantic equivalence, partial overlap — use the `/claude-md-merge` slash command from a Claude Code session instead.
@@ -96,6 +96,7 @@ The installer detects the existing `.devkit-manifest.json` and switches to **upd
 | `NEW`       | File doesn't exist in target (added in this pack version). | install |
 | `SKIP`      | File exists in target but differs from what we installed — you customized it. | leave alone (pass `--force` to overwrite, with backup to `.claude/.devkit-bak/`) |
 | `UNCHANGED` | Target file already matches the new pack — no-op. | nothing |
+| `UNMANAGED` | Target has pack files but **no manifest**, so there's no record of what version installed them — "differs from the pack" can't be read as "you customized it". | report loudly, change nothing (`--force` overwrites, with backup) |
 
 Templates (`CLAUDE.md.template`, `state.md.template`) are **never auto-overwritten** — the files they seeded (`CLAUDE.md`, `.claude/state.md`) are yours, and the installer will not write over your edits. That means **new fields do not arrive on their own.**
 
