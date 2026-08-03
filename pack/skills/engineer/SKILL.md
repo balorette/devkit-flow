@@ -80,6 +80,19 @@ Small reversible steps. Verify as you go. Think out loud.
 - **Think out loud.** Before writing code, state the approach in one or two sentences: *what* you're about to change and *why*. This surfaces mistaken premises before they cost time.
 - **Pause.** At the end of each step, hand control back to the user. Silent unless something needs attention. The user moves faster reviewing one step at a time than catching up with five.
 
+## When something breaks
+
+Root cause before fix. The rule is not "investigate thoroughly" — it is **no fix without a stated cause.** A fix applied to a symptom you haven't explained is a guess, and it will be indistinguishable from a real fix until it fails again somewhere else.
+
+1. **Read the error completely.** The whole stack trace, the line numbers, the exit code. Most are more specific than they look at a glance, and the specific part is usually further down.
+2. **Reproduce it.** If it isn't reliably reproducible, gather data — don't start changing things. An intermittent failure that disappears after an edit has not been fixed; it has been disturbed.
+3. **Check what changed.** `git bisect` is unusually cheap here, and that is a direct payoff of the commit cadence rather than a coincidence: each step is its own commit, so a bisect lands on one step's diff instead of a mega-commit you still have to search.
+4. **State one hypothesis** — *"I think X, because Y"* — and test it with the smallest change that would distinguish it from the alternatives. One variable. Two changes at once means a passing test tells you nothing about which one mattered.
+5. **Write the failing test through the `tester` subagent**, fresh context, exactly as in the Red phase. A fix without a test pinning it will regress, and the moment it does, the reasoning that produced it is gone.
+6. **Three strikes.** If three hypotheses have failed, stop fixing. Repeated failures in different places are evidence about the *design*, not about your attempts — invoke the `architect`, and `/checkpoint` if the plan needs amending. A fourth attempt at that point is the most expensive way to learn the same thing.
+
+Do not bundle "while I'm here" changes into a fix. The diff that fixes the bug contains only the fix — anything else makes the revert lossy and hides which change actually mattered.
+
 ## Plan-time behaviors (loaded by `/plan`)
 
 When `/plan` loads you, the TDD loop above is irrelevant — no code is being written yet. Your plan-time job is to enforce the **step-shape rules** on the plan the `pm` skill is drafting, so that when `/build` later runs the loop, each step is executable as written.

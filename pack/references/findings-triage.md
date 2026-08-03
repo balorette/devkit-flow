@@ -28,6 +28,10 @@ The two sources fail in opposite directions, so the default posture differs.
 
 An external reviewer not having read the spec is a fact about their **access**, not a judgment about them. Cite the spec; don't condescend to it. (If your PR body doesn't link the spec, fix that before blaming the review.)
 
+**Tracking what you've already answered.** External findings arrive repeatedly — a review pass is re-run as new comments land. Every reply the pack posts to a forge ends with `<!-- devkit:pr-review handled:<comment-id> -->`, so a later pass can tell the reviewer's item from the pack's own answer to it. The forge holds that record, not a local file: it survives session boundaries and context compaction, and there is nothing to keep in sync.
+
+The general rule this instance illustrates: **when you act on a finding, leave the record where the finding lives.** Inferring "did I already handle this?" from surrounding state fails as soon as your own action is one of the things that changed that state.
+
 ## Classification buckets
 
 Every item lands in exactly one.
@@ -39,6 +43,10 @@ Every item lands in exactly one.
 | **Already answered** by the spec or an accepted ADR | Reply citing it. No code change. |
 | **Technically disagree** | Reply with technical reasoning. Surface to the user before it goes anywhere public. |
 | **Unclear** | Ask. Implement nothing else in that cluster until answered. |
+
+**Every disposition except "already answered" leaves a record.** A finding accepted and fixed is recorded by its commit. A finding accepted but deferred, or disagreed with and let go, needs somewhere durable — that is the findings ledger (see the `documenter` skill's *The findings ledger*). Parking it in `state.md`'s `## Open questions` only works for something resolved *within* the current feature, because `/feature-merge` clears that section.
+
+The failure this prevents is quiet: a finding evaluated, judged real, deferred deliberately — and then gone at merge, so the next feature rediscovers it as a bug.
 
 ## The five devkit rules
 
