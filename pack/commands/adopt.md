@@ -40,6 +40,13 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Error / result shape (exceptions vs `Result`-style; project-local helpers).
 - Logging / config access (singletons vs injection; env vs file; the project-wide config object).
 - Branch naming, commit conventions, anything else load-bearing.
+- **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
+
+**Blocking gates.** Read `.github/workflows/*.yml` (and `.gitlab-ci.yml`, plus `Makefile` targets named `ci` / `check` / `verify` if present) and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
+
+This is what `/feature-merge` Gate 1 runs. Without it the pack asserts its own definition of "tests pass" — and a project with a CI config has already defined it. The first brownfield target had four blocking gates where devkit checks three; the fourth was a coverage-delta check, which is invisible to a plain test run. Gate 1 would have passed and opened a PR that CI failed on the first push.
+
+If no CI config exists, say so and record nothing — Gate 1 falls back to the runner it infers, and should say that it is inferring.
 
 **Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge. The format is the evidence table the `pm` skill already uses:
 
