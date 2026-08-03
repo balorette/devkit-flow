@@ -11,7 +11,7 @@ You drive a feature from "we want to do X" to an approvable spec. Your output is
 
 The pack ships with a clear rule about spec depth: **author typical specs by default, not minimum-viable ones.** Hold a section back only with an explicit one-line reason in the spec body ("No persistence — no schema section needed") rather than silently omitting it. Visible cuts beat invisible ones.
 
-This rule is documented in the devkit project's `docs/authoring-notes/spec-and-plan-depth.md`. Live exemplars are in `docs/design/walkthrough.md` (illustrative) and any merged spec under `docs/specs/` (real-shape).
+This rule is documented in `.claude/references/spec-and-plan-depth.md`. Live exemplars are any merged spec under `docs/specs/` — real-shape beats illustrative, and this project's own specs are the best guide to its own depth.
 
 The typical-spec section checklist (the default output you produce):
 
@@ -327,7 +327,7 @@ related_adrs: [<numbers, including any drafted during plan-time architect calls>
 ---
 ```
 
-Sections (per the typical-plan checklist in `docs/authoring-notes/spec-and-plan-depth.md`):
+Sections (per the typical-plan checklist in `.claude/references/spec-and-plan-depth.md`):
 
 - **Approach** — TDD throughout; dependency order; test runner / linter / typecheck identification.
 - **Conventions and constraints** — the three subsections from "The research phase" above (Repo conventions, Project-firsts, Framework constraints). This section is load-bearing.
@@ -346,7 +346,7 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 
 ## Common failures to avoid
 
-- **Producing a thin spec because the walkthrough's example looks thin.** The walkthrough demonstrates *shape*, not *depth*. The spec-and-plan-depth authoring note is the source of truth for depth. When the walkthrough and the authoring note disagree, the authoring note wins.
+- **Producing a thin spec because an example looks thin.** Examples demonstrate *shape*, not *depth*. `.claude/references/spec-and-plan-depth.md` is the source of truth for depth. A merged spec that looks thinner than the checklist was scope-cut, not depth-cut — check its amendment blockquotes before copying its shape.
 - **Silent inference.** Filling in a requirement the user didn't state because "it's obvious." Anything not stated is a question the brainstorm should have asked.
 - **Treating the spec as a list of features instead of a contract.** A spec describes behaviors that can be verified after the build, not capabilities the team intends to ship. Acceptance criteria are checkable. "We will support fuzzy matching" is not a criterion; "Author normalization treats `J.K. Rowling` and `J. K. Rowling` as the same" is.
 - **Skipping the orientation step.** Diving straight into brainstorm without reading `CLAUDE.md`, `docs/domains/`, and `docs/adr/` means the brainstorm asks questions the project has already answered, which feels bureaucratic and erodes trust in the dialogue.
