@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import re
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -75,9 +76,43 @@ def template_names() -> list[str]:
     return [pack_rel for pack_rel, _ in install_lib.TEMPLATE_FILES]
 
 
-def migrations_has_section(version: str) -> bool:
+def migrations_has_section_in(migrations_path: Path, version: str) -> bool:
     pattern = re.compile(rf"^##\s+{re.escape(version)}\s*$", re.MULTILINE)
-    return bool(pattern.search(MIGRATIONS.read_text(encoding="utf-8")))
+    return bool(pattern.search(migrations_path.read_text(encoding="utf-8")))
+
+
+def migrations_has_section(version: str) -> bool:
+    return migrations_has_section_in(MIGRATIONS, version)
+
+
+def snapshot_file_names(history_dir: Path, version: str) -> set[str]:
+    snap_dir = history_dir / version
+    if not snap_dir.is_dir():
+        return set()
+    return {p.name for p in snap_dir.iterdir() if p.is_file()}
+
+
+def changed_template_names(history_dir: Path, prev: str, version: str) -> list[str]:
+    """Names whose bytes differ between two snapshots.
+
+    Iterates the UNION of both snapshots' filenames, not `template_names()`
+    (the *current* TEMPLATE_FILES). A template dropped from TEMPLATE_FILES
+    between `prev` and `version` still has a file in the `prev` snapshot and
+    none in the `version` one -- that disappearance must register as a change
+    even though the name is no longer in the live list, or a same-version
+    removal-only release would take the "nothing changed" early return while
+    existing installs still carry the formerly-seeded file.
+    """
+    names = snapshot_file_names(history_dir, prev) | snapshot_file_names(history_dir, version)
+    changed = []
+    for name in sorted(names):
+        prev_path = history_dir / prev / name
+        cur_path = history_dir / version / name
+        prev_bytes = prev_path.read_bytes() if prev_path.is_file() else None
+        cur_bytes = cur_path.read_bytes() if cur_path.is_file() else None
+        if prev_bytes != cur_bytes:
+            changed.append(name)
+    return changed
 
 
 class TestVersionHelpers(unittest.TestCase):
@@ -148,11 +183,7 @@ class TestMigrationPresent(unittest.TestCase):
         prev = previous_version(version)
         if prev is None:
             self.skipTest(f"{version} is the earliest snapshot; no baseline to diff")
-        changed = [
-            name
-            for name in template_names()
-            if (HISTORY / prev / name).read_bytes() != (HISTORY / version / name).read_bytes()
-        ]
+        changed = changed_template_names(HISTORY, prev, version)
         if not changed:
             return
         self.assertTrue(
@@ -162,6 +193,66 @@ class TestMigrationPresent(unittest.TestCase):
             f"never rewritten by the installer, so a change with no entry ships to "
             f"nobody.",
         )
+
+
+class TestChangedTemplateNamesCoversRemovals(unittest.TestCase):
+    """Regression for the finding that `changed_template_names` (formerly
+    inlined against `template_names()`, i.e. the *current* TEMPLATE_FILES)
+    missed a template removed between two versions: the name is gone from the
+    current list, so a removal-only diff was invisible to the old
+    iteration. Exercised against temporary snapshot dirs -- never the real
+    pack/templates/history/ -- per this file's own no-mutation posture.
+    """
+
+    def test_template_removed_since_prev_version_counts_as_changed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            history = Path(tmp) / "history"
+            (history / "0.1.0").mkdir(parents=True)
+            (history / "0.2.0").mkdir(parents=True)
+            (history / "0.1.0" / "kept.template").write_bytes(b"same in both")
+            (history / "0.2.0" / "kept.template").write_bytes(b"same in both")
+            (history / "0.1.0" / "removed.template").write_bytes(b"present only in 0.1.0")
+            # 0.2.0 has no removed.template: simulates a template dropped from
+            # TEMPLATE_FILES between releases.
+
+            changed = changed_template_names(history, "0.1.0", "0.2.0")
+
+            self.assertIn("removed.template", changed)
+            self.assertNotIn("kept.template", changed)
+
+    def test_template_added_since_prev_version_counts_as_changed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            history = Path(tmp) / "history"
+            (history / "0.1.0").mkdir(parents=True)
+            (history / "0.2.0").mkdir(parents=True)
+            (history / "0.2.0" / "added.template").write_bytes(b"present only in 0.2.0")
+
+            changed = changed_template_names(history, "0.1.0", "0.2.0")
+
+            self.assertIn("added.template", changed)
+
+    def test_a_removal_with_no_migration_section_fails_the_real_assertion(self):
+        """End-to-end shape of the guard: a removal is detected AND, when
+        MIGRATIONS.md lacks the corresponding section, the assertion this
+        test file makes in `test_changed_template_has_a_migration_section`
+        would fail. Checked directly against isolated files so this test
+        does not depend on the repo's real version history lining up."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            history = tmp_path / "history"
+            (history / "0.1.0").mkdir(parents=True)
+            (history / "0.2.0").mkdir(parents=True)
+            (history / "0.1.0" / "removed.template").write_bytes(b"gone in 0.2.0")
+
+            migrations = tmp_path / "MIGRATIONS.md"
+            migrations.write_text("# Migrations\n\n## 0.1.0\n\nInitial.\n", encoding="utf-8")
+
+            changed = changed_template_names(history, "0.1.0", "0.2.0")
+            self.assertTrue(changed, "removal should register as a change")
+            self.assertFalse(
+                migrations_has_section_in(migrations, "0.2.0"),
+                "fixture MIGRATIONS.md deliberately has no 0.2.0 section",
+            )
 
 
 if __name__ == "__main__":

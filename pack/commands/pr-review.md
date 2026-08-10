@@ -80,6 +80,8 @@ Strict order. Each stage completes before the next begins.
 4. **Commit the metadata.** Stage exactly what stages 2 and 3 wrote — the summary doc, the discovered findings-ledger path, and `.claude/state.md` — and propose a commit. Subject: `review: findings ledger + state`. Stage explicitly; never `git add -A`.
 
    Stages 2 and 3 write durable artifacts and stage 5 pushes; without this, neither reaches the remote. The PR then lacks the `REV` record that is the whole point of a cross-feature deferral, and the tree stays dirty — which `/feature-merge`'s own preconditions treat as blocking, so the next closeout cannot check out mainline.
+
+   **If the user declines this commit, stop here — do not proceed to stage 5.** Like every commit in this pack, it's a proposal the user may decline, but declining it leaves the summary, ledger, and `state.md` edits uncommitted, and pushing the fix commits anyway would strand exactly those artifacts locally: the failure this stage exists to close. The user's options are to commit it (editing the message or splitting it first, if they want) or to stop and resolve the tree by hand; either way, re-run `/pr-review` once the tree is clean rather than continuing past the decline.
 5. **Push — and verify the remote tip actually contains the fix commits.** Check with `git ls-remote origin <branch>`, compared against your local `HEAD`.
 
    Use `git ls-remote`, **not** `gh pr view --json headRefOid`. The former reads the ref directly and is authoritative the moment the push lands; the latter reads GitHub's PR view, which can serve a stale `headRefOid` for seconds after a successful push. Verifying with the API produces a false *negative* — a correct push reported as unverified — and the correct response to an unverified push is to post nothing, so the failure mode is a stalled run rather than a bad one. Still worth avoiding: a check that cries wolf gets skipped.
@@ -113,6 +115,7 @@ Stop and surface to the user (do not auto-recover) if:
 - The user declines the proposed batch without providing a revision.
 - A reply fails to post (`gh` error, thread locked, PR closed mid-run). Report which replies landed and which did not; never retry blindly into a PR whose state you no longer know.
 - **The push fails, or the remote tip does not contain the fix commits after it.** Report which commits are local-only, **post nothing**, and stop. Fixes that exist only on your machine plus replies announcing them is the worst state this command can leave a PR in — the reviewer sees claims they cannot verify and code that has not changed.
+- **The metadata commit (Phase D stage 4) is declined.** Report what's still uncommitted (summary doc, findings-ledger entry, `.claude/state.md`) and stop — do not push the fix commits from stage 1 while those remain uncommitted. The user commits the metadata (as proposed or edited) or resolves the tree themselves; re-run `/pr-review` once it's clean.
 
 ## Common rationalizations
 

@@ -31,11 +31,11 @@ The phases below mirror the `pm` skill's loop. The skill is the source of truth 
 
 ### Phase A — Orient, discover, and confirm
 
-PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, and the findings ledger). Then:
+PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, the findings ledger, and — per the `pm` skill's Orient step — runs `.claude/references/adr-registry.md` § *Discover* in full). Then:
 
-1. **Run ADR-registry discovery now.** Follow `.claude/references/adr-registry.md` § *Discover* in full, and record for the rest of this invocation: the registry's location, its format, and its current high-water number. Report what was found per that reference's *Report what was found* step.
+1. **Record what pm's Orient just discovered.** Note for the rest of this invocation: the registry's location, its format, and its current high-water number. Report what was found per that reference's *Report what was found* step. Discovery itself runs once, inside Orient — this step records and reports that result rather than re-running the scan.
 
-   Discovery runs here rather than at Phase E because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs kept as headings in a single decisions log, invisible to the subagent asked to avoid contradicting them.
+   Orient must run discovery before Phase B because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs kept as headings in a single decisions log, invisible to the subagent asked to avoid contradicting them.
 2. Propose the slug derived from the user's argument. Confirm with the user.
 3. Confirm the feature framing back to the user in one or two sentences before brainstorming. ("My read: you want X so that Y. Right?")
 
@@ -75,7 +75,7 @@ Write the spec to the path. If `docs/specs/` doesn't exist, create it. If a spec
 
 If the architect was invoked during brainstorm and drafted an ADR:
 
-1. **Re-scan before allocating.** Phase A recorded the registry's location, format, and high-water mark. Re-run `.claude/references/adr-registry.md` § *Discover* against that location now, and allocate from what it returns — **never from the number Phase A recorded**. That reference's *Never cache the number* explains why: `/plan` allocates from the same registry, and a mark read once is reused by the next allocator.
+1. **Re-scan before allocating.** Phase A recorded the registry's location, format, and high-water mark from Orient's discovery. Re-run `.claude/references/adr-registry.md` § *Discover* **in full** now — the same full scan Orient ran, not narrowed to the location it found — and allocate from what it returns — **never from the number Phase A recorded**. That reference's *Never cache the number* explains why: `/plan` allocates from the same registry, and a mark read once is reused by the next allocator; a location-scoped re-scan would just as easily reuse a mark that no longer reflects a registry that changed since Orient ran.
 2. **Allocate and write** per that reference's *Allocate* section — floor + 1, ask before relocating, write in the registry's own format.
 3. Update the spec's front-matter `related_adrs` to include the new number.
 4. **Update the recorded high-water mark** in `CLAUDE.md` conventions to the number just written, so the record stays a useful hint rather than decaying into a wrong one. The re-scan in step 1 is the authority regardless; this keeps the two from disagreeing.

@@ -2,7 +2,7 @@
 
 Structural changes to **seeded** files — the ones the pack stamps once at install and you own thereafter: `.claude/state.md` and your `CLAUDE.md`. The installer never rewrites them, so changes to their shape arrive here instead of being applied over your edits.
 
-Every file the manifest tracks (`.claude/.devkit-manifest.json`) updates automatically — you do not need this file for those. Anything under `.claude/` that the manifest does not list is **yours**, and the pack neither updates it nor expects you to migrate it.
+Files the manifest tracks (`.claude/.devkit-manifest.json`) are pack-tracked, not seeded — you do not need this file for those. A tracked file updates on a normal `install.sh` run unless you've edited it yourself, in which case the installer reports `SKIP` and leaves your edit alone (`--force` overwrites it, backing up your version first). Anything under `.claude/` that the manifest does not list is **yours**, and the pack neither updates it nor expects you to migrate it.
 
 ## How to apply
 
