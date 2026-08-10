@@ -167,6 +167,7 @@ The scan procedure moves to **`pack/references/adr-registry.md`**: scan scope, b
 
 - Should clause 2's exclusion pathspec be centralized (a named "pack bookkeeping paths" list) rather than written at each comparison? Leaning: no while there is exactly one comparison. Revisit at the second.
 - Should `conformance-reviewer` be taught to check plans against these three clauses? Leaning: out of scope — it reviews plans against specs, and this is an authoring-time property of the pack itself.
+- `pack/commands/claude-md-merge.md` and `pack/commands/adopt.md` both write structural edits to a project's `CLAUDE.md` — the same artifact — but disagree on clause 1: `claude-md-merge.md:100,137` explicitly declines to name a carrier commit ("the user commits at their cadence"), while `adopt.md`'s Phase F proposes and commits the same kind of edit. A plausible rationale exists — `/claude-md-merge` may run before a project is git-bootstrapped, whereas `/adopt` gates on being a repo (`adopt.md:22`) — but neither file states it. Does clause 1 admit an exception for a command that may run outside a git repo, and if so must that exception be stated in the command rather than left implicit? Unresolved; not fixed in slice 11.
 
 ## Relationship to slice 10 / ADR-0007
 
