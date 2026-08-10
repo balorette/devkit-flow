@@ -129,7 +129,7 @@ Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>
 
 The **location** is the durable part. The recorded number is a snapshot, not an authority: `/feature-start` and `/plan` both re-scan for the current highest before every allocation, because features allocate continuously while this record is written once. Recording it is still worth doing — it makes the registry's shape visible to a human reading `CLAUDE.md` — but nothing allocates from it.
 
-Registries turn up in shapes a fixed list would miss — the first brownfield target kept `ADR-001 … ADR-012` as headings inside a **single decisions log**, not a directory of files. Without this step `/feature-start` would have found no `docs/adr/`, started at `0001`, and created a second document claiming `ADR-001`.
+Run the scan in `.claude/references/adr-registry.md` § *Discover*, and record what it reports into `CLAUDE.md` conventions — location, format, and high-water number. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
 
 **Discovery records; it does not write ADRs.** The default below is unchanged.
 
@@ -138,7 +138,7 @@ Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C
 Write an ADR **only** when, during the run, the user flags an existing decision as both *load-bearing* and *plausibly reversible* (a future feature might want to revisit it). For each such case:
 
 1. Invoke the `architect` to frame the decision, its alternatives, and the trade-offs as they stand today.
-2. Write the ADR **to the registry discovered above**, in that registry's format and at its next free number — `docs/adr/NNNN-<short-name>.md` only when discovery found nothing. Use `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
+2. Write the ADR **to the registry discovered above**, in that registry's format and at its next free number per `.claude/references/adr-registry.md` § *Allocate* (which creates `docs/adr/` only when discovery found nothing). Use `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
 3. Reference it from the relevant domain doc.
 
 If nothing is flagged, skip this phase entirely and say so.
