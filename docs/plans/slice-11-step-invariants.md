@@ -1037,7 +1037,17 @@ with:
 Every file the manifest tracks (`.claude/.devkit-manifest.json`) updates automatically — you do not need this file for those. Anything under `.claude/` that the manifest does not list is **yours**, and the pack neither updates it nor expects you to migrate it.
 ```
 
-- [ ] **Step 3: Verify**
+- [ ] **Step 3: Bring the commit-cadence table current**
+
+*Added during execution.* The table at `pack/devkit-orientation.md:60-72` is meant to list every commit moment in a feature's life. Two rows are wrong, and this slice makes both matter:
+
+**(a) The `/pr-review` row** names only `review: <short summary>` (the per-fix commit from Phase D stage 1). Task 8 added a second commit moment — Phase D stage 4, `review: findings ledger + state`. Add it, so the table stops implying `/pr-review` commits only code.
+
+**(b) The "PR opened (PR flow)" row** reads *"(no commit — pushes the branch and opens the PR)"*. That is contradicted by `pack/commands/feature-merge.md`, which requires committing the `Phase: in-review` transition with subject `/feature-merge: in-review (PR #<n>)`, staging `.claude/state.md` only. Pre-existing, but Task 10 makes it load-bearing: that transition commit is the one commit the new `Gated baseline` discriminator excludes from its content diff. A table telling readers no commit happens there describes the mechanism as broken. Correct the row.
+
+While there, check the "Summary + domain doc + state.md transition" row's message (`/feature-merge: summary + state.md to idle`) against what `/feature-merge` actually specifies for the closeout commit. Fix only if it genuinely disagrees; do not invent a discrepancy.
+
+- [ ] **Step 4: Verify**
 
 ```bash
 python3 -m unittest discover -s tests -v
