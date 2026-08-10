@@ -1,6 +1,6 @@
 # ADR-0008: Step Invariants — Artifact Transport, Self-Reference, and Discovery Order
 
-**Status:** Proposed
+**Status:** Built
 **Date:** 2026-08-10
 **Deciders:** [user], Claude (design partner)
 **Evidence:** [`docs/validation/pr139-pack-findings.md`](../validation/pr139-pack-findings.md) Findings 1–8, each re-verified against `pack/` source before this ADR was written
