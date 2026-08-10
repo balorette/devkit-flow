@@ -20,11 +20,22 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 |---|---|
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
-| `in-review`, PR open, **PR tip == `Gated baseline`** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this exact commit already passed them. |
-| `in-review`, PR open, **PR tip != `Gated baseline`** | Re-run gates 1–3 — the PR contains commits that have never been gated — then push and update `Gated baseline`. Do **not** re-create the PR. |
+| `in-review`, PR open, **gated content unchanged** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this content already passed them. |
+| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen — then push and update `Gated baseline`. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
 
-**The discriminator is `Gated baseline` versus the PR tip — never local tip versus remote tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on tip equality would take the *nothing changed* path and skip tests, docs reconciliation, and security review on precisely the code that is about to merge. Read the PR tip with `gh pr view --json headRefOid`.
+**The discriminator is a content diff against `Gated baseline` — never local tip versus remote tip, and never SHA equality.** Read the PR tip with `gh pr view --json headRefOid`, then:
+
+```
+git diff --quiet <Gated baseline> <PR tip> -- . ':(exclude).claude/state.md'
+```
+
+Quiet (exit 0) → the gated content is unchanged; run no gates. Differs → re-run gates 1–3.
+
+Two things this gets right that the obvious versions do not:
+
+- **Not tip versus tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on that would skip tests, docs reconciliation, and security review on precisely the code about to merge.
+- **Not SHA equality against the baseline.** Writing `Gated baseline` requires committing `state.md`, which changes the tip — so tip *never* equals baseline, and an equality check makes the no-gates branch unreachable from the moment the PR opens. The exclusion of `.claude/state.md` is what makes the comparison survive the command's own bookkeeping write. It is a **content** diff rather than a commit walk so that a change reverted within the PR correctly reads as unchanged.
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
@@ -112,6 +123,8 @@ Everything authored above is **uncommitted**. The preconditions demanded a clean
 
 Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
+**Record this commit's SHA.** It becomes `Gated baseline` at PR creation — it is the tip as it stands before the `state.md`-only transition commit, which is the one commit the discriminator's exclusion accounts for.
+
 Skip this and the failure is quiet in both flows. In PR flow the body assembles correctly from a summary that **is not in the branch**, so reviewers get a description of a file the PR does not contain. In local-merge flow the merge succeeds and leaves the summary sitting untracked in the working directory, belonging to a feature that no longer has an active state.
 
 Only after this commit lands do you proceed to *Merge proposal* or *PR creation*.
@@ -159,13 +172,15 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
 
-On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the SHA that just passed gates 1–3>`**. **Do not clear state** — the feature is still active until the PR merges.
+On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-review`, `PR: <url>`, and **`Gated baseline: <the closeout commit's SHA>`** — the tip as it stands *before* the transition commit below, not the SHA the gates ran against. The closeout commit lands after the gates too, so the gate-time SHA is already two commits behind by the time the PR opens. **Do not clear state** — the feature is still active until the PR merges.
 
 **Then commit and push that transition.** Subject: `/feature-merge: in-review (PR #<n>)`, staging `.claude/state.md` only. It is written *after* the closeout commit and after the push, so without this step the tracked file is left dirty and the remote branch still says `Phase: building` with no PR and no baseline. Review is explicitly asynchronous — another session, clone, or worktree resuming the feature would read `building`, take the PR-creation path a second time, and open a duplicate PR. A later closeout in the original worktree can also fail outright, because checking out mainline over a dirty tracked `state.md` is exactly what its own preconditions forbid.
 
 Report the PR URL and point at `/pr-review`.
 
-Update `Gated baseline` again after **every** successful gate rerun, to the SHA those gates ran against. A stale baseline is worse than none: it makes ungated commits look gated.
+Update `Gated baseline` after **every** successful gate rerun — to the tip as it stands once any fix commits are in and before the `state.md`-only transition commit. Same rule as at PR creation: the baseline is the last commit whose content was gated, never the SHA that happened to be checked out when the gates started.
+
+A stale baseline is worse than none: it makes ungated commits look gated.
 
 ### After the merge
 
