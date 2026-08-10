@@ -1,7 +1,9 @@
 # Slice 11 — Validation Report
 
 **Slice:** 11 (step invariants — `adr-registry.md` extraction, `/feature-start` discovery ordering, `Gated baseline` self-invalidation fix, `/plan` findings-ledger commit, `/pr-review` push-before-reply and own-reply filtering under `all`)
-**Design:** `docs/design/inventory-and-build-order.md` § Slice 11 (clause references below map to that section's numbered list)
+**Design:** [`0008-step-invariants.md`](../design/0008-step-invariants.md) (clause references below map to that ADR's three numbered clauses)
+**Plan:** [`slice-11-step-invariants.md`](../plans/slice-11-step-invariants.md)
+**Evidence:** [`pr139-pack-findings.md`](pr139-pack-findings.md) — 8 findings
 **Status:** **authoring complete; dogfood pending.** Mechanical checks pass. No pack command has been executed.
 **Date:** 2026-08-10 (authoring)
 
