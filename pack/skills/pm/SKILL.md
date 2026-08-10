@@ -43,7 +43,7 @@ Before asking the user a single question:
 - Read `CLAUDE.md` for project conventions.
 - Read `docs/domains/` to understand the project's existing vocabulary and bounded contexts.
 - Skim `docs/specs/` for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*).
-- Skim the project's ADRs. If any are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec. Their location is recorded in `CLAUDE.md` conventions by `/adopt`; `docs/adr/` is the default, not the assumption.
+- **Discover the ADR registry and record it for this invocation.** Follow `.claude/references/adr-registry.md` § *Discover* in full — a `CLAUDE.md` note left by a prior `/adopt` is a useful hint for where to look, not a substitute for running the scan (see that reference's *Never cache the number*). Record the location, format, and current high-water number; every architect invocation and ADR write for the rest of this invocation reads from that record. If any ADRs are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec.
 - **Read the findings ledger** (`docs/findings.md`, or the existing review system `CLAUDE.md` names). Open rows touching the area this feature will change are prior art, and they cut two ways: some are fix-now candidates that belong in this feature's scope, and the rest are known hazards to design around. A deferred security or conformance finding in the code you're about to extend is exactly the context a brainstorm should start from — rediscovering it as a bug three features later is the failure this ledger exists to prevent.
 - Read `.claude/state.md` to confirm no active feature is in progress.
 
@@ -201,7 +201,7 @@ When you invoke the architect, pass:
 
 - The specific question, framed in one sentence.
 - The trade-offs you've already considered (so the architect doesn't repeat your work).
-- Paths to the active spec draft, relevant `docs/domains/` files, and relevant ADR files **from the discovered registry** (`.claude/references/adr-registry.md`) — actual paths, never a directory pattern.
+- Paths to the active spec draft, relevant `docs/domains/` files, and relevant ADR files **from the discovered registry** (`.claude/references/adr-registry.md`) — actual paths, never a directory pattern. If discovery found no registry at all, pass that explicitly (`"registry: none found"`) rather than omitting the field — the architect distinguishes a genuinely empty registry from a caller that forgot to discover, but only if told which one this is.
 - Pointers to the source code the architect should sample.
 
 The architect returns a recommendation, rationale, trade-offs, precedent, and — if warranted — an ADR draft. Reflect the recommendation back to the user; do not silently apply it. If the architect drafted an ADR, allocate and write it per `.claude/references/adr-registry.md` § *Allocate* — re-scanning the registry for the current highest number rather than reusing one read earlier — and reference it in the spec's front-matter `related_adrs`.

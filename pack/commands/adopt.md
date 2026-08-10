@@ -65,13 +65,15 @@ If a convention isn't observable (no file demonstrates it yet), it isn't a conve
 
 When scoped to an `<area>`, survey conventions within that area; don't claim project-wide conventions from one subsystem.
 
-### Phase B — Discover and confirm the domain map
+### Phase B — Discover the ADR registry, then the domain map
+
+**This phase owns ADR discovery for the run; Phase E does not re-discover.** Run `.claude/references/adr-registry.md` § *Discover* now, before the architect invocation below that might need it. Record the registry's location, format, and current high-water number for the rest of this invocation — Phase E records this same result into `CLAUDE.md` and re-scans only if it goes on to actually write an ADR (per that reference's *Allocate* step 1 and *Never cache the number*).
 
 Run the `pm` skill's extend-vs-introduce heuristic in reverse: cluster the existing code (within `<area>` if scoped) into bounded contexts. For each, note the slug, a one-line responsibility, and the files/directories it owns.
 
 Propose the map to the user as a list — one line per domain — and **wait for confirmation**. The user merges, splits, renames, or drops entries. This is the cheap correction point, exactly as domain decomposition is in `/feature-start`; correcting the map here is far cheaper than after docs are written.
 
-Invoke the `architect` subagent (fresh context, `subagent_type: architect`) **only** when a boundary is genuinely ambiguous — "is this one context or two?" where the answer constrains future work. Reflect its recommendation back before adopting it. Do not invoke it to rubber-stamp an obvious clustering.
+Invoke the `architect` subagent (fresh context, `subagent_type: architect`) **only** when a boundary is genuinely ambiguous — "is this one context or two?" where the answer constrains future work. Pass it the ADR paths discovered above — or the explicit `"registry: none found"` signal when discovery found nothing. A genuinely empty registry is common and legitimate on a brownfield project; pass it explicitly rather than omitting the field, so the architect can tell that apart from a caller that forgot to discover. Reflect its recommendation back before adopting it. Do not invoke it to rubber-stamp an obvious clustering.
 
 Default to the spine: if the repo has many candidate contexts, propose the few that carry the project and say so ("Proposing the 4 core domains; re-run `/adopt` to document the rest"). Silent truncation reads as "covered everything" — name what you're deferring.
 
@@ -117,23 +119,21 @@ Propose writing the Phase A block into that resolved section (replacing the `{{L
 
 Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
 
-### Phase E — Discover the ADR registry, then contested decisions (opt-in, sparse)
+### Phase E — Record the registry, then contested decisions (opt-in, sparse)
 
-**Discovery first, and it is not authoring.** Run the scan in `.claude/references/adr-registry.md` § *Discover* to find out whether the project already keeps decision records, and where. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
+**Discovery already ran, in Phase B; this phase does not re-run it as a matter of course.** Record what Phase B found in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* Recording it is still worth doing even though nothing allocates from the record — it makes the registry's shape visible to a human reading `CLAUDE.md`. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
 
-Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* Recording it is still worth doing even though nothing allocates from it — it makes the registry's shape visible to a human reading `CLAUDE.md`. See `.claude/references/adr-registry.md` § *Never cache the number* for why the number itself is a snapshot, not an authority.
-
-**Discovery records; it does not write ADRs.** The default below is unchanged.
+**Recording is not authoring.** The default below is unchanged.
 
 Default: **write no ADRs.** As-built rationale lives in the domain docs (Phase C), not in reconstructed ADRs — manufacturing retroactive ADRs wholesale is the bloat this command avoids.
 
 Write an ADR **only** when, during the run, the user flags an existing decision as both *load-bearing* and *plausibly reversible* (a future feature might want to revisit it). For each such case:
 
-1. Invoke the `architect` to frame the decision, its alternatives, and the trade-offs as they stand today.
-2. Write the ADR **to the registry discovered above**, in that registry's format and at its next free number per `.claude/references/adr-registry.md` § *Allocate* (which creates `docs/adr/` only when discovery found nothing). Use `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
+1. Invoke the `architect` to frame the decision, its alternatives, and the trade-offs as they stand today. Pass it the ADR paths Phase B discovered — or its explicit `"registry: none found"` — the same rule as the Phase B invocation.
+2. Write the ADR **to the registry Phase B discovered**, in that registry's format and at its next free number per `.claude/references/adr-registry.md` § *Allocate* — **re-scan first** rather than trusting Phase B's record (which creates `docs/adr/` only when discovery found nothing). See `.claude/references/adr-registry.md` § *Never cache the number* for why: this is the same rule the `pm` skill follows at spec and plan time. Use `status: accepted` and an explicit opening line: *"Documents a pre-existing decision; adoption date is not the original decision date."*
 3. Reference it from the relevant domain doc.
 
-If nothing is flagged, skip this phase entirely and say so.
+If nothing is flagged, skip this phase's ADR-writing entirely and say so.
 
 ### Phase F — Commit and hand off
 
