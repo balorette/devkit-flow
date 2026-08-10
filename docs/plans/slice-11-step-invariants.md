@@ -759,7 +759,11 @@ git commit -m "pack: /plan commits the CONF row it writes (ADR-0008 clause 1)"
 
 **(b) The staging list names an artifact `/plan` never writes.** It includes *"any spec front-matter `related_adrs` amendment Phase C made"* — but `/plan` Phase C references the new ADR in **the plan's** front-matter (already covered by "the plan"). Amending the **spec's** front-matter is `/feature-start` Phase E step 3's job. Pre-existing, and it makes Step 1's own added sentence false: the list names something the invocation does not produce. Delete that clause.
 
-Then reword *"not a checklist that happens to be four items long"* to be count-independent — with (b) removed the list is four items again, so the phrase now reads as a coincidence rather than the point.
+Then reword *"not a checklist that happens to be four items long"* to be count-independent — with (b) removed the list is four items again, so the phrase now reads as a coincidence rather than the point. The clause must keep its **warning** function, not just lose the number: it exists to stop a future editor treating the list as a closed enumeration, which is the defect (b) was. Final text:
+
+> Every artifact this invocation writes is named in this list; that is the rule, not a fixed enumeration.
+
+A first attempt (*"…; the staging list derives from what this invocation produces"*) was count-independent but tautological — both halves stated the same relation and the guard was gone.
 
 ```bash
 git add pack/commands/plan.md
