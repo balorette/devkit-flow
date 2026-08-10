@@ -677,7 +677,17 @@ python3 -m unittest discover -s tests -v
 grep -rn "docs/adr" pack/ | grep -v "references/adr-registry.md" | grep -v "templates/history"
 ```
 
-Expected: tests PASS. Every surviving hit names `docs/adr/` as the create-when-empty default or as a documenter/immutability note (`documenter/SKILL.md:37`) — none is a discovery procedure or a contract. Confirm each one individually; do not accept the count alone.
+Expected: tests PASS, and **exactly five** surviving hits, each of which must be one of these and nothing else. Confirm each individually; do not accept the count alone.
+
+| Hit | Why it survives |
+|---|---|
+| `agents/architect.md:18` | Illustrative enumeration of registry shapes ("a `docs/adr/` directory, a single decisions log, or something else entirely") |
+| `skills/pm/SKILL.md:46` | Read path, already correct — states `docs/adr/` is "the default, not the assumption" |
+| `skills/documenter/SKILL.md:37` | Doc-ownership table row about ADR immutability; outside this slice's scope |
+| `commands/feature-start.md:128` | Cautionary prose explaining why a *pattern* fails where paths work |
+| `commands/adopt.md:141` | The create-when-discovery-found-nothing default |
+
+None may be a discovery procedure or a subagent contract. A sixth hit means an edit was missed.
 
 - [ ] **Step 7: Commit**
 
