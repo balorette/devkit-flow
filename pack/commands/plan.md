@@ -149,7 +149,7 @@ Pass the architect:
 
 - The question framed in one sentence.
 - The trade-offs you've already considered.
-- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant ADR files from the discovered registry (actual paths, never a directory pattern).
+- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant ADR files from the discovered registry (actual paths, never a directory pattern — or the explicit `"registry: none found"` signal if discovery found nothing).
 - Pointers to source files the architect should sample.
 
 The architect returns a recommendation, rationale, trade-offs, precedent, and (if warranted) an ADR draft. Reflect the recommendation back to the user before accepting; the user's confirmation is the gate before applying it to the plan or writing an ADR.

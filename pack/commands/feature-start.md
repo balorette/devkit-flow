@@ -123,9 +123,9 @@ When the PM skill identifies an architectural question during brainstorm (see th
 
 - The question framed in one sentence.
 - The trade-offs the brainstorm has already considered.
-- Paths to: the active spec draft (write-as-you-go if necessary), relevant `docs/domains/<domain>.md` files, **relevant ADR files from the registry Phase A discovered** — actual paths, never a pattern — and source-code pointers.
+- Paths to: the active spec draft (write-as-you-go if necessary), relevant `docs/domains/<domain>.md` files, **relevant ADR files from the registry Phase A discovered** — actual paths, never a pattern, or its explicit `"registry: none found"` — and source-code pointers.
 
-  Passing a path pattern instead of paths is how the architect ends up reading nothing: `docs/adr/NNNN-*.md` matches no file on a project whose decisions live in a single log, and the subagent has no way to know that is not simply an empty registry.
+  Passing a path pattern instead of paths is how the architect ends up reading nothing: `docs/adr/NNNN-*.md` matches no file on a project whose decisions live in a single log, and a pattern is neither an actual path nor the explicit `"registry: none found"` signal — so the architect still can't tell that apart from a genuinely empty registry.
 
 The architect returns a recommendation in its response. Reflect it back to the user before accepting; the user's confirmation is the gate before applying it to the spec or writing an ADR.
 
