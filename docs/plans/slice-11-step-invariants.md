@@ -698,6 +698,21 @@ git add pack/commands/plan.md pack/commands/adopt.md
 git commit -m "pack: /plan and /adopt cite the ADR-registry reference (ADR-0008 clause 3)"
 ```
 
+- [ ] **Step 8: Collapse `/adopt` Phase E's restated procedure**
+
+*Added during execution.* Steps 4–5 scoped only `adopt.md:132` and `:141`, which left Phase E carrying the **full Discover procedure** at `:122-124` — Scope, Match-two-patterns with both regexes and the date-prefix exclusion, Rank-definitions — three lines above the new citation. Step 4 turned `:132` from rationale prose into a citation, so the phase ends up instructing a model to run the same scan twice from two copies that can drift. Worse than the pre-slice state, and a direct hit on this slice's own goal.
+
+Delete those three bullets and the location-is-durable / re-scan-continuously reasoning (all four are covered by the reference's *Discover* and *Never cache the number*). **Keep** the three `/adopt`-specific items the reference has no home for: the *"discovery is not authoring"* / *"discovery records; it does not write ADRs"* framing, the literal recording string *"ADRs live in `<path>` (`<format>`); highest is `<N>`."*, and the rationale that recording the number is still worth doing because it makes the registry's shape visible to a human reading `CLAUDE.md`.
+
+Before deleting any sentence, verify its content actually exists in the reference. A deletion justified by a false claim is silent content loss and no test catches it.
+
+Verify with `grep -n 'ADR\[-_ \]\|0\*\\d\|rank definitions' pack/commands/adopt.md` → empty. The surviving `docs/adr` hit in this file shifts from `:141` to `:133`; confirm that is a line shift, not a content change.
+
+```bash
+git add pack/commands/adopt.md
+git commit -m "pack: /adopt Phase E cites Discover instead of restating it"
+```
+
 ---
 
 ## Phase C — Transport and self-reference (Findings 4–7)
