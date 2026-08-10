@@ -36,7 +36,12 @@ Read, in this order:
 - `docs/specs/` for one or two recent merged specs — gives shape context.
 - `docs/plans/` for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like.
 - `docs/domains/<domain>.md` for each domain the spec touches.
-- The project's ADR titles (location per `CLAUDE.md` conventions; `docs/adr/` is the default, not the assumption); read in full any named in the spec's `related_adrs` front-matter or whose title is keyword-relevant.
+
+Then discover the ADR registry and **record the result for the rest of this invocation** — Phase C's architect invocation, and the engineer skill's plan-time architect calls, both read this record rather than re-discovering:
+
+1. **Discover.** Run `.claude/references/adr-registry.md` § *Discover* in full. Record the registry's location, its format, and its current high-water number — the number is a reported hint only, never an allocation source (see that reference's § *Never cache the number*; allocation always re-scans). Report what was found per that reference's § *Report what was found*.
+2. **Record the ADR paths.** The actual file paths discovery found, or the explicit `"registry: none found"` when discovery finds nothing. This is the piece the architect contract in "Invoking the architect" below needs verbatim — a directory pattern is not a substitute for either.
+3. **Read titles; read in full what's relevant.** Read in full any ADR named in the spec's `related_adrs` front-matter or whose title is keyword-relevant to the spec.
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
@@ -56,7 +61,7 @@ After research, audit the project-firsts you identified in Phase B against the p
 
 For each first-of-kind cross-cutting decision found, **invoke the `architect` subagent in fresh context** before drafting it into the plan. See "Invoking the architect" below for the invocation mechanic. Surface the architect's recommendation to the user; do not silently apply.
 
-If the architect drafts an ADR, write it to the **discovered** ADR registry, following `/feature-start` Phase E exactly: `CLAUDE.md` conventions tell you *where* the registry is; **re-scan it for the current highest number every time**, never trusting a recorded high-water mark, and update that record after writing. Allocation happens continuously while the record is written once, so a cached number is reused by the next allocator — and `/plan` allocating from the same cache `/feature-start` already consumed is precisely how two ADRs end up claiming one ID. `docs/adr/NNNN-<short-name>.md` is the default only when no registry exists. Reference it in the plan's front-matter `related_adrs`. Allocating here without discovering is the same duplicate-registry bug, one command over.
+If the architect drafts an ADR, allocate and write it per `.claude/references/adr-registry.md` — § *Discover* to locate the registry, § *Allocate* to take the next number, § *Never cache the number* for why a recorded high-water mark is not it. `/plan` allocating from a mark `/feature-start` already consumed is exactly how two ADRs end up claiming one ID. Reference it in the plan's front-matter `related_adrs`.
 
 This is the slice-2 forward-reference: the pm skill almost missed a cross-cutting pattern at spec time; the same risk applies even more sharply at plan time when decisions get baked into multiple steps.
 
@@ -126,7 +131,11 @@ You wrote this plan. That is exactly why you are not the one checking it — the
 
 ### Phase G — Commit and hand off
 
-Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, and any spec front-matter `related_adrs` amendment Phase C made. Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
+Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, **and the findings ledger if Phase F2 recorded a `CONF` row** (its path is the discovered one, not assumed).
+
+A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Every artifact this invocation writes is named in this list; that is the rule, not a fixed enumeration.
+
+Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
 
 Then pause for the user. Surface, in one short message:
 
@@ -145,7 +154,7 @@ Pass the architect:
 
 - The question framed in one sentence.
 - The trade-offs you've already considered.
-- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant ADR files from the project's registry.
+- Paths to: the active spec, the in-progress plan draft (if any sections are written), relevant `docs/domains/<domain>.md` files, relevant ADR files from the discovered registry (actual paths, never a directory pattern — or the explicit `"registry: none found"` signal if discovery found nothing).
 - Pointers to source files the architect should sample.
 
 The architect returns a recommendation, rationale, trade-offs, precedent, and (if warranted) an ADR draft. Reflect the recommendation back to the user before accepting; the user's confirmation is the gate before applying it to the plan or writing an ADR.

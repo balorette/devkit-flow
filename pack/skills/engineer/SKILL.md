@@ -68,7 +68,17 @@ See `.claude/references/solid-checklist.md` for the five principles. Apply per-d
 
 ## Clean Architecture layering
 
-See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. Do not guess on architectural boundaries; the cost of getting it wrong propagates.
+See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. See "Invoking the architect" below for what to pass. Do not guess on architectural boundaries; the cost of getting it wrong propagates.
+
+## Invoking the architect
+
+Every architect call in this skill — the layer-ambiguity call above, the three-strikes escalation in *When something breaks*, and the plan-time boundary call in *Plan-time behaviors* — passes the same packet: the question in one sentence, the trade-offs already considered, the active spec, relevant `docs/domains/` files, source pointers, and ADR paths.
+
+**At plan time** (`/plan` loads this skill), `/plan` Phase A has already run `.claude/references/adr-registry.md` § *Discover* before this skill's plan-time section is ever consulted — use that recorded result; don't re-discover.
+
+**At build time** (`/build` loads this skill), nothing has discovered the registry yet this session. `/feature-start` Phase A discovered it once, but `.claude/state.md` doesn't carry that record forward — nothing persists it between invocations, and the state file has no field for it — so the engineer cannot assume it's still available. **Discover it yourself, once, before the first architect call of the `/build` session:** follow `.claude/references/adr-registry.md` § *Discover* in full, record the location, format, and high-water number for the rest of the session, and pass the resulting ADR paths — or the explicit `"registry: none found"` when discovery finds nothing — to every architect call the session makes.
+
+If the architect drafts an ADR in response (build-time or plan-time), allocate and write it per `.claude/references/adr-registry.md` § *Allocate* — re-scanning for the current highest number rather than reusing one recorded earlier, exactly as `pm` does at spec and plan time.
 
 ## Karpathy discipline
 
@@ -89,7 +99,7 @@ Root cause before fix. The rule is not "investigate thoroughly" — it is **no f
 3. **Check what changed.** `git bisect` is unusually cheap here, and that is a direct payoff of the commit cadence rather than a coincidence: each step is its own commit, so a bisect lands on one step's diff instead of a mega-commit you still have to search.
 4. **State one hypothesis** — *"I think X, because Y"* — and test it with the smallest change that would distinguish it from the alternatives. One variable. Two changes at once means a passing test tells you nothing about which one mattered.
 5. **Write the failing test through the `tester` subagent**, fresh context, exactly as in the Red phase. A fix without a test pinning it will regress, and the moment it does, the reasoning that produced it is gone.
-6. **Three strikes.** If three hypotheses have failed, stop fixing. Repeated failures in different places are evidence about the *design*, not about your attempts — invoke the `architect`, and `/checkpoint` if the plan needs amending. A fourth attempt at that point is the most expensive way to learn the same thing.
+6. **Three strikes.** If three hypotheses have failed, stop fixing. Repeated failures in different places are evidence about the *design*, not about your attempts — invoke the `architect` (see "Invoking the architect" for what to pass), and `/checkpoint` if the plan needs amending. A fourth attempt at that point is the most expensive way to learn the same thing.
 
 Do not bundle "while I'm here" changes into a fix. The diff that fixes the bug contains only the fix — anything else makes the revert lossy and hides which change actually mattered.
 
@@ -192,7 +202,7 @@ The pm skill owns plan-time architect invocation for cross-cutting *patterns*. Y
 - **pm cue:** the step decomposition keeps repeating the same pattern shape (suggests a project-first cross-cutting pattern is emerging).
 - **engineer cue:** a piece of code doesn't fit cleanly in any existing layer, or the choice of layer would constrain future work. E.g., "this new ADK tool needs to call the agent runtime for sub-tool dispatch — does that wiring live in the adapter layer or in a new sub-tool registry?"
 
-Invoke the architect at plan time when the layer-boundary question would otherwise be answered in `/build` under time pressure with no precedent search. The cost of an architect call at plan time (one round-trip) is cheaper than a refactor mid-build.
+Invoke the architect at plan time when the layer-boundary question would otherwise be answered in `/build` under time pressure with no precedent search. The cost of an architect call at plan time (one round-trip) is cheaper than a refactor mid-build. Pass the packet described in "Invoking the architect" above — at plan time, reuse what `/plan` Phase A already discovered rather than re-discovering.
 
 ## How this skill plugs into the pack
 

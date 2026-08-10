@@ -66,9 +66,10 @@ Each workflow command proposes its own commit before pausing; you confirm or dec
 | Plan approved | you flip front-matter `status` to `approved` | `approve plan: <slug>` |
 | Each plan step | end of `/build` (engineer Verify substep 5) | `step N: <step heading>` |
 | Each amendment | end of `/checkpoint` | `/checkpoint A: <description>` (or B/C/D variant) |
-| Summary + domain doc + state.md transition | inside `/feature-merge` | `/feature-merge: summary + state.md to idle` |
-| PR opened (PR flow) | end of `/feature-merge` (your confirmation) | *(no commit — pushes the branch and opens the PR)* |
-| Each accepted review finding | end of `/pr-review` Phase D | `review: <short summary>` |
+| Summary + domain doc + state.md transition | inside `/feature-merge` | `/feature-merge: summary + state.md` |
+| PR opened (PR flow) | end of `/feature-merge` (your confirmation) | `/feature-merge: in-review (PR #<n>)` (stages `.claude/state.md` only) |
+| Each accepted review finding | end of `/pr-review` Phase D, stage 1 | `review: <short summary>` |
+| Findings ledger + state.md | end of `/pr-review` Phase D, stage 4 | `review: findings ledger + state` |
 | Merge to mainline | end of `/feature-merge` (your confirmation), or the PR merging on the forge | `Merge feature/<slug> into <mainline>` |
 
 Two rules apply everywhere:
@@ -78,15 +79,19 @@ Two rules apply everywhere:
 
 A clean feature history reads as one line per logical moment — bisectable, revertable per step. A feature that landed in one mega-commit ignored the cadence; the next feature is a chance to course-correct.
 
-## `.claude/` is pack-owned
+## Which `.claude/` files the pack owns
 
-Everything under `.claude/` is vendored from the devkit pack and versioned by it, not by this repository's conventions.
+**Not all of them.** `.claude/.devkit-manifest.json` lists exactly what the installer tracks — skills, agents, commands, hooks, references, plus `devkit-orientation.md` and `MIGRATIONS.md`. Those files are vendored from the pack and versioned by it rather than by this repository's conventions.
 
-Your linters, reviewers, and CI will see those files and may file findings against them under your project's rules. The drift hook's `print(..., file=sys.stderr)` is the common one — that stderr line **is** the hook's channel back to the model, so routing it through a logging framework would break it, and the hook is deliberately stdlib-only. Expect findings of this shape on every install.
+Anything else under `.claude/` is **yours**: subagents and commands you wrote, and anything a previous setup left there. The pack does not manage them, will not update them, and has no opinion about them. On a project that had `.claude/` before devkit, that is usually most of the directory.
 
-Treat them as pack issues rather than project issues, and report them upstream instead of editing in place. A local edit is what the installer's customization detection will `SKIP` on your next update — you keep your change and stop receiving improvements to that file, silently.
+Two files are **seeded** — stamped once and yours to edit freely thereafter: `.claude/state.md` and your `CLAUDE.md`. The installer never rewrites them; changes to their shape arrive as entries in `.claude/MIGRATIONS.md`. `settings.json` is a third case: the installer merges its hook fragment in and leaves the rest of the file alone.
 
-The exceptions are the files the pack **seeds** rather than owns: `.claude/state.md` and your `CLAUDE.md` are yours to edit freely. The installer never rewrites them; changes to their shape arrive as entries in `.claude/MIGRATIONS.md`.
+### Findings filed against pack-tracked files
+
+Your linters, reviewers, and CI will see the tracked files and may file findings against them under your project's rules. The drift hook's `print(..., file=sys.stderr)` is the common one — that stderr line **is** the hook's channel back to the model, so routing it through a logging framework would break it, and the hook is deliberately stdlib-only.
+
+For a file in the manifest, treat findings of that shape as pack issues and report them upstream rather than editing in place: a local edit is what the installer's customization detection will `SKIP` on your next update, so you keep your change and silently stop receiving improvements to that file. For a file *not* in the manifest, none of that applies — it is your file, and your project's rules are the right rules for it.
 
 ## Automated guards
 

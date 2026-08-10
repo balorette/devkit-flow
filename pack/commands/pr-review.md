@@ -9,7 +9,7 @@ Drive the review-response loop for a feature whose PR is open. One `/pr-review` 
 ## Arguments
 
 - **`/pr-review`** — normal mode. Skips threads the pack has already replied in.
-- **`/pr-review all`** — re-triage every thread, including previously-answered ones. Use when replies were posted manually outside the pack, or when a spec amendment changes how earlier findings should have been classified.
+- **`/pr-review all`** — re-triage every thread, including previously-answered ones. Use when replies were posted manually outside the pack, or when a spec amendment changes how earlier findings should have been classified. The pack's own replies stay excluded; `all` re-opens the reviewer's items, not the answers to them.
 
 ## Preconditions
 
@@ -42,9 +42,9 @@ Skip an item if **either** is true:
 1. **A marker names its id.** Some reply on the PR carries `handled:<this item's id>` — the item has been answered.
 2. **The item itself contains a marker.** It is one of the pack's own replies.
 
-Both conditions are required, and the second is easy to miss. A reply's marker names the *original* comment's id, while the reply is itself a comment with a *different* id that no marker names. Condition 1 alone would therefore skip the original and treat the pack's own answer as a new item to respond to — proposing replies to its own replies, growing by one every pass. This is the same defect as the `in_reply_to_id` bug it replaced, recurring one level up: the pack's own actions are among the things that changed the state it is reading.
+Both checks must be implemented — an item matching *either* is skipped — and the second check is the one that is easy to miss. A reply's marker names the *original* comment's id, while the reply is itself a comment with a *different* id that no marker names. Condition 1 alone would therefore skip the original and treat the pack's own answer as a new item to respond to — proposing replies to its own replies, growing by one every pass. This is the same defect as the `in_reply_to_id` bug it replaced, recurring one level up: the pack's own actions are among the things that changed the state it is reading.
 
-Search all three surfaces for markers, build the handled set, then skip. **Report the skipped count** — silent omission is precisely the failure this guard prevents, and a number the user can sanity-check is the whole point. `/pr-review all` disables the skip.
+Search all three surfaces for markers, build the handled set, then skip. **Report the skipped count** — silent omission is precisely the failure this guard prevents, and a number the user can sanity-check is the whole point. **`/pr-review all` disables condition 1 only.** Condition 2 always applies: an item carrying a devkit marker is the pack's own reply and is never a review item, in any mode. Disabling the whole skip would re-fetch those replies and offer to answer them — the exact recursion the paragraph above prevents, reintroduced by the flag meant to re-triage the reviewer's comments.
 
 ADR-0003 chose the forge as the triage ledger — no local state — and that choice stands. What failed was the *detection*: `in_reply_to_id` exists only on inline review comments, so replies to review bodies and top-level comments recorded nothing, and a second pass re-fetched both the original item **and** the pack's own reply, then offered to answer it again. A marker the pack writes itself works on every surface and still requires no local bookkeeping.
 
@@ -77,10 +77,15 @@ Strict order. Each stage completes before the next begins.
 1. **Code fixes**, one at a time, each under the `engineer` skill's Verify discipline: tests green, lint and type-check clean, its own commit. Subject `review: <short summary>`. Stage explicitly; never `git add -A`. A review fix that cannot be brought green is not a fix — halt and surface it.
 2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. Through the `documenter` skill, propose-before-write as always.
 3. **The findings ledger and `.claude/state.md`.** Anything accepted but deferred past this feature goes in the ledger as a `REV` row (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). `state.md`'s `## Open questions` holds only what must be resolved *within this feature* — `/feature-merge` clears that section, so a finding parked there and not fixed before merge is a finding silently discarded. Remove entries whose fix just landed.
-4. **Push — and verify the remote tip actually contains the fix commits.** Check with `git ls-remote origin <branch>`, compared against your local `HEAD`.
+4. **Commit the metadata.** Stage exactly what stages 2 and 3 wrote — the summary doc, the discovered findings-ledger path, and `.claude/state.md` — and propose a commit. Subject: `review: findings ledger + state`. Stage explicitly; never `git add -A`.
+
+   Stages 2 and 3 write durable artifacts and stage 5 pushes; without this, neither reaches the remote. The PR then lacks the `REV` record that is the whole point of a cross-feature deferral, and the tree stays dirty — which `/feature-merge`'s own preconditions treat as blocking, so the next closeout cannot check out mainline.
+
+   **If the user declines this commit, stop here — do not proceed to stage 5.** Like every commit in this pack, it's a proposal the user may decline, but declining it leaves the summary, ledger, and `state.md` edits uncommitted, and pushing the fix commits anyway would strand exactly those artifacts locally: the failure this stage exists to close. The user's options are to commit it (editing the message or splitting it first, if they want) or to stop and resolve the tree by hand; either way, re-run `/pr-review` once the tree is clean rather than continuing past the decline.
+5. **Push — and verify the remote tip actually contains the fix commits.** Check with `git ls-remote origin <branch>`, compared against your local `HEAD`.
 
    Use `git ls-remote`, **not** `gh pr view --json headRefOid`. The former reads the ref directly and is authoritative the moment the push lands; the latter reads GitHub's PR view, which can serve a stale `headRefOid` for seconds after a successful push. Verifying with the API produces a false *negative* — a correct push reported as unverified — and the correct response to an unverified push is to post nothing, so the failure mode is a stalled run rather than a bad one. Still worth avoiding: a check that cries wolf gets skipped.
-5. **Replies**, only after that verification passes.
+6. **Replies**, only after that verification passes.
 
 **Push before replying.** A reply citing a SHA is a public, unrecallable claim about the remote — and until the push succeeds that SHA does not exist there. If the push then fails (auth, network, a rejected non-fast-forward because someone else pushed), the PR is left carrying citations to code it does not contain, in comments addressed to the reviewers who will go looking.
 
@@ -88,7 +93,7 @@ An earlier version of this command had replies last, reasoning that *"a reply sa
 
 ### Phase E — Hand off
 
-One short report: items per bucket, commits made, replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.
+One short report: items per bucket, commits made (fixes **and** the metadata commit), replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.
 
 If every thread is answered and the working tree is clean, suggest re-running `/feature-merge`. New commits mean gates 1–3 need re-validation against the code that will actually merge.
 
@@ -110,6 +115,7 @@ Stop and surface to the user (do not auto-recover) if:
 - The user declines the proposed batch without providing a revision.
 - A reply fails to post (`gh` error, thread locked, PR closed mid-run). Report which replies landed and which did not; never retry blindly into a PR whose state you no longer know.
 - **The push fails, or the remote tip does not contain the fix commits after it.** Report which commits are local-only, **post nothing**, and stop. Fixes that exist only on your machine plus replies announcing them is the worst state this command can leave a PR in — the reviewer sees claims they cannot verify and code that has not changed.
+- **The metadata commit (Phase D stage 4) is declined.** Report what's still uncommitted (summary doc, findings-ledger entry, `.claude/state.md`) and stop — do not push the fix commits from stage 1 while those remain uncommitted. The user commits the metadata (as proposed or edited) or resolves the tree themselves; re-run `/pr-review` once it's clean.
 
 ## Common rationalizations
 

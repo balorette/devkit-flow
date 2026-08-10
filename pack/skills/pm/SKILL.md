@@ -43,7 +43,7 @@ Before asking the user a single question:
 - Read `CLAUDE.md` for project conventions.
 - Read `docs/domains/` to understand the project's existing vocabulary and bounded contexts.
 - Skim `docs/specs/` for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*).
-- Skim the project's ADRs. If any are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec. Their location is recorded in `CLAUDE.md` conventions by `/adopt`; `docs/adr/` is the default, not the assumption.
+- **Discover the ADR registry and record it for this invocation.** Follow `.claude/references/adr-registry.md` § *Discover* in full — a `CLAUDE.md` note left by a prior `/adopt` is a useful hint for where to look, not a substitute for running the scan (see that reference's *Never cache the number*). Record the location, format, and current high-water number; every architect invocation and ADR write for the rest of this invocation reads from that record. If any ADRs are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec.
 - **Read the findings ledger** (`docs/findings.md`, or the existing review system `CLAUDE.md` names). Open rows touching the area this feature will change are prior art, and they cut two ways: some are fix-now candidates that belong in this feature's scope, and the rest are known hazards to design around. A deferred security or conformance finding in the code you're about to extend is exactly the context a brainstorm should start from — rediscovering it as a bug three features later is the failure this ledger exists to prevent.
 - Read `.claude/state.md` to confirm no active feature is in progress.
 
@@ -201,17 +201,17 @@ When you invoke the architect, pass:
 
 - The specific question, framed in one sentence.
 - The trade-offs you've already considered (so the architect doesn't repeat your work).
-- Paths to the active spec draft, relevant `docs/domains/` files, and relevant `docs/adr/` files.
+- Paths to the active spec draft, relevant `docs/domains/` files, and relevant ADR files **from the discovered registry** (`.claude/references/adr-registry.md`) — actual paths, never a directory pattern. If discovery found no registry at all, pass that explicitly (`"registry: none found"`) rather than omitting the field — the architect distinguishes a genuinely empty registry from a caller that forgot to discover, but only if told which one this is.
 - Pointers to the source code the architect should sample.
 
-The architect returns a recommendation, rationale, trade-offs, precedent, and — if warranted — an ADR draft. Reflect the recommendation back to the user; do not silently apply it. If the architect drafted an ADR, write it to `docs/adr/NNNN-<short-name>.md` with the next free number, and reference it in the spec's front-matter `related_adrs`.
+The architect returns a recommendation, rationale, trade-offs, precedent, and — if warranted — an ADR draft. Reflect the recommendation back to the user; do not silently apply it. If the architect drafted an ADR, allocate and write it per `.claude/references/adr-registry.md` § *Allocate* — re-scanning the registry for the current highest number rather than reusing one read earlier — and reference it in the spec's front-matter `related_adrs`.
 
 ## After the spec is approved
 
 `/feature-start`'s job (and yours within it) ends when:
 
 - The spec exists at `docs/specs/<feature>.md` with `status: approved`.
-- Any ADRs drafted during brainstorm are written under `docs/adr/`.
+- Any ADRs drafted during brainstorm are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`).
 - The feature branch exists.
 - `.claude/state.md` points at the new spec and reflects `Phase: spec-approved` (or `spec-draft` if the user is reviewing asynchronously).
 
@@ -341,7 +341,7 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 ### What you hand to /plan when you're done
 
 - The plan file exists at `docs/plans/<slug>.md` with `status: draft`.
-- Any ADRs drafted during plan-time architect calls are written under `docs/adr/`.
+- Any ADRs drafted during plan-time architect calls are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`). Plan-time allocation re-scans exactly as brainstorm-time does — `/feature-start` may already have consumed the number you last saw.
 - The plan's front-matter `related_adrs` references them.
 - The state.md update mechanic is /plan's responsibility, not yours. You return; /plan writes Phase + Next step.
 
@@ -350,7 +350,7 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 - **Producing a thin spec because an example looks thin.** Examples demonstrate *shape*, not *depth*. `.claude/references/spec-and-plan-depth.md` is the source of truth for depth. A merged spec that looks thinner than the checklist was scope-cut, not depth-cut — check its amendment blockquotes before copying its shape.
 - **Silent inference.** Filling in a requirement the user didn't state because "it's obvious." Anything not stated is a question the brainstorm should have asked.
 - **Treating the spec as a list of features instead of a contract.** A spec describes behaviors that can be verified after the build, not capabilities the team intends to ship. Acceptance criteria are checkable. "We will support fuzzy matching" is not a criterion; "Author normalization treats `J.K. Rowling` and `J. K. Rowling` as the same" is.
-- **Skipping the orientation step.** Diving straight into brainstorm without reading `CLAUDE.md`, `docs/domains/`, and `docs/adr/` means the brainstorm asks questions the project has already answered, which feels bureaucratic and erodes trust in the dialogue.
+- **Skipping the orientation step.** Diving straight into brainstorm without reading `CLAUDE.md`, `docs/domains/`, and the project's ADR registry means the brainstorm asks questions the project has already answered, which feels bureaucratic and erodes trust in the dialogue.
 - **Over-decomposing.** Splitting one feature into three domains because "separation of concerns" produces a spec that's harder to build and a plan that's harder to sequence. Trust the existing domain shape; introduce new domains only with specific evidence.
 - **Invoking the architect for non-architectural questions.** Fresh-context invocation is expensive (in tokens and in user time). Use it where it pays.
 - **Skipping the research phase at plan time.** A plan written without research produces code that is technically correct but stylistically detached from the project — wrong import style, wrong validation idiom, wrong library choice. The research phase is required, not optional. See "Plan-time behaviors" above.

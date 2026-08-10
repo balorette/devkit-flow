@@ -36,14 +36,11 @@ Field meanings:
   PR              URL or owner/repo#N while Phase is in-review; "—" otherwise.
                   Set by /feature-merge when it opens the PR; cleared at
                   closeout once the PR has merged.
-  Gated baseline  the last commit whose CONTENT passed gates 1-3 -- the tip
-                  before the state.md-only transition commit, set when the PR
+  Gated baseline  the last commit SHA that passed gates 1-3. Set when the PR
                   opens and after every successful gate rerun. /feature-merge
-                  diffs it against the PR tip, excluding this file, to decide
-                  whether a rerun needs the gates. Excluding it is required:
-                  writing this field commits it, so a plain SHA comparison
-                  would never match. Comparing local vs remote tips cannot
-                  work either -- /pr-review pushes its fixes and makes them
+                  compares it against the PR tip to decide whether a rerun
+                  needs the gates -- comparing local vs remote tips cannot
+                  work, because /pr-review pushes its fixes and makes them
                   agree.
   Next step       short pointer to the next plan step when phase = building
 

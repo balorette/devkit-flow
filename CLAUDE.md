@@ -64,8 +64,9 @@ Target: `enterprise-agent` (Google ADK + LiteLLM personal-assistant agent at `~/
 
 **Not yet dogfood-validated:**
 
-- **Slice 9 — Enterprise API findings (2026-08-03).** All twelve findings from the first brownfield install, in three phases: brownfield portability ([ADR-0005](docs/design/0005-brownfield-portability.md)), the six slice-8 defect fixes ([ADR-0003 § Corrections](docs/design/0003-pr-lifecycle-and-findings-triage.md)), and the findings ledger + `conformance-reviewer` ([ADR-0006](docs/design/0006-findings-ledger-and-plan-conformance.md)), plus a hand-written `MIGRATIONS.md` as the interim for [ADR-0007](docs/design/0007-artifact-dispositions.md). **Four behavioural predictions are recorded and unrun** in `docs/validation/slice-9.md`. Needs the full end-to-end dogfood on the brownfield target — install, `/adopt`, then one feature through to PR closeout.
+- **Slice 9 — Enterprise API findings (2026-08-03).** All twelve findings from the first brownfield install, in three phases: brownfield portability ([ADR-0005](docs/design/0005-brownfield-portability.md)), the six slice-8 defect fixes ([ADR-0003 § Corrections](docs/design/0003-pr-lifecycle-and-findings-triage.md)), and the findings ledger + `conformance-reviewer` ([ADR-0006](docs/design/0006-findings-ledger-and-plan-conformance.md)), plus a hand-written `MIGRATIONS.md` as the interim for [ADR-0007](docs/design/0007-artifact-dispositions.md). **Four behavioural predictions are recorded and unrun** in `docs/validation/slice-9.md`. Needs the full end-to-end dogfood on the brownfield target — install, `/adopt`, then one feature through to PR closeout. **Finding 1 of the follow-up PR #139 review is [ADR-0007](docs/design/0007-artifact-dispositions.md) `:128`'s risk actually occurring** — a seeded-template change shipped with an incomplete `MIGRATIONS.md` entry — which is why slice 11 lands that guard early instead of waiting on slice 10.
 - **Slice 10 — artifact dispositions.** Designed in ADR-0007, unplanned. Generalises what slice 9's task 21 did by hand: owned/seeded/discovered as declared dispositions, a `/devkit-reconcile` command, and a disposition-aware manifest. Until it lands, every seeded-file change must be hand-written into `MIGRATIONS.md` or it silently ships to nobody — the same defect, relocated.
+- **Slice 11 — Step invariants (2026-08-10).** Eight pack findings from a second automated-review round on the Enterprise API 0.10.0 upgrade and first `/adopt` run (`docs/validation/pr139-pack-findings.md`, PR #139), closed by three named clauses in [ADR-0008](docs/design/0008-step-invariants.md): an artifact and its carrier commit together, never infer "what changed" from state the pack itself wrote, and discovery precedes every consumer. Net changes: `tests/test_migrations_snapshot.py` + `pack/templates/history/<version>/` (release guard); `pack/references/adr-registry.md` absorbing discovery/allocation restated across `/feature-start`, `pm`, and `architect`; `/plan` Phase G and `/pr-review` Phase D each gain the commit that carries what they write; `/feature-merge`'s `Gated baseline` relocated to the tip before the transition commit with a content-diff discriminator excluding `.claude/state.md`; `/pr-review all` scoped to leave the own-reply filter intact; `.claude/` ownership rescoped to the manifest's tracked set. Ships as **0.11.0** (`VERSION` bumped, 0.11.0 template snapshot in `pack/templates/history/0.11.0/`). **Behavioral predictions are recorded and unrun** in `docs/validation/slice-11.md`. Slice 10 (artifact dispositions, ADR-0007) remains unbuilt; slice 11 does not depend on it — the numbering is deliberate, not a gap. Needs the Enterprise API dogfood: reopen the PR, change nothing, confirm `/feature-merge` runs no gates.
 
 - **PR lifecycle + findings triage (slice 8)** — authored 2026-07-30; design in `docs/design/0003-pr-lifecycle-and-findings-triage.md`, plan in `docs/plans/slice-8-pr-lifecycle.md`, authoring record in `docs/validation/slice-8.md`. Net changes: new `pack/references/findings-triage.md` (the consumer-side discipline for evaluating any finding, internal or external) and `pack/commands/pr-review.md` (intake/triage/response across all three GitHub comment surfaces, re-runnable, nothing posts unseen); `/feature-merge` gains flow detection, a Phase-branch table making it re-runnable, the `gh pr create` path, and phase-aware async closeout; `state.md` gains `Phase: in-review` and a `PR:` field; documenter gains *Review notes* + *The summary as PR body*; engineer cites findings-triage for tester/architect output. No installer change needed (`TRACKED_DIRS` already covers `commands/` and `references/`). **Four behavioral predictions are recorded and unrun** — T6b (nothing posts to a PR before user confirmation) blocks the slice rather than merely revising it. Needs a GitHub-remote project with real reviewers.
 - **Slice 9 — scoped but not authored.** The `debugger` skill (the pack has no debugging discipline at all; `/build`'s halt conditions hand off to a process that doesn't exist) and a `reviewer` subagent as a pre-PR gate 4 covering the cross-step lens no current component owns. Both were scoped during the 0003 discussion and deliberately deferred; rationale in that ADR's *Context* and *Consequences*.
@@ -94,6 +95,25 @@ Still pending dogfood only (no authoring left):
 
 - (a) `/feature-merge` on `feature/notes-write-and-delete-services-and-tools` to exercise the gate trio + the polish items + `/checkpoint` commit proposal, or
 - (b) start a small new feature on Enterprise Agent (e.g., the deferred `add ruff + mypy + pre-commit` follow-up) to exercise commit-discipline + grilling end-to-end.
+
+## Releasing the pack
+
+Seeded files (`state.md`, `CLAUDE.md`) are stamped once and never rewritten by
+the installer, so a change to their *shape* reaches existing installs only via
+`pack/MIGRATIONS.md`. `tests/test_migrations_snapshot.py` blocks a release that
+forgets one. The cycle:
+
+1. `diff -u pack/templates/history/<prev>/state.md.template pack/state.md.template`
+   (and the same for `CLAUDE.md.template`).
+2. Account for **every hunk** in a `## <new-version>` section of `pack/MIGRATIONS.md`.
+   Not every hunk needs its own bullet — but every hunk needs a decision.
+3. Bump `VERSION`.
+4. `mkdir -p pack/templates/history/<new-version> && cp pack/*.template pack/templates/history/<new-version>/`
+5. `python3 -m unittest discover -s tests`
+
+Step 1 is the one that matters. Finding 1 of the PR #139 review was a migration
+entry written from recollection: two things changed in 0.10.0 and the entry
+documented one.
 
 ## Working principles for this project
 
