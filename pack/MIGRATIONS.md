@@ -40,7 +40,11 @@ A Claude Code session can do this for you: ask it to apply the pending entries. 
                   before the state.md-only transition commit, set when the PR
                   opens and after every successful gate rerun. /feature-merge
                   diffs it against the PR tip, excluding this file, to decide
-                  whether a rerun needs the gates.
+                  whether a rerun needs the gates. Excluding it is required:
+                  writing this field commits it, so a plain SHA comparison
+                  would never match. Comparing local vs remote tips cannot
+                  work either -- /pr-review pushes its fixes and makes them
+                  agree.
   ```
 
   The field's shape is unchanged; its **meaning** is. In 0.10.0 it held the SHA the gates ran against, and `/feature-merge` compared it to the PR tip for equality — which could never match, because writing the field commits it. 0.11.0 stores the tip before that commit and compares by content diff excluding `state.md`. No edit to your header is needed; this keeps the file's own documentation true.
