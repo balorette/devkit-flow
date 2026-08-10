@@ -1171,8 +1171,14 @@ Insert immediately after the `# Migrations` preamble and before `## 0.10.0`:
                   before the state.md-only transition commit, set when the PR
                   opens and after every successful gate rerun. /feature-merge
                   diffs it against the PR tip, excluding this file, to decide
-                  whether a rerun needs the gates.
+                  whether a rerun needs the gates. Excluding it is required:
+                  writing this field commits it, so a plain SHA comparison
+                  would never match. Comparing local vs remote tips cannot
+                  work either -- /pr-review pushes its fixes and makes them
+                  agree.
   ```
+
+  **Quote the live template, not this block.** The text above must match `pack/state.md.template` exactly at release time; if Task 10's wording drifted, the template wins. A migration whose quoted block is shorter than what shipped is an *incomplete entry* — finding 1's defect class, relocated.
 
   The field's shape is unchanged; its **meaning** is. In 0.10.0 it held the SHA the gates ran against, and `/feature-merge` compared it to the PR tip for equality — which could never match, because writing the field commits it. 0.11.0 stores the tip before that commit and compares by content diff excluding `state.md`. No edit to your header is needed; this keeps the file's own documentation true.
 ```
