@@ -4,6 +4,7 @@
 **Date:** 2026-08-10
 **Deciders:** [user], Claude (design partner)
 **Evidence:** [`docs/validation/pr139-pack-findings.md`](../validation/pr139-pack-findings.md) Findings 1–8, each re-verified against `pack/` source before this ADR was written
+**Amended:** 2026-08-10 — clause 1 gained a stated exception for a step that may execute outside a git repository, in response to PR #3 review; see *Open questions*, now resolved.
 
 ---
 
@@ -63,6 +64,8 @@ The carrier depends on the artifact:
 | A change to a *seeded* file's shape | an existing install | a `MIGRATIONS.md` entry for the version that ships it |
 
 **What it forbids:** a step whose output is left for "whatever commits next" to notice. A staging list maintained by hand at a distance from the writes it covers is the failure mode — `/plan` Phase G lists four artifact classes and F2's ledger row is simply not among them.
+
+**Exception — no repository, no carrier.** A step that may execute outside a git repository has no carrier available for a repo-file artifact, and clause 1 does not apply to it. This is not license to say nothing: the command must state, in its own text, that it falls outside clause 1 and why — e.g., its preconditions don't require a git repo, so it cannot assume a commit exists to propose. An exception left unstated in the command is indistinguishable from the oversight this clause exists to catch.
 
 ### Clause 2 — Never infer "what changed" from state you wrote yourself
 
@@ -167,7 +170,7 @@ The scan procedure moves to **`pack/references/adr-registry.md`**: scan scope, b
 
 - Should clause 2's exclusion pathspec be centralized (a named "pack bookkeeping paths" list) rather than written at each comparison? Leaning: no while there is exactly one comparison. Revisit at the second.
 - Should `conformance-reviewer` be taught to check plans against these three clauses? Leaning: out of scope — it reviews plans against specs, and this is an authoring-time property of the pack itself.
-- `pack/commands/claude-md-merge.md` and `pack/commands/adopt.md` both write structural edits to a project's `CLAUDE.md` — the same artifact — but disagree on clause 1: `claude-md-merge.md:100,137` explicitly declines to name a carrier commit ("the user commits at their cadence"), while `adopt.md`'s Phase F proposes and commits the same kind of edit. A plausible rationale exists — `/claude-md-merge` may run before a project is git-bootstrapped, whereas `/adopt` gates on being a repo (`adopt.md:22`) — but neither file states it. Does clause 1 admit an exception for a command that may run outside a git repo, and if so must that exception be stated in the command rather than left implicit? Unresolved; not fixed in slice 11.
+- **Resolved (2026-08-10).** `pack/commands/claude-md-merge.md` and `pack/commands/adopt.md` both write structural edits to a project's `CLAUDE.md` — the same artifact — but disagreed on clause 1: `claude-md-merge.md:100,137` explicitly declined to name a carrier commit ("the user commits at their cadence"), while `adopt.md`'s Phase F proposes and commits the same kind of edit. A plausible rationale existed — `/claude-md-merge` may run before a project is git-bootstrapped, whereas `/adopt` gates on being a repo (`adopt.md:22`) — but neither file stated it. **Owner's decision: yes, clause 1 admits an exception for a command that may run outside a git repo, and the exception must be stated in the command rather than left implicit.** `/claude-md-merge` is the one that qualifies — its preconditions require only `CLAUDE.md` and `.claude/devkit-orientation.md`, no git repo — while `/adopt` does not, because it gates on being a repo and always has somewhere to commit. Clause 1 above now states the exception; `claude-md-merge.md` now states its own rationale for invoking it.
 
 ## Relationship to slice 10 / ADR-0007
 

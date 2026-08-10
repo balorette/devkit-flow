@@ -97,7 +97,7 @@ Equivalent (left as-is):
 
 If anything was skipped, end with a one-line nudge: "Re-run `/claude-md-merge` later to revisit skipped items."
 
-Do not propose a git commit. CLAUDE.md edits are project housekeeping; the user commits at their cadence.
+Do not propose a git commit. CLAUDE.md edits are project housekeeping; the user commits at their cadence. This command's preconditions require only `CLAUDE.md` and `.claude/devkit-orientation.md` — no git repo — so it may run somewhere with no commit to propose; it relies on clause 1's outside-a-repo exception rather than omitting the carrier by oversight.
 
 ## Idempotency
 
@@ -134,7 +134,7 @@ Stop and surface, without applying anything, when:
 
 - **Does not touch `.claude/devkit-orientation.md`.** That file is pack-owned; the installer manages it.
 - **Does not touch any other doc** (`docs/`, READMEs, etc.). `CLAUDE.md` only.
-- **Does not commit.** The user commits at their cadence.
+- **Does not commit.** The user commits at their cadence. Unlike `/adopt`, this command has no git precondition, so it cannot assume a commit is available to propose — the stated exception is clause 1's outside-a-repo case, not an oversight.
 - **Does not rewrite user-authored content.** Project conventions, custom sections, prose the user wrote — all left alone. Only the canonical structural elements are in scope.
 - **Does not require an active feature.** Unlike `/checkpoint` and `/feature-merge`, this command is project housekeeping and runs whether `.claude/state.md` shows an active feature or `none`.
 
