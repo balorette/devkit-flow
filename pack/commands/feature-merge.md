@@ -21,8 +21,21 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
 | `in-review`, PR open, **gated content unchanged** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this content already passed them. |
-| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen — then push and update `Gated baseline`. Do **not** re-create the PR. |
+| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen — then update `Gated baseline`, commit `.claude/state.md` only, and push (same recipe as *PR creation*'s transition commit, below). Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
+
+The `in-review` rows have their own preconditions, checked **before** the discriminator runs:
+
+1. `PR:` is set in state.md, or a PR is discoverable for the current branch.
+2. **Local and remote agree.** No uncommitted changes to tracked files, and the local branch is not ahead of the remote. Check the latter with `git ls-remote origin <branch>`, compared against local `HEAD` — **not** `gh pr view --json headRefOid`. The API can serve a stale `headRefOid` for a moment after a push (see `/pr-review`'s push-verification step for the same distinction); using it here risks a false negative on a genuinely diverged branch, which is exactly the case this check exists to catch. `git ls-remote` reads the ref directly and is authoritative.
+
+If either check fails — uncommitted tracked changes, or local ahead of what `ls-remote` reports — **halt**. Report what's uncommitted (`git status`) or unpushed (`git log <remote-tracking>..HEAD --oneline`); don't guess which it is, and don't run the discriminator anyway. The reason this has to come first: the discriminator below reasons about the PR's **remote** content, and that framing is only correct when local and remote already agree. A review-fix commit made locally and never pushed leaves the remote diff quiet while the code actually about to merge has never passed a gate — gates 1–3 get silently skipped on exactly the commits that most need them.
+
+With that established, fetch the PR tip locally before diffing against it. `gh pr view --json headRefOid` returns an OID from GitHub's record; if the PR was updated from another clone or the web UI since this checkout, that commit may not exist in the local object database, and the diff below fails on an unknown object instead of deciding anything:
+
+```
+git fetch origin <branch>
+```
 
 **The discriminator is a content diff against `Gated baseline` — never local tip versus remote tip, and never SHA equality.** Read the PR tip with `gh pr view --json headRefOid`, then:
 
@@ -41,7 +54,7 @@ Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention 
 
 Merged-state detection is `gh pr view --json state,mergedAt`. If `gh` fails or is unauthenticated, **ask the user whether the PR merged** — do not guess, and do not treat a failed call as "not merged."
 
-The numbered preconditions below apply to the two `building` / `merging` rows. The `in-review` rows have their own precondition: `PR:` is set in state.md, or a PR is discoverable for the current branch.
+The numbered preconditions below apply to the two `building` / `merging` rows; the `in-review` rows' preconditions are above.
 
 Read `.claude/state.md`. Verify:
 
@@ -180,6 +193,8 @@ Report the PR URL and point at `/pr-review`.
 
 Update `Gated baseline` after **every** successful gate rerun — to the tip as it stands once any fix commits are in and before the `state.md`-only transition commit. Same rule as at PR creation: the baseline is the last commit whose content was gated, never the SHA that happened to be checked out when the gates started.
 
+**Commit and push that update using the same recipe as the transition commit above:** stage `.claude/state.md` only, commit (subject e.g. `/feature-merge: gate rerun (PR #<n>)`), then push. Skipping it leaves the tree dirty against this command's own clean-tree preconditions and the new baseline unrecorded on the remote — a later invocation, possibly a different session, still reads the stale baseline and misjudges the discriminator.
+
 A stale baseline is worse than none: it makes ungated commits look gated.
 
 ### After the merge
@@ -209,6 +224,7 @@ Stop and surface, without auto-recovering:
 - Flow detection is inconclusive and the user has not chosen a flow.
 - PR flow was selected but `gh` is unavailable or unauthenticated, and the user has not opted into the draft-only path.
 - `Phase: in-review` but no PR can be found for the branch — state and reality disagree. Surface both; do not silently re-open a PR or silently reset the phase.
+- `in-review` and local doesn't agree with remote: uncommitted changes to tracked files, or local `HEAD` ahead of what `git ls-remote origin <branch>` reports. Halt and report what's uncommitted or unpushed — do not run the discriminator against content the PR doesn't actually have yet.
 - `gh pr view` fails while checking merged state. Ask whether the PR merged; never treat a failed call as "not merged."
 
 After any halt, the user resolves; re-running `/feature-merge` picks up from the beginning (Gate 1). Re-running is cheap because gates 1 and 2 are mostly read-only and the security-reviewer's work is fresh-context per invocation — no harm in re-running the full sequence after a fix.
