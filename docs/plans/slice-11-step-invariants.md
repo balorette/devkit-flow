@@ -420,7 +420,7 @@ PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, and t
 
 1. **Run ADR-registry discovery now.** Follow `.claude/references/adr-registry.md` § *Discover* in full, and record for the rest of this invocation: the registry's location, its format, and its current high-water number. Report what was found per that reference's *Report what was found* step.
 
-   Discovery runs here rather than at Phase E because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs in `docs/ai/decisions.md` invisible to the subagent asked to avoid contradicting them.
+   Discovery runs here rather than at Phase E because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs kept as headings in a single decisions log, invisible to the subagent asked to avoid contradicting them.
 2. Propose the slug derived from the user's argument. Confirm with the user.
 3. Confirm the feature framing back to the user in one or two sentences before brainstorming. ("My read: you want X so that Y. Right?")
 ```
