@@ -85,7 +85,7 @@ Where a value must be discovered rather than assumed — the ADR registry, the f
 | Finding | Clause | Fix |
 |---|---|---|
 | #1 `MIGRATIONS.md` 0.10.0 incomplete | 1 | The missed change ships in the **0.11.0** section; a snapshot test makes the diff unskippable |
-| #2 `pm` writes ADRs to `docs/adr/` | 3 | Five `pm` sites + three `architect.md` sites cite the extracted procedure |
+| #2 `pm` writes ADRs to `docs/adr/` | 3 | Five `pm` sites cite the extracted procedure; three `architect.md` sites are reworded to receive discovered ADR paths from their caller instead of hardcoding `docs/adr/` |
 | #3 architect invoked before discovery | 3 | Discovery runs in Phase A and is recorded; `feature-start.md:130` passes the discovered paths |
 | #4 `Gated baseline` self-invalidates | 2 | Baseline becomes the closeout commit; discriminator becomes a content diff excluding `.claude/state.md` |
 | #5 `/pr-review` pushes uncommitted | 1 | A metadata commit covering Phase D steps 2 **and** 3, before the push |
@@ -120,7 +120,7 @@ The exclusion list is exactly one file, and that is the point. Setting the basel
 
 ### Clause 3 applied to the ADR registry
 
-The scan procedure moves to **`pack/references/adr-registry.md`**: scan scope, both match patterns, definitions-ranked-above-mentions, floor-plus-one allocation, ask-before-relocating, and the never-trust-a-cached-high-water-mark rule. Five components cite it and none restate it — `pm`, `architect`, `/feature-start`, `/plan`, `/adopt`.
+The scan procedure moves to **`pack/references/adr-registry.md`**: scan scope, both match patterns, definitions-ranked-above-mentions, floor-plus-one allocation, ask-before-relocating, and the never-trust-a-cached-high-water-mark rule. Four components cite it and none restate it — `pm`, `/feature-start`, `/plan`, `/adopt` — plus `architect`, which receives the discovered ADR paths from its caller rather than citing the reference itself.
 
 `pm` is why the reference is a file rather than a section of `/feature-start`. It is a skill, loadable outside any command, and a skill citing a slash command for its own write path is a backwards dependency. `tests/test_pack_references_resolve.py` already enforces that every citation resolves in a target install, so the new file is covered the day it lands.
 
@@ -184,7 +184,7 @@ Nothing in this ADR changes ADR-0007's taxonomy. `pack/templates/history/` is a 
 **Slice 11**, in four phases. The task-level breakdown lands in [`inventory-and-build-order.md`](inventory-and-build-order.md) as part of this slice, alongside every other slice's.
 
 - **Phase A — release guard (#1).** Snapshot templates to `pack/templates/history/0.10.0/`; `tests/test_migrations_snapshot.py`; the missed Open-questions entry into the **0.11.0** section, not retroactively into 0.10.0 — applicability is "sections newer than your installed version," so a 0.9.0 upgrader would otherwise apply it twice; release step into this project's `CLAUDE.md`.
-- **Phase B — ADR registry (#2, #3).** New `pack/references/adr-registry.md`; `/feature-start` Phase A discovery + Phase E citation + the `:130` contract; five `pm` sites; three `architect.md` sites; `/plan` and `/adopt` citations.
+- **Phase B — ADR registry (#2, #3).** New `pack/references/adr-registry.md`; `/feature-start` Phase A discovery + Phase E citation + the `:130` contract; five `pm` sites; three `architect.md` sites reworded to receive discovered ADR paths rather than to cite the reference; `/plan` and `/adopt` citations.
 - **Phase C — transport and self-reference (#4–#7).** `/plan` Phase G staging; `/pr-review` metadata commit; `/feature-merge` baseline relocation and diff discriminator, including the `state.md.template` field comment it necessarily rewords; `/pr-review` `all`-mode filter and the `either`/`both` contradiction at `:40` vs `:45`.
 - **Phase D — ownership (#8), doc currency, and release.** `devkit-orientation.md:81-89` scoped to the manifest's tracked set plus the two seeded exceptions; the slice-11 section in `inventory-and-build-order.md` and the status update in this project's `CLAUDE.md`; `VERSION` → 0.11.0; re-snapshot; the 0.11.0 migration entries.
 
