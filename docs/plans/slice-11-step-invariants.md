@@ -751,6 +751,21 @@ git add pack/commands/plan.md
 git commit -m "pack: /plan commits the CONF row it writes (ADR-0008 clause 1)"
 ```
 
+- [ ] **Step 4: Repair the paragraph Step 1's replacement span cut through**
+
+*Added during execution.* Two defects, both in the text Step 1 touched.
+
+**(a) The splice.** Step 1's "replace this" string ended mid-paragraph, so the surviving commit-mechanics (`Subject:`, `Body:`, staging, the decline branch) are now glued onto the end of the new rationale — a paragraph that opens on why `CONF` rows must be committed and closes on subject-line format. Insert a paragraph break before `Subject:` so those mechanics are their own paragraph again, as they were.
+
+**(b) The staging list names an artifact `/plan` never writes.** It includes *"any spec front-matter `related_adrs` amendment Phase C made"* — but `/plan` Phase C references the new ADR in **the plan's** front-matter (already covered by "the plan"). Amending the **spec's** front-matter is `/feature-start` Phase E step 3's job. Pre-existing, and it makes Step 1's own added sentence false: the list names something the invocation does not produce. Delete that clause.
+
+Then reword *"not a checklist that happens to be four items long"* to be count-independent — with (b) removed the list is four items again, so the phrase now reads as a coincidence rather than the point.
+
+```bash
+git add pack/commands/plan.md
+git commit -m "pack: /plan Phase G stages what it writes, and only that"
+```
+
 ---
 
 ### Task 8: `/pr-review` commits before pushing
