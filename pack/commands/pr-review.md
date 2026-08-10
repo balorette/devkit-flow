@@ -77,10 +77,13 @@ Strict order. Each stage completes before the next begins.
 1. **Code fixes**, one at a time, each under the `engineer` skill's Verify discipline: tests green, lint and type-check clean, its own commit. Subject `review: <short summary>`. Stage explicitly; never `git add -A`. A review fix that cannot be brought green is not a fix — halt and surface it.
 2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. Through the `documenter` skill, propose-before-write as always.
 3. **The findings ledger and `.claude/state.md`.** Anything accepted but deferred past this feature goes in the ledger as a `REV` row (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). `state.md`'s `## Open questions` holds only what must be resolved *within this feature* — `/feature-merge` clears that section, so a finding parked there and not fixed before merge is a finding silently discarded. Remove entries whose fix just landed.
-4. **Push — and verify the remote tip actually contains the fix commits.** Check with `git ls-remote origin <branch>`, compared against your local `HEAD`.
+4. **Commit the metadata.** Stage exactly what stages 2 and 3 wrote — the summary doc, the discovered findings-ledger path, and `.claude/state.md` — and propose a commit. Subject: `review: findings ledger + state`. Stage explicitly; never `git add -A`.
+
+   Stages 2 and 3 write durable artifacts and stage 5 pushes; without this, neither reaches the remote. The PR then lacks the `REV` record that is the whole point of a cross-feature deferral, and the tree stays dirty — which `/feature-merge`'s own preconditions treat as blocking, so the next closeout cannot check out mainline.
+5. **Push — and verify the remote tip actually contains the fix commits.** Check with `git ls-remote origin <branch>`, compared against your local `HEAD`.
 
    Use `git ls-remote`, **not** `gh pr view --json headRefOid`. The former reads the ref directly and is authoritative the moment the push lands; the latter reads GitHub's PR view, which can serve a stale `headRefOid` for seconds after a successful push. Verifying with the API produces a false *negative* — a correct push reported as unverified — and the correct response to an unverified push is to post nothing, so the failure mode is a stalled run rather than a bad one. Still worth avoiding: a check that cries wolf gets skipped.
-5. **Replies**, only after that verification passes.
+6. **Replies**, only after that verification passes.
 
 **Push before replying.** A reply citing a SHA is a public, unrecallable claim about the remote — and until the push succeeds that SHA does not exist there. If the push then fails (auth, network, a rejected non-fast-forward because someone else pushed), the PR is left carrying citations to code it does not contain, in comments addressed to the reviewers who will go looking.
 
@@ -88,7 +91,7 @@ An earlier version of this command had replies last, reasoning that *"a reply sa
 
 ### Phase E — Hand off
 
-One short report: items per bucket, commits made, replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.
+One short report: items per bucket, commits made (fixes **and** the metadata commit), replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.
 
 If every thread is answered and the working tree is clean, suggest re-running `/feature-merge`. New commits mean gates 1–3 need re-validation against the code that will actually merge.
 
