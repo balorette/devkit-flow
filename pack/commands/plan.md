@@ -128,7 +128,7 @@ You wrote this plan. That is exactly why you are not the one checking it — the
 
 Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, **and the findings ledger if Phase F2 recorded a `CONF` row** (its path is the discovered one, not assumed).
 
-A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Every artifact this invocation writes is named in this list; the staging list derives from what this invocation produces.
+A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Every artifact this invocation writes is named in this list; that is the rule, not a fixed enumeration.
 
 Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
 
