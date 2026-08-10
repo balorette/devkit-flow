@@ -17,38 +17,39 @@ Slice 11 is authored and mechanically green (see below) but has not survived con
 
 | Check | Result |
 |---|---|
-| Full unit suite | 39 tests, **1 expected failure**, 1 pre-existing skip |
-| Expected failure | `test_every_template_matches_its_snapshot` on `state.md.template` — the snapshot guard correctly flagging that an earlier task in this slice edited the template ahead of the release task's re-snapshot. Not a regression. |
-| Pre-existing skip | `test_changed_template_has_a_migration_section` — skipped because 0.10.0 is the earliest snapshot with no 0.9.0 baseline to diff against; unrelated to this slice |
+| Full unit suite | 39 tests, all passing, no failures, no skips |
+| `test_every_template_matches_its_snapshot` | Passes — `VERSION` is `0.11.0`, `pack/templates/history/0.11.0/` exists, and the release task re-snapshotted it against the live templates, including `state.md.template`. Mid-slice this test failed by design (an earlier task had edited the template ahead of the re-snapshot); the release task landed the snapshot and closed that gap. |
+| `test_changed_template_has_a_migration_section` | Now runs for real, rather than skipping — 0.11.0 gives it a genuine 0.10.0 baseline to diff against and confirm `pack/MIGRATIONS.md` covers the change. It was skipped for the whole slice before the release task landed, because 0.10.0 was the newest snapshot and had no prior baseline to diff. |
 
-Verbatim tail of the run:
+Verbatim tail of the run (`python3 -m unittest discover -s tests -v`):
 
 ```
-......................sF...............
-======================================================================
-FAIL: test_every_template_matches_its_snapshot (test_migrations_snapshot.TestSnapshotCurrent.test_every_template_matches_its_snapshot) (template='state.md.template')
+test_migrations_has_section_matches_a_real_heading (test_migrations_snapshot.TestVersionHelpers.test_migrations_has_section_matches_a_real_heading) ... ok
+test_migrations_has_section_rejects_a_missing_one (test_migrations_snapshot.TestVersionHelpers.test_migrations_has_section_rejects_a_missing_one) ... ok
+test_template_names_is_not_empty (test_migrations_snapshot.TestVersionHelpers.test_template_names_is_not_empty)
+A bug returning [] would make SNAPSHOT-CURRENT vacuously pass. ... ok
+test_version_key_orders_numerically_not_lexically (test_migrations_snapshot.TestVersionHelpers.test_version_key_orders_numerically_not_lexically) ... ok
+test_backticked_paths_are_not_double_reported (test_pack_references_resolve.TestClassifier.test_backticked_paths_are_not_double_reported)
+A quoted devkit path is reported once by CITATION, not again by the bare scan. ... ok
+test_bare_unquoted_devkit_path_is_caught (test_pack_references_resolve.TestClassifier.test_bare_unquoted_devkit_path_is_caught)
+`adopt.md:92` cited "docs/design/0002" in prose and evaded a quoted-only scan. ... ok
+test_devkit_only_path_is_forbidden (test_pack_references_resolve.TestClassifier.test_devkit_only_path_is_forbidden) ... ok
+test_installed_reference_resolves (test_pack_references_resolve.TestClassifier.test_installed_reference_resolves) ... ok
+test_installed_set_is_not_empty (test_pack_references_resolve.TestClassifier.test_installed_set_is_not_empty)
+A bug that returned {} would make every citation look devkit-only. ... ok
+test_runtime_target_paths_are_allowed (test_pack_references_resolve.TestClassifier.test_runtime_target_paths_are_allowed) ... ok
+test_trailing_punctuation_is_stripped (test_pack_references_resolve.TestClassifier.test_trailing_punctuation_is_stripped) ... ok
+test_no_installed_file_cites_a_devkit_only_path (test_pack_references_resolve.TestNoDanglingReferences.test_no_installed_file_cites_a_devkit_only_path) ... ok
+
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/root/code/devkit-flow/tests/test_migrations_snapshot.py", line 122, in test_every_template_matches_its_snapshot
-    self.assertEqual(
-AssertionError: b'# P[1105 chars]mmit whose CONTENT passed gates 1-3 -- the tip[1779 chars]->\n' != b'# P[1105 chars]mmit SHA that passed gates 1-3. Set when the P[1543 chars]->\n' :
+Ran 39 tests in 0.788s
 
-pack/state.md.template differs from its 0.10.0 snapshot.
-This is the guard working. Do this, in order:
-  1. diff pack/templates/history/0.10.0/state.md.template pack/state.md.template
-  2. Account for EVERY hunk in pack/MIGRATIONS.md under the
-     version that will ship it.
-  3. Re-snapshot: cp pack/state.md.template pack/templates/history/<shipping-version>/state.md.template
-
-----------------------------------------------------------------------
-Ran 39 tests in 0.774s
-
-FAILED (failures=1, skipped=1)
+OK
 ```
 
-This is red **by design** for this task. Re-snapshotting `pack/templates/history/` is Task 14's job (release), not Task 13's — doing it here would hide the very drift the guard exists to catch mid-slice.
+Mid-slice, `test_every_template_matches_its_snapshot` was red by design: an earlier task in this slice had edited `pack/state.md.template` ahead of the release task's re-snapshot, and re-snapshotting early would have hidden the drift the guard exists to catch. The release task has since landed (`VERSION` `0.11.0`, `pack/templates/history/0.11.0/` created), closing that gap.
 
-Mechanical checks confirm the files install, cross-reference correctly, and that the one intentional gap in the suite is exactly the one predicted. They say nothing about whether the pack *behaves* as intended in a real session — that is what the predictions below are for.
+Mechanical checks confirm the files install, cross-reference correctly, and that the suite is fully green. They say nothing about whether the pack *behaves* as intended in a real session — that is what the predictions below are for.
 
 ## Behavioral predictions (pending)
 
