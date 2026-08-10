@@ -61,6 +61,7 @@ Markdown content has no automated test. Per `CLAUDE.md` working principle 4, the
 | `pack/state.md.template` | Modify | `Gated baseline` field comment follows the new semantics. |
 | `pack/MIGRATIONS.md` | Modify | 0.11.0 section: the missed Open-questions entry + the reworded field comment. |
 | `pack/devkit-orientation.md` | Modify | Ownership scoped to the manifest's tracked set. |
+| `pack/MIGRATIONS.md` | Modify (Task 11) | Second instance of the same over-claim, found while planning. |
 | `VERSION` | Modify | `0.10.0` → `0.11.0`. |
 | `CLAUDE.md` | Modify | Release step; slice-11 status. |
 | `docs/design/inventory-and-build-order.md` | Modify | Slice 11 section. |
@@ -953,6 +954,9 @@ git commit -m "pack: Gated baseline compares content, excluding its own write (A
 
 **Files:**
 - Modify: `pack/devkit-orientation.md:81-89`
+- Modify: `pack/MIGRATIONS.md:5`
+
+Finding 8 named one site. A grep for the claim while this plan was written found a **second**, in an installed file: `pack/MIGRATIONS.md:5` reads *"Everything else under `.claude/` is **pack-owned** and updates automatically."* Same over-claim, same consequence. `README.md` was checked and is clean — it says "pack-owned" only of `devkit-orientation.md` specifically, which is true.
 
 - [ ] **Step 1: Rewrite the section**
 
@@ -974,19 +978,33 @@ Your linters, reviewers, and CI will see the tracked files and may file findings
 For a file in the manifest, treat findings of that shape as pack issues and report them upstream rather than editing in place: a local edit is what the installer's customization detection will `SKIP` on your next update, so you keep your change and silently stop receiving improvements to that file. For a file *not* in the manifest, none of that applies — it is your file, and your project's rules are the right rules for it.
 ```
 
-- [ ] **Step 2: Verify**
+- [ ] **Step 2: Fix the same claim in `MIGRATIONS.md`**
+
+Replace `pack/MIGRATIONS.md:5`:
+
+```
+Everything else under `.claude/` is **pack-owned** and updates automatically. You do not need this file for those.
+```
+
+with:
+
+```
+Every file the manifest tracks (`.claude/.devkit-manifest.json`) updates automatically — you do not need this file for those. Anything under `.claude/` that the manifest does not list is **yours**, and the pack neither updates it nor expects you to migrate it.
+```
+
+- [ ] **Step 3: Verify**
 
 ```bash
 python3 -m unittest discover -s tests -v
-grep -n "pack-owned" pack/devkit-orientation.md README.md
+grep -rn "pack-owned" pack/ README.md
 ```
 
-Expected: tests PASS (`test_every_template_matches_its_snapshot` still failing from Task 10). Read every `pack-owned` hit — if `README.md` makes the same whole-directory claim, fix it here and add it to the commit.
+Expected: `test_every_template_matches_its_snapshot` still failing from Task 10; everything else PASSES. Every surviving `pack-owned` hit must name a **specific file** (`devkit-orientation.md`), never the directory. Read each one.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add pack/devkit-orientation.md
+git add pack/devkit-orientation.md pack/MIGRATIONS.md
 git commit -m "pack: scope .claude/ ownership to the manifest's tracked set (finding 8)"
 ```
 
