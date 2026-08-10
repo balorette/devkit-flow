@@ -119,17 +119,9 @@ Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring
 
 ### Phase E — Discover the ADR registry, then contested decisions (opt-in, sparse)
 
-**Discovery first, and it is not authoring.** Before anything else in this phase, find out whether the project already keeps decision records, and where:
+**Discovery first, and it is not authoring.** Run the scan in `.claude/references/adr-registry.md` § *Discover* to find out whether the project already keeps decision records, and where. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
 
-- **Scope:** `*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
-- **Match, two patterns.** In file *contents*: `ADR[-_ ]?0*\d+`, case-insensitive. In *filenames*: `^0*\d{1,4}[-_]` under any directory whose name suggests decision records (`adr`, `adrs`, `decisions`, `rfc`, `rfcs`), **excluding date-prefixed names** matching `^\d{4}-\d{2}-\d{2}` — dated notes are not ADR numbers, and treating `2026-04-15-review.md` as one sets the high-water mark in the thousands. A numbered-filename registry may never spell "ADR" in its contents at all.
-- **Rank definitions above mentions** — a heading (`## ADR-012: …`) or a filename (`0012-*.md`) is a definition; inline prose citing `ADR-007` is a mention. Report which kind the high-water mark came from.
-
-Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."*
-
-The **location** is the durable part. The recorded number is a snapshot, not an authority: `/feature-start` and `/plan` both re-scan for the current highest before every allocation, because features allocate continuously while this record is written once. Recording it is still worth doing — it makes the registry's shape visible to a human reading `CLAUDE.md` — but nothing allocates from it.
-
-Run the scan in `.claude/references/adr-registry.md` § *Discover*, and record what it reports into `CLAUDE.md` conventions — location, format, and high-water number. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
+Record the result in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* Recording it is still worth doing even though nothing allocates from it — it makes the registry's shape visible to a human reading `CLAUDE.md`. See `.claude/references/adr-registry.md` § *Never cache the number* for why the number itself is a snapshot, not an authority.
 
 **Discovery records; it does not write ADRs.** The default below is unchanged.
 
