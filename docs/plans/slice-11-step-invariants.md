@@ -59,9 +59,8 @@ Markdown content has no automated test. Per `CLAUDE.md` working principle 4, the
 | `pack/skills/pm/SKILL.md` | Modify | Five ADR-path sites. |
 | `pack/agents/architect.md` | Modify | Three ADR-path sites. |
 | `pack/state.md.template` | Modify | `Gated baseline` field comment follows the new semantics. |
-| `pack/MIGRATIONS.md` | Modify | 0.11.0 section: the missed Open-questions entry + the reworded field comment. |
+| `pack/MIGRATIONS.md` | Modify | Task 11: the `:5` ownership over-claim (a second instance, found while planning). Task 14: the 0.11.0 section — missed Open-questions entry + reworded field comment. |
 | `pack/devkit-orientation.md` | Modify | Ownership scoped to the manifest's tracked set. |
-| `pack/MIGRATIONS.md` | Modify (Task 11) | Second instance of the same over-claim, found while planning. |
 | `VERSION` | Modify | `0.10.0` → `0.11.0`. |
 | `CLAUDE.md` | Modify | Release step; slice-11 status. |
 | `docs/design/inventory-and-build-order.md` | Modify | Slice 11 section. |
