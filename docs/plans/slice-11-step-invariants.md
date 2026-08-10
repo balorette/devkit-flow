@@ -601,7 +601,7 @@ python3 -m unittest discover -s tests -v
 grep -n "docs/adr" pack/agents/architect.md
 ```
 
-Expected: tests PASS; the grep returns nothing.
+Expected: tests PASS; the grep returns **exactly one** hit — the illustrative enumeration inside Step 2's own replacement text (*"a `docs/adr/` directory, a single decisions log, or something else entirely"*). That is a list of shapes a registry can take, not a directive to choose one, and it is what teaches the subagent that registries vary. No hit may be a location the architect is told to read or write.
 
 - [ ] **Step 5: Commit**
 
