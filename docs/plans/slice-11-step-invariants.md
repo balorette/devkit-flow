@@ -674,8 +674,10 @@ per `.claude/references/adr-registry.md` § *Allocate* (which creates `docs/adr/
 
 ```bash
 python3 -m unittest discover -s tests -v
-grep -rn "docs/adr" pack/ | grep -v "references/adr-registry.md" | grep -v "templates/history"
+grep -rn "docs/adr" pack/ | grep -v "^pack/references/adr-registry.md:" | grep -v "^pack/templates/history/"
 ```
+
+The `^…:` anchors matter. An unanchored `grep -v "references/adr-registry.md"` drops any line *containing* that string — including a consumer line that both cites the reference and mentions `docs/adr/`, which is exactly what `adopt.md:141` becomes after Step 5. Anchoring excludes the reference file's own lines and nothing else.
 
 Expected: tests PASS, and **exactly five** surviving hits, each of which must be one of these and nothing else. Confirm each individually; do not accept the count alone.
 
