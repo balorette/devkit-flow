@@ -825,7 +825,7 @@ git commit -m "pack: /pr-review commits the ledger and docs it writes before pus
 ### Task 9: `/pr-review all` keeps the own-reply filter
 
 **Files:**
-- Modify: `pack/commands/pr-review.md:40`, `:45`, `:47`
+- Modify: `pack/commands/pr-review.md:12` (argument description), `:40`, `:45`, `:47`
 
 - [ ] **Step 1: Resolve the either/both contradiction**
 
