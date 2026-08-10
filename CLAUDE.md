@@ -95,6 +95,25 @@ Still pending dogfood only (no authoring left):
 - (a) `/feature-merge` on `feature/notes-write-and-delete-services-and-tools` to exercise the gate trio + the polish items + `/checkpoint` commit proposal, or
 - (b) start a small new feature on Enterprise Agent (e.g., the deferred `add ruff + mypy + pre-commit` follow-up) to exercise commit-discipline + grilling end-to-end.
 
+## Releasing the pack
+
+Seeded files (`state.md`, `CLAUDE.md`) are stamped once and never rewritten by
+the installer, so a change to their *shape* reaches existing installs only via
+`pack/MIGRATIONS.md`. `tests/test_migrations_snapshot.py` blocks a release that
+forgets one. The cycle:
+
+1. `diff -u pack/templates/history/<prev>/state.md.template pack/state.md.template`
+   (and the same for `CLAUDE.md.template`).
+2. Account for **every hunk** in a `## <new-version>` section of `pack/MIGRATIONS.md`.
+   Not every hunk needs its own bullet — but every hunk needs a decision.
+3. Bump `VERSION`.
+4. `mkdir -p pack/templates/history/<new-version> && cp pack/*.template pack/templates/history/<new-version>/`
+5. `python3 -m unittest discover -s tests`
+
+Step 1 is the one that matters. Finding 1 of the PR #139 review was a migration
+entry written from recollection: two things changed in 0.10.0 and the entry
+documented one.
+
 ## Working principles for this project
 
 These are non-negotiable for the *authoring work*, not just the eventual pack:
