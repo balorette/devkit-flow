@@ -14,6 +14,39 @@ A Claude Code session can do this for you: ask it to apply the pending entries. 
 
 ---
 
+## 0.11.0
+
+### `.claude/state.md`
+
+- **In the trailing HTML comment**, replace the `Open questions` paragraph with the two-paragraph version below. *(This change shipped in 0.10.0 and was omitted from that entry — apply it now regardless of whether you already applied 0.10.0.)*
+
+  ```
+  The Open questions section captures things deferred mid-feature that need
+  the user's input. /checkpoint reads and helps resolve these.
+
+  During Phase: in-review it holds review findings accepted for THIS
+  feature and not yet fixed. It is cleared at /feature-merge, so anything
+  deferred PAST this feature must go to the findings ledger instead --
+  /pr-review routes cross-feature deferrals there as REV rows. Parking a
+  durable finding here discards it at merge.
+  ```
+
+  Without it your `state.md` tells a model that accepted-but-unfixed review findings live in `## Open questions` — a section `/feature-merge` clears — directly contradicting `/pr-review`, which routes cross-feature deferrals to the findings ledger as `REV` rows.
+
+- **In the trailing HTML comment**, replace the `Gated baseline` field meaning with:
+
+  ```
+  Gated baseline  the last commit whose CONTENT passed gates 1-3 -- the tip
+                  before the state.md-only transition commit, set when the PR
+                  opens and after every successful gate rerun. /feature-merge
+                  diffs it against the PR tip, excluding this file, to decide
+                  whether a rerun needs the gates.
+  ```
+
+  The field's shape is unchanged; its **meaning** is. In 0.10.0 it held the SHA the gates ran against, and `/feature-merge` compared it to the PR tip for equality — which could never match, because writing the field commits it. 0.11.0 stores the tip before that commit and compares by content diff excluding `state.md`. No edit to your header is needed; this keeps the file's own documentation true.
+
+---
+
 ## 0.10.0
 
 ### `.claude/state.md`
