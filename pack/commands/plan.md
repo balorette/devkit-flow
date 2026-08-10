@@ -36,7 +36,12 @@ Read, in this order:
 - `docs/specs/` for one or two recent merged specs — gives shape context.
 - `docs/plans/` for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like.
 - `docs/domains/<domain>.md` for each domain the spec touches.
-- The project's ADR titles — locate the registry per `.claude/references/adr-registry.md` § *Discover*. Read in full any named in the spec's `related_adrs` front-matter or whose title is keyword-relevant.
+
+Then discover the ADR registry and **record the result for the rest of this invocation** — Phase C's architect invocation, and the engineer skill's plan-time architect calls, both read this record rather than re-discovering:
+
+1. **Discover.** Run `.claude/references/adr-registry.md` § *Discover* in full. Record the registry's location, its format, and its current high-water number — the number is a reported hint only, never an allocation source (see that reference's § *Never cache the number*; allocation always re-scans). Report what was found per that reference's § *Report what was found*.
+2. **Record the ADR paths.** The actual file paths discovery found, or the explicit `"registry: none found"` when discovery finds nothing. This is the piece the architect contract in "Invoking the architect" below needs verbatim — a directory pattern is not a substitute for either.
+3. **Read titles; read in full what's relevant.** Read in full any ADR named in the spec's `related_adrs` front-matter or whose title is keyword-relevant to the spec.
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
