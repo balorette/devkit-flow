@@ -178,4 +178,3 @@ Four findings surfaced during this slice's task-level reviews. Each was evaluate
 - Every behavioral prediction (P1, P2, P3, P4, P5).
 - The full end-to-end dogfood on Enterprise API: a PR sitting at `Phase: in-review` with an established `Gated baseline`, at least one reviewer comment already answered by the pack, and a second `/feature-start` run against its twelve-ADR decisions log — none of which currently exist as live state on that target.
 - Whether the `Gated baseline` exclusion of `.claude/state.md` (P1/P2) survives a real diff where the transition commit also happens to touch an unrelated tracked file in the same commit (outside this slice's scope to construct, but worth a note if the dogfood surfaces it).
-- Re-snapshotting `pack/templates/history/` for `state.md.template` is explicitly **not** this task's job — that is Task 14 (release). The current red `test_every_template_matches_its_snapshot` result is expected and should stay red until Task 14 runs.
