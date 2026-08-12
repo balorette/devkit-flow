@@ -129,6 +129,34 @@ Surface the full findings document either way, including a clean result. A confo
 
 You wrote this plan. That is exactly why you are not the one checking it — the fresh-context reviewer has not spent the last hour making these choices sound reasonable.
 
+### Phase F3 — Symbol verification
+
+Phase F2 asked whether the plan contradicts the spec. This phase asks a different question: **do the things this plan names actually exist?**
+
+The `engineer` skill states the plan's status plainly — *"The signatures are authoritative. If the signatures are wrong, the tester writes the wrong tests."* Nothing downstream can check that. `conformance-reviewer` has no codebase access by design; `tester` is forbidden implementation source; `engineer` finds out at red, after the tester has already spent its context on a contract that cannot compile. This phase is the only place the plan's claims meet the codebase.
+
+**Enumerate every symbol the plan names**, from all three places they appear:
+
+1. **Type signature blocks** — every type, parameter type, and return type.
+2. **The conventions table** — every function, method, helper, and constant.
+3. **Prose** — any identifier that names real code, including ones mentioned only in a step's narrative.
+
+Scope by *what names code*, not by *what sits in a signature block*. The narrow version of this rule has already failed once: a mid-feature correction restricted to signature blocks let a wrong name through in the conventions table two steps later.
+
+**Confirm each against the codebase.** A plain identifier search is enough — a false "resolved" is not possible, and a false "unresolved" costs one look. Report:
+
+```
+RESOLVED    ReconciliationCaseLayout        src/layouts.py:41
+UNRESOLVED  CaseLayout                      -- nearest: ReconciliationCaseLayout
+UNRESOLVED  build_manifest_conflict_detail  -- no match
+```
+
+Where a name does not resolve, offer the nearest match if there is a plausible one. Most instances are a shortened or half-remembered form of a real symbol rather than an invention.
+
+**Halt on any UNRESOLVED.** Do not carry an unresolved name into Phase G. Either correct the plan, or — if the symbol is genuinely new code this plan introduces — mark it explicitly in the plan as *introduced by this plan*, so the next reader can tell a deliberate new name from a wrong one. That distinction is the entire output of this phase.
+
+**Symbols the plan introduces are not failures.** A plan for new code names things that do not exist yet, and that is correct. What this phase catches is a name that was *meant* to match existing code and doesn't.
+
 ### Phase G — Commit and hand off
 
 Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, **and the findings ledger if Phase F2 recorded a `CONF` row** (its path is the discovered one, not assumed).
