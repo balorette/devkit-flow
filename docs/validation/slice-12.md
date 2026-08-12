@@ -63,3 +63,60 @@ The dogfood target is Enterprise API, which has an open PR (#141) from the run t
 **T14c (pr140-4) — untracked files.** Leave an unstaged new test file in the tree and re-run.
 **Predicted:** surfaced and asked about before any gate runs.
 **Before this change:** precondition passes, gates run green against a tree containing the untracked implementation, and the PR gets a `Gated baseline` it did not earn.
+
+---
+
+## Carried over from slice 11 — still unrun
+
+Recorded here because slice 11's predictions were never run and would otherwise be lost behind slice 12's. Neither is a slice-12 finding; both are open questions slice 12 inherits.
+
+### Prediction T18a — clause 2's discriminator runs no gates on an unchanged PR
+
+Reopen the Enterprise API PR, change nothing, re-run `/feature-merge`.
+
+**Predicted:** the content diff against `Gated baseline` is quiet and **no gates run** — no tests, no docs reconciliation, no fresh-context security review.
+
+**Why it still matters:** this branch has been unreachable since `Gated baseline` was introduced, because writing the baseline commits it and a SHA comparison could therefore never match. ADR-0008 called this the highest-value thing for a dogfood to exercise, and it remains unexercised. Slice 12 changed the rerun path around it (the two-commit ordering), so the prediction now covers both.
+
+### Prediction T18b — the drift hook's unexplained miss
+
+**This is a lead, not a finding.** During the 0.11.0 run, `/feature-merge` Gate 2's `owned_files` check caught two files edited outside the active spec's declared scope (`show_flights.py` and `CLAUDE.md`) that the `PostToolUse` drift hook did not warn about.
+
+**Predicted:** editing a file outside the active spec's `owned_files` produces a visible warning at edit time.
+
+**If it does not:** the hook has a real gap, and the cheap layer of drift detection is not working — leaving the expensive layer (the merge gate) as the only one. Nobody yet knows whether this was a hook defect or output lost in a long session, and that distinction is the whole point of running it.
+
+---
+
+## Findings → task → prediction
+
+Every finding from both rounds, what closed it, and what would confirm it. **"—" in the prediction column means the fix is authored by reading and has no behavioural check in this slice.**
+
+| # | Finding | Sev | Clause | Closed by | Prediction |
+|---|---|---|---|---|---|
+| flow-6 | Plan signatures authoritative, unverified | high | 4 | T1 — `/plan` Phase F3 | **T1** |
+| flow-7 | `/build` verify omits the project's real gates | high | 3 | T2, T3 | **T2, T3** |
+| flow-1 | Phase H staging omits the Phase E `CLAUDE.md` write | med | 1 | T5, T6 | `test_clause_one` |
+| pr140-3 | Gate-rerun row commits `state.md` only | high | 1 | T5, T6 | `test_clause_one` |
+| pr140-un | `MIGRATIONS.md` paragraph replacement deletes silently | — | 1 | T7, T9 | `test_migrations_snapshot` |
+| flow-4 | `/plan` precondition vs an occupied namespace | med | 3 | T8, T9 | — |
+| pr140-5 | `adr-registry` cannot re-read its recorded location | med | 3 | T10 | — |
+| pr140-6 | `architect` missing-input contradiction | med | 3, 5 | T10 | — |
+| pr140-7 | Build-time ADRs never linked from spec or plan | med | 3 | T10 | — |
+| flow-5 | Phase F2 has no branch for "the advisory was fixed" | low | 5 | T13 | — |
+| flow-8 | Tester findings framed as an error path | med | 5 | T13 | — |
+| pr140-2 | Merged-state check ordered after a failing precondition | high | — | T14 | **T14a** |
+| pr140-1 | `in-review` sync check is one-directional | med | — | T14 | **T14b** |
+| pr140-4 | `in-review` precondition ignores untracked files | high | — | T14 | **T14c** |
+| flow-2 | Stale slice-2 simulation note | low | — | T15 | — |
+| flow-3 | `install.sh` restart guidance over-warns | low | — | T15 | verified during the 0.11.0 run |
+| flow-9 | Three-strikes not generalized to process defects | low | — | T15 | — |
+
+**Seventeen findings, seven behavioural predictions, three mechanical guards.** The gap between those numbers is the honest state of this slice: most of it is authored by reading, exactly as slices 8, 9, and 11 were, and the dogfood is what converts it.
+
+## Two things that caught defects during authoring
+
+Worth recording because both were machinery the pack already had, working on the slice that was extending it.
+
+- **`test_migrations_snapshot.py` (slice 11) caught a clause-1 violation in slice 12's own plan.** The plan sequenced the `MIGRATIONS.md` entry into Task 17 while the seeded-template change was in Task 9 — deferring a carrier two phases from its artifact, in the slice implementing clause 1. The guard went red the instant the template changed and would not go green until the entry existed. ADR-0008 was explicit that no test can verify an entry is semantically *complete*; what this one enforces is *timing*, and timing was enough.
+- **`test_pack_references_resolve.py` caught a dangling path in `artifact-locations.md`.** The new reference used the brownfield target's real plans directory as a narrative example; in an installed file a backticked path reads as a pointer, and that directory does not exist in a target project.
