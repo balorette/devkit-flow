@@ -5,6 +5,7 @@
 **Deciders:** [user], Claude (design partner)
 **Evidence:** [`docs/validation/flow-execution-0.11.0.md`](../validation/flow-execution-0.11.0.md) findings 1–9 (the pack's first end-to-end execution) and [`docs/validation/pr140-pack-findings.md`](../validation/pr140-pack-findings.md) findings 1–7 plus its unnumbered `MIGRATIONS.md` finding. Every quotation re-verified against `pack/` source before this ADR was written.
 **Extends:** [ADR-0008](0008-step-invariants.md) — cited throughout, not amended.
+**Amended:** 2026-08-12 — clause 5 added at the owner's direction, generalizing a rule the pack already states fourteen times in ten formulations. See *Clause 5* and Decision 5.
 
 ---
 
@@ -20,8 +21,8 @@ Sixteen findings plus one unnumbered. They sort into four buckets:
 |---|---|
 | Clause 1 stated, not applied | flow-1, pr140-3, pr140-unnumbered |
 | Clause 3 stated, not applied | flow-4, flow-7, pr140-5, pr140-6, pr140-7 |
-| No existing clause covers it | flow-6 |
-| Independent corrections | flow-2, flow-3, flow-5, flow-8, flow-9, pr140-1, pr140-2, pr140-4 |
+| No existing clause covers it — this ADR adds one | flow-6 (clause 4); flow-5, flow-8 (clause 5) |
+| Independent corrections | flow-2, flow-3, flow-9, pr140-1, pr140-2, pr140-4 |
 
 ### The theme both reviews reached independently
 
@@ -123,6 +124,22 @@ The rejected rationale for "still answer" was that a caller bug should not deadl
 
 **This is a clause-3 finding, not a wording nit.** A consumer that answers despite discovery demonstrably not having run is a consumer running before discovery.
 
+### Clause 5 — Decide what is arguable; never assert what is unverified
+
+A component **may decide** a question that is genuinely arguable. It **must not assert** a fact it has not checked.
+
+**Facts carry their provenance.** Any assertion about the project — a path, a symbol, a convention, a prior decision, what a file says — carries `file:line` evidence, or is explicitly marked as inferred. Silence about provenance reads as verified, which is how a confidently wrong assertion travels further than a hedged right one.
+
+**Judgment calls are decided, with the recommendation and its reasoning stated.** A component facing two defensible options decides and says why, rather than returning the fork to its caller. Escalating is correct when the answer turns on the user's priorities; it is not correct merely because a choice exists.
+
+**The discriminator is whether the repo can answer it.** `grill-me` already states this in its sharpest form — *"If a question can be answered by exploring the codebase, explore the codebase instead."* Generalized: if the answer is knowable, go and know it; if it is arguable, decide it and state why; if it depends on what the user wants, ask.
+
+**Why a clause rather than a habit.** The rule is already in the pack **fourteen times across ten files, in fourteen different formulations** — `architect.md:25`, `engineer/SKILL.md:95,221-223`, `pm/SKILL.md:288,357,365`, `tester.md:21`, `grill-me/SKILL.md:10`, `findings-triage.md:12`, `plan.md:52`, `adopt.md:55,159`, `spec-and-plan-depth.md:28`, `pr-review.md:57`, `feature-merge.md:32`, `documenter/SKILL.md:14`. One sentence appears **verbatim in three files** — *"Do not guess on architectural boundaries; the cost of getting it wrong propagates"* (`clean-architecture-layers.md:23`, `engineer/SKILL.md:71`, `pm/SKILL.md:67`). That is exactly the condition clause 3's corollary names, *"the same procedure restated in more than one component, which is how two copies drift into disagreeing"* — and pr140-6 is the drift, two copies disagreeing inside a single file.
+
+**The asymmetry worth naming.** The pack states the don't-guess half roughly nine times and the decide-and-recommend half roughly three. Two findings this round are failures of the *under-stated* half: flow-5, where Phase F2 names two dispositions for an advisory and omits the third, pushing a literal reader to defer a finding that was cheaper to fix; and flow-8, where the tester's most valuable output has no stated handling, so it is improvised every time. **A component with no stated branch for the common case does not become neutral — it becomes whatever the reader improvises.**
+
+Implementation: `pack/references/evidence-and-uncertainty.md`, cited at those sites rather than restated at them.
+
 ### Date-prefixed filenames as the forcing function for clause 3
 
 Specs, plans, and summaries are written to `docs/{specs,plans,summaries}/YYYY-MM-DD-<slug>.md`. The date is the creation date and is stable across amendments; the directory carries the type, so no type suffix is added.
@@ -141,19 +158,19 @@ Domains are excluded: `docs/domains/<domain>.md` is a per-domain living document
 | flow-4 | `/plan` precondition vs an occupied namespace | med | 3 | `artifact-locations.md` + date prefixes |
 | pr140-3 | Gate-rerun row commits `state.md` only | high | 1 | `Writes:` declaration; staging derives from it |
 | pr140-5 | `adr-registry` cannot re-read its recorded location | med | 3 | Scan scope includes the recorded location |
-| pr140-6 | `architect` missing-input contradiction | med | 3 | Silence is not an input — ask |
+| pr140-6 | `architect` missing-input contradiction | med | 3, **5** | Silence is not an input — ask |
 | pr140-7 | Build-time ADRs never linked from spec or plan | med | 3 | `engineer` amends `related_adrs` |
 | pr140-un | `MIGRATIONS.md` paragraph replacement silently deletes | — | 1 | Entries become anchored sentence-level replacements naming their template hunk |
 | pr140-2 | Merged-state check ordered after a failing precondition | high | none | Reorder: detect `state,mergedAt` first |
 | pr140-4 | `in-review` precondition ignores untracked files | high | none | Apply the existing building-phase prompt to `in-review` |
 | pr140-1 | `in-review` sync check is one-directional | med | none | Require tip **equality**, not "not ahead" |
-| flow-8 | Tester findings framed as an error path | med | none | Rewrite as expected dual output + triage guidance |
+| flow-8 | Tester findings framed as an error path | med | **5** | Rewrite as expected dual output + triage guidance |
 | flow-2 | Stale slice-2 simulation note | low | none | Delete; add verify-before-reflect for architect source claims |
 | flow-3 | `install.sh` restart guidance over-warns | low | none | Narrow to newly-added commands and skills |
-| flow-5 | Phase F2 has no branch for "the advisory was fixed" | low | none | Name the third disposition; prefer cheap fixes to ledger rows |
+| flow-5 | Phase F2 has no branch for "the advisory was fixed" | low | **5** | Name the third disposition; prefer cheap fixes to ledger rows |
 | flow-9 | Three-strikes not generalized to process defects | low | none | `documenter`: third correction of a class amends the rule, not the instance |
 
-**Eight findings are deliberately not given a clause.** Three — pr140-1, -2, and -4 — are ordinary correctness defects in preconditions: a directional comparison, a mis-ordered check, a scope that says "tracked" where it means "all." Inventing an invariant for each would be the over-correction ADR-0008 warned about when it declined to give its own finding #8 a clause. The other five — flow-2, -3, -5, -8, and -9 — are documentation-accuracy corrections. A rule for every finding is how a rule set stops being read.
+**Six findings are deliberately not given a clause.** Three — pr140-1, -2, and -4 — are ordinary correctness defects in preconditions: a directional comparison, a mis-ordered check, a scope that says "tracked" where it means "all." Inventing an invariant for each would be the over-correction ADR-0008 warned about when it declined to give its own finding #8 a clause. The other three — flow-2, -3, and -9 — are documentation-accuracy corrections. A rule for every finding is how a rule set stops being read.
 
 ## The forks, resolved
 
@@ -165,7 +182,11 @@ Domains are excluded: `docs/domains/<domain>.md` is a per-domain living document
 
 **Decision 4 — date prefixes ship with the sweep, not separately.** Sequencing them apart would mean rewriting twenty citation sites twice.
 
-**Decision 5 — the `/feature-merge` `in-review` quartet ships textually now.** pr140-1, -2, and -4 sit on a path that has never executed, and both validation docs correctly say the highest-value move for that path is behavioral. They ship anyway because **pr140-2 is severity-high and blocks closeout on any forge that auto-deletes head branches** — which is the very path slice 12's own dogfood must traverse. Leaving it unfixed means the run that validates this slice halts on a known defect. The ADR records plainly that these three are fixes authored by reading, and that the behavioral run still owes an answer on all four.
+**Decision 5 — clause 5 is a clause *and* a reference file, and it is owner-sourced rather than finding-sourced.** Worth stating plainly, because it is the first clause in the pack that did not come from a defect report: it is the owner's stated working principle, and the pack's purpose is to encode how its owner works. That provenance changes nothing about its standing — the evidence that it belongs is that the pack had already reached for it fourteen times without ever naming it.
+
+The clause/reference split mirrors clause 3 and `adr-registry.md` exactly: the clause is the rule every component is held to, the reference is the one copy of the discipline that components cite. Rejected alternative: a reference file alone, with no clause. That was tempting given this ADR's own warning against a rule for every finding — but a reference file is only reachable by a component that already knows to cite it, and the sites that need clause 5 most are the ones where nobody thought to state it at all (flow-5, flow-8). A clause is checkable at authoring time against every component; a reference is not.
+
+**Decision 6 — the `/feature-merge` `in-review` quartet ships textually now.** pr140-1, -2, and -4 sit on a path that has never executed, and both validation docs correctly say the highest-value move for that path is behavioral. They ship anyway because **pr140-2 is severity-high and blocks closeout on any forge that auto-deletes head branches** — which is the very path slice 12's own dogfood must traverse. Leaving it unfixed means the run that validates this slice halts on a known defect. The ADR records plainly that these three are fixes authored by reading, and that the behavioral run still owes an answer on all four.
 
 ## Alternatives considered
 
@@ -188,11 +209,14 @@ Domains are excluded: `docs/domains/<domain>.md` is a per-domain living document
 - The build loop runs the gates the project actually blocks on, so a coverage failure surfaces in the step that caused it rather than across six steps of diff at the merge gate.
 - Spec, plan, and summary locations stop colliding with brownfield projects' existing artifact trees — the failure flow-4 hit silently, and the class the pack's whole brownfield posture exists to prevent.
 - `architect` can no longer form a recommendation while unable to tell whether precedent exists.
+- The pack's most-repeated and least-named discipline gets one copy, so its fourteen formulations can no longer drift apart — and the decide-and-recommend half stops being the quiet one, which is what flow-5 and flow-8 cost.
 
 **Negative / risks:**
 
 - **Date prefixes are a seeded-shape change shipping alongside a large release.** That is precisely the condition that produced pr140's unnumbered finding. Mitigated by keeping the `MIGRATIONS.md` entry an anchored single-line replacement of `state.md.template`'s `Active feature  short slug matching docs/specs/<slug>.md` line, and by `tests/test_migrations_snapshot.py`, which already blocks a release whose template diff has no entry.
 - **`tests/test_clause_one.py` parses prose.** "Every phase heading containing a write verb" is a heuristic, and it will produce both false positives (a phase that describes a write it does not perform) and false negatives (a write described without a listed verb). Accepted deliberately: a test that occasionally demands a `Writes:` line where none is needed costs one line, while the defect it prevents costs a validation round. The verb list is data in the test, revisable without redesign.
+- **Clause 5 has no mechanical enforcement.** Clause 1 gets `test_clause_one.py`; clause 5 gets a reference file and citations, and nothing fails when a future component quietly restates it a fifteenth time. `test_pack_references_resolve.py` only proves a citation resolves, not that a citation exists where one should. This is the weakest link in the ADR and is stated rather than papered over.
+- **Extraction can flatten useful specificity.** The fourteen restatements are not identical: `tester.md:21`'s "don't read implementation source, return a finding instead" and `plan.md:52`'s "file:line citations, don't generalize from one file" are genuinely different applications of one principle. The sweep must leave each site's *specific* obligation in place and replace only the shared rationale, or it will trade fourteen consistent statements for one vague one. The verbatim triplicate is the safe case; the other eleven need judgment.
 - **Phase F3 adds a step to a command that already has eight.** `/plan` is the pack's longest command and this makes it longer. Weighed against five wrong symbols in one feature, and it sits adjacent to Phase F2, which is the other pre-approval check.
 - **Three `/feature-merge` fixes remain authored by reading.** The `in-review` re-entry path is still the largest never-executed body of text in the pack, and slice 12 does not change that.
 - Seventeen findings are being addressed in one slice. This is larger than the project's *small reversible steps* principle prefers, and the phase ordering exists specifically so A and B are independently committable and independently valuable.
@@ -215,9 +239,9 @@ Domains are excluded: `docs/domains/<domain>.md` is a per-domain living document
 
 - **Phase A — clause 4 and the gate list (flow-6, flow-7).** `/plan` Phase F3; `engineer` Verify substep 3; `/plan` *Approach* emits the per-step gate command. Both highs, independently shippable, no dependency on B–E.
 - **Phase B — clause 1 by construction (flow-1, pr140-3, pr140-unnumbered).** `Writes:` lines across every artifact-producing phase; `tests/test_clause_one.py`; staging lists derived from declarations; `MIGRATIONS.md` entries become anchored sentence-level replacements naming their template hunk.
-- **Phase C — clause 3 sweep (flow-4, pr140-5, pr140-6, pr140-7).** New `pack/references/artifact-locations.md`; date-prefixed spec/plan/summary paths and the ~20 citation sites; `adr-registry.md` scan scope; `engineer` `related_adrs` linking; `architect.md` silence-is-not-an-input.
+- **Phase C — discovery and evidence sweeps, clauses 3 and 5 (flow-4, flow-5, flow-8, pr140-5, pr140-6, pr140-7).** Clause 3: new `pack/references/artifact-locations.md`; date-prefixed spec/plan/summary paths and the ~20 citation sites; `adr-registry.md` scan scope; `engineer` `related_adrs` linking; `architect.md` silence-is-not-an-input. Clause 5: new `pack/references/evidence-and-uncertainty.md`, with the fourteen restatements reduced to citations — including the verbatim triplicate — plus the two under-stated-half fixes, `/plan` Phase F2's third advisory disposition and `engineer`'s tester-findings dual output. **The two sweeps are one phase because they rewrite the same files:** `architect.md`, `pm/SKILL.md`, and `engineer/SKILL.md` each carry sites from both, and sequencing them apart would rewrite those sites twice.
 - **Phase D — `/feature-merge` `in-review` corrections (pr140-1, pr140-2, pr140-4).** Textual fixes to a never-executed path, flagged as such in the command and in `docs/validation/slice-12.md`.
-- **Phase E — corrections, doc currency, release (flow-2, flow-3, flow-5, flow-8, flow-9).** The five documentation fixes; the slice-12 section in `inventory-and-build-order.md`; the slice-9 → slice-13 renumbering in `CLAUDE.md`; `VERSION` → 0.12.0; re-snapshot to `pack/templates/history/0.12.0/`; the 0.12.0 migration entries.
+- **Phase E — corrections, doc currency, release (flow-2, flow-3, flow-9).** The three documentation fixes; the slice-12 section in `inventory-and-build-order.md`; the slice-9 → slice-13 renumbering in `CLAUDE.md`; `VERSION` → 0.12.0; re-snapshot to `pack/templates/history/0.12.0/`; the 0.12.0 migration entries.
 
 **Version 0.12.0, not 0.11.1.** A new tracked component ships (`references/artifact-locations.md`), a seeded file's shape changes (the `Active feature` field meaning), and `/plan` gains a phase.
 
