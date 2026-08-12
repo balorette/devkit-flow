@@ -10,7 +10,9 @@ A fixed list of known locations would only ever find the layouts its author thou
 
 ### Scope
 
-`*.md` under `docs/`, plus root-level `*.md`. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
+`*.md` under `docs/`, plus root-level `*.md`, **plus any location `CLAUDE.md` conventions record for decisions** — scanned even when it falls outside those two. Never `.git/`, `node_modules/`, `vendor/`, or anything matched by `.gitignore`.
+
+The recorded location has to be in scope, or the record is unreadable. § *Never cache the number* says the location may be recorded while the number may not be trusted — but a scan that cannot reach `architecture/decisions/`, `.github/decisions/`, or wherever else a project keeps them reports "none found" for a project that told the pack exactly where to look. Callers then pass `registry: none found` to the architect, § *Allocate*'s recorded high-water mark is unreachable, and the pack creates a second registry: the duplicate-ID failure step 3 forbids, reintroduced by the scan that exists to prevent it.
 
 ### Match, two patterns
 

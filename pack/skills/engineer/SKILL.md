@@ -82,6 +82,8 @@ Every architect call in this skill — the layer-ambiguity call above, the three
 
 If the architect drafts an ADR in response (build-time or plan-time), allocate and write it per `.claude/references/adr-registry.md` § *Allocate* — re-scanning for the current highest number rather than reusing one recorded earlier, exactly as `pm` does at spec and plan time.
 
+Then **add the new number to the applicable `related_adrs` front-matter** — the spec's if the decision changes the contract, the plan's otherwise — via `/checkpoint`, before continuing the build. `pm` closes this loop at brainstorm time and `/feature-start` closes it at Phase E; `engineer` is the one architect caller that could write an ADR and leave it unlinked. `security-reviewer` reads `related_adrs` at merge, so an unlinked build-time ADR is invisible to the review of the very architecture it authorized — and invisible to the next `/feature-start`, which reads the same field to find precedent.
+
 ## Karpathy discipline
 
 Small reversible steps. Verify as you go. Think out loud.
