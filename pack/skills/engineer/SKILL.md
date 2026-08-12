@@ -54,7 +54,9 @@ Before declaring the step complete:
 
 1. Run the affected test files in full.
 2. Run neighboring tests that touch the changed modules to catch regressions.
-3. Run the linter and type-checker if the project uses them. Identify them from `CLAUDE.md`, `pyproject.toml`, `package.json`, etc. If unclear, ask.
+3. **Run the project's gates.** If `CLAUDE.md` conventions record a **Blocking gates** list (written by `/adopt`), run exactly that list, in order — it is the whole of this substep. Do not add your own lint or type-check on top: the list already contains whatever the project blocks on, and adding to it risks running a *different* lint profile than CI does, or running the same step twice. Only when no such list exists do you infer the runner and checks from the plan's *Approach* section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`) — and when you infer, **say that you are inferring**.
+
+   This is the same rule `/feature-merge` Gate 1 follows, for the same reason, and it is the per-step half of it. A gate that only runs at merge is a gate you learn about across the whole feature's diff instead of in the step that broke it. The first brownfield target had four blocking gates where this loop ran two; the missing one was a diff-coverage threshold, which surfaced after step 6 at 80% and cost six new tests written against code from several different steps. Had the loop run it per step, the failure would have been three tests in the step that caused it.
 4. Update `.claude/state.md`:
    - Append a one-line entry to a `## Completed steps` section (create the section on first use of a feature): `- Step N — <heading>. <one-line summary including test count if relevant>.`
    - Set `Next step` to the next plan item, or `—` if this was the last step.
