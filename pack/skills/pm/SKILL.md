@@ -64,7 +64,7 @@ The brainstorm covers, in roughly this order:
 
 **Make the brainstorm visible.** Each batch of questions is a clear ask, and each answer gets reflected back ("OK, so X means we're committing to Y") before moving on. Silent inference is the enemy of a spec-as-contract.
 
-If a question is genuinely architectural — "should this be a new bounded context or an extension of an existing domain", "does this warrant a new layer", "should we introduce a new cross-cutting pattern" — invoke the `architect` subagent in fresh context (see "When to invoke the architect" below). Do not guess on architectural boundaries.
+If a question is genuinely architectural — "should this be a new bounded context or an extension of an existing domain", "does this warrant a new layer", "should we introduce a new cross-cutting pattern" — invoke the `architect` subagent in fresh context (see "When to invoke the architect" below). Do not guess on architectural boundaries — the specific obligation here is that a bounded-context question is settled before the spec commits to a shape. Rationale: `.claude/references/evidence-and-uncertainty.md` § *The discriminator*.
 
 ### 3. Propose a domain decomposition
 
@@ -285,7 +285,7 @@ The evidence format is again a small table:
 | Vitest discovers `tests/**/*.test.ts` | `vitest.config.ts:7` | Place test files under `tests/`, suffix `.test.ts` |
 ```
 
-The intent isn't bibliographic completeness — it's enough evidence that the implementer doesn't need to re-research what you already settled. If you can't easily cite the source, the constraint is probably folk knowledge, and folk knowledge belongs in a project-first decision with explicit justification.
+The intent isn't bibliographic completeness — it's enough evidence that the implementer doesn't need to re-research what you already settled. If you can't easily cite the source, the constraint is probably folk knowledge, and folk knowledge belongs in a project-first decision with explicit justification. This is `.claude/references/evidence-and-uncertainty.md` § *Facts* applied to research: evidence or an explicit mark, never a bare assertion.
 
 ### Cross-cutting pattern cue at plan time
 

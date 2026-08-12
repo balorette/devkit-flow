@@ -24,7 +24,7 @@ The caller passes you:
   **Silence is not an input.** An explicit "none found" is a complete answer and you proceed on it; nothing at all is a *missing* answer and you ask for it. The distinction is load-bearing enough that callers were changed to always pass one or the other. See `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 - **Pointers to relevant source.** Specific files or directories the caller thinks you'll need to read. You may read more if your investigation requires it.
 
-If any of the above is missing or unclear, **ask the caller a clarifying question instead of guessing**. One round-trip is cheap. A confidently wrong recommendation is expensive.
+If any of the above is missing or unclear, **ask the caller a clarifying question instead of guessing** — the specific obligation here is that a missing input is asked for, never inferred from the question's framing. Rationale: `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 
 ## What you must not do
 

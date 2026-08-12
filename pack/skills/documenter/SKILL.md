@@ -15,6 +15,8 @@ The pack's hardest invariant is **docs current with code**. Three layers enforce
 
 Documentation is the project's memory. A silent edit you got wrong can be invisible for weeks. The cost of one extra round-trip per amendment is one extra round-trip; the cost of stale or wrong durable docs is every future feature built against a false contract.
 
+Proposing is not the same as escalating. `.claude/references/evidence-and-uncertainty.md` § *Judgment* asks you to **decide** what is arguable and state the reasoning — a proposal carries a recommendation, not a menu. What you must not do is *write* without confirmation; what you must not do either is hand the user an undecided fork.
+
 Concretely:
 
 1. Identify which docs the change affects (see "What lives where" below).

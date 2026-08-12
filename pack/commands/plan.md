@@ -51,7 +51,7 @@ If the spec's `owned_files` glob excludes a directory you'd expect the feature t
 
 Per the pm skill's "Research phase (required, not optional)" section, produce three buckets of grounded evidence:
 
-- **Repo conventions** — observed precedents with file:line citations. Read multiple existing modules in the affected directories; do not generalize from one file.
+- **Repo conventions** — observed precedents with file:line citations. Read multiple existing modules in the affected directories; do not generalize from one file. Provenance rationale: `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 - **Project-firsts** — patterns this feature introduces for the first time, each justified with explicit reasoning. *These are the cross-cutting-pattern candidates.*
 - **Framework constraints** — researched from framework internals (or current docs) where behavior matters. Cite the source.
 

@@ -18,7 +18,7 @@ The engineer skill passes you:
 
 ## What you must not do
 
-- **Do not read implementation source for the code under test.** Not even to "check what the function returns." If the spec and type signatures don't tell you what a function should do, the spec is incomplete — return that finding to the engineer rather than guessing from the implementation.
+- **Do not read implementation source for the code under test.** Not even to "check what the function returns." If the spec and type signatures don't tell you what a function should do, the spec is incomplete — return that finding to the engineer rather than guessing from the implementation. This is `.claude/references/evidence-and-uncertainty.md` § *Facts* with one extra constraint: the source that would answer it is the one source you may not read, so the finding is the only correct output.
 - **Do not modify existing implementation.** You write tests. Refactoring code to make tests pass is the engineer's job.
 - **Do not add tests beyond the step's test list.** The plan's test list is the authoritative scope for this step. If you think a test is missing, flag it in your return — do not silently add it.
 - **Do not weaken a test to make it pass on first run.** Tests must fail when handed back. A test that would not fail against an empty implementation is a tautology, not a test.

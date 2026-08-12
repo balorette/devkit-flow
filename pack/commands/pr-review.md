@@ -54,7 +54,7 @@ Also read the active spec, the plan, and any ADRs named in their front-matter. Y
 
 ### Phase B — Triage
 
-Classify every item into exactly one bucket from `.claude/references/findings-triage.md` → *Classification buckets*. This is an **external** source: verify the claim against the repo before accepting it.
+Classify every item into exactly one bucket from `.claude/references/findings-triage.md` → *Classification buckets*. This is an **external** source: verify the claim against the repo before accepting it. An external reviewer's confident claim is exactly the case `.claude/references/evidence-and-uncertainty.md` § *Facts* names — provenance you did not establish reads as verified unless you check.
 
 The reviewer has not read the spec. That is a fact about their access, not a judgment about them — cite the spec, don't condescend to it. If the PR body doesn't link the spec, that is a `/feature-merge` problem worth fixing rather than a reviewer failing.
 

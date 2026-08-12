@@ -52,7 +52,7 @@ If no CI config exists, say so and record nothing — Gate 1 falls back to the r
 
 `documenter` writes findings to whatever this records. If it finds nothing, the pack creates `docs/findings.md`; if it finds something, `/feature-merge` and `/pr-review` **ask** whether to adopt that format or sit alongside it. Skipping this step is how devkit becomes the fifth review system on a project that already had a working one — the duplication the pack's whole brownfield posture exists to prevent.
 
-**Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge. The format is the evidence table the `pm` skill already uses:
+**Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge, and the shared rationale is `.claude/references/evidence-and-uncertainty.md` § *Facts*. An entry without evidence is an assertion about someone else's codebase made by a reader who has been in it for an hour. The format is the evidence table the `pm` skill already uses:
 
 ```markdown
 | Convention | Evidence | Note |

@@ -70,7 +70,7 @@ See `.claude/references/solid-checklist.md` for the five principles. Apply per-d
 
 ## Clean Architecture layering
 
-See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. See "Invoking the architect" below for what to pass. Do not guess on architectural boundaries; the cost of getting it wrong propagates.
+See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. See "Invoking the architect" below for what to pass. Do not guess on architectural boundaries — the specific obligation here is that a layer question goes to the architect rather than being settled inline. Rationale: `.claude/references/evidence-and-uncertainty.md` § *The discriminator*.
 
 ## Invoking the architect
 
@@ -96,7 +96,7 @@ Small reversible steps. Verify as you go. Think out loud.
 
 ## When something breaks
 
-Root cause before fix. The rule is not "investigate thoroughly" — it is **no fix without a stated cause.** A fix applied to a symptom you haven't explained is a guess, and it will be indistinguishable from a real fix until it fails again somewhere else.
+Root cause before fix. The rule is not "investigate thoroughly" — it is **no fix without a stated cause.** A fix applied to a symptom you haven't explained is a guess, and it will be indistinguishable from a real fix until it fails again somewhere else. See `.claude/references/evidence-and-uncertainty.md` § *Facts* — a stated cause is what provenance means for a bug.
 
 1. **Read the error completely.** The whole stack trace, the line numbers, the exit code. Most are more specific than they look at a glance, and the specific part is usually further down.
 2. **Reproduce it.** If it isn't reliably reproducible, gather data — don't start changing things. An intermittent failure that disappears after an edit has not been fixed; it has been disturbed.
@@ -224,7 +224,7 @@ Invoke the architect at plan time when the layer-boundary question would otherwi
 - The `architect` returns a recommendation you believe is wrong. Disagreement is legitimate; silent deviation is not. Evaluate it per `.claude/references/findings-triage.md` and surface the disagreement with technical reasoning.
 - Any time you would otherwise guess at intent.
 
-The cost of asking is one round-trip. The cost of guessing wrong propagates through every subsequent step.
+The cost of asking is one round-trip. The cost of guessing wrong propagates through every subsequent step. Before asking, apply `.claude/references/evidence-and-uncertainty.md` § *The discriminator*: if the repo can answer it, read the repo — a question sent to the user that the code could have settled spends their attention to save your own.
 
 ## Common rationalizations
 

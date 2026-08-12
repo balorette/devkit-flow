@@ -9,7 +9,7 @@ The failure mode this prevents is not "ignoring good feedback." It is the quiete
 ## The shared loop
 
 1. **Read completely.** All of it, before reacting to any of it. Items in a review often depend on each other.
-2. **Restate the technical claim** in one sentence. If you can't, you don't understand it yet — that's the *Unclear* bucket, not a reason to guess.
+2. **Restate the technical claim** in one sentence. If you can't, you don't understand it yet — that's the *Unclear* bucket, not a reason to guess. See `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 3. **Verify against the repo and the spec.** Both. Code alone tells you whether the claim is true; the spec tells you whether it's in scope.
 4. **Classify** into exactly one bucket (below).
 5. **Respond** — a fix, a citation, or reasoned pushback. Never performative agreement; the code is the acknowledgment.
