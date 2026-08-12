@@ -24,7 +24,11 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 | `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen. **Commit whatever the gates wrote first** (Gate 2's reconciliation, Gate 3's `SEC` rows — see each gate's `**Writes:**`), *then* update `Gated baseline` and commit `.claude/state.md` alone, and push. Two commits, in that order — see *Why two commits* below. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
 
-**Check merged state first, before any other precondition.** Read `gh pr view --json state,mergedAt`. If the PR has merged, go straight to closeout (*After the merge*) — the preconditions below apply only while the PR is still **open**, and applying them to a merged PR breaks the closeout path outright.
+**Check merged state first, before any other precondition.** Read `gh pr view --json state,mergedAt`. If the PR has merged, skip to closeout (*After the merge*) — the *remote-agreement* preconditions below apply only while the PR is still **open**, and applying them to a merged PR breaks the closeout path outright.
+
+**One precondition still applies on the merged path: the tracked worktree must be clean.** Closeout runs `git checkout <mainline>` as its first act, and a dirty tracked tree either aborts that checkout on an overlap or carries unrelated modifications onto mainline. Neither is a state transition anyone can complete safely. Check `git diff --quiet && git diff --cached --quiet` before the checkout; if it fails, halt and report what is uncommitted rather than proceeding. Untracked files are surfaced and asked about, as everywhere else.
+
+What does **not** apply on this path is the remote comparison — the head ref may be gone, which is exactly why the merged check has to come first.
 
 The failure is specific enough to be worth naming. Forges that delete the head branch on merge leave `git ls-remote origin <branch>` returning no OID, and `git ls-remote -h` does not error on no-match unless `--exit-code` is passed. So precondition 2 sees an empty result rather than a failure, reads the local checkout as diverged or unpushed, and **halts before the closeout that would have cleared state** — on a PR whose only remaining work is that closeout. The halt list further down does mention a merged-state check; nothing ordered it ahead of precondition 2.
 
@@ -244,7 +248,7 @@ Stop and surface, without auto-recovering:
 - Flow detection is inconclusive and the user has not chosen a flow.
 - PR flow was selected but `gh` is unavailable or unauthenticated, and the user has not opted into the draft-only path.
 - `Phase: in-review` but no PR can be found for the branch — state and reality disagree. Surface both; do not silently re-open a PR or silently reset the phase.
-- `in-review` and local doesn't agree with remote: uncommitted changes to tracked files, or local `HEAD` ahead of what `git ls-remote origin <branch>` reports. Halt and report what's uncommitted or unpushed — do not run the discriminator against content the PR doesn't actually have yet.
+- `in-review` and local doesn't agree with remote: uncommitted changes to tracked files, untracked files not yet resolved, or local `HEAD` **not equal** to what `git ls-remote origin <branch>` reports — **in either direction**. Halt and report which it is; do not run the discriminator against content the PR doesn't actually have yet. Local *behind* the remote is the case a directional check misses, and it is the common one: it happens whenever another clone or the web UI pushes to the PR. This list and precondition 2 state the same rule, and they must keep stating the same rule.
 - `gh pr view` fails while checking merged state. Ask whether the PR merged; never treat a failed call as "not merged."
 
 After any halt, the user resolves; re-running `/feature-merge` picks up from the beginning (Gate 1). Re-running is cheap because gates 1 and 2 are mostly read-only and the security-reviewer's work is fresh-context per invocation — no harm in re-running the full sequence after a fix.
