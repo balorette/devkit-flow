@@ -157,12 +157,22 @@ The `engineer` skill states the plan's status plainly — *"The signatures are a
 
 Scope by *what names code*, not by *what sits in a signature block*. The narrow version of this rule has already failed once: a mid-feature correction restricted to signature blocks let a wrong name through in the conventions table two steps later.
 
-**Confirm each against the codebase.** A plain identifier search is enough — a false "resolved" is not possible, and a false "unresolved" costs one look. Report:
+**Confirm each against the codebase — at its definition, not at any occurrence.** A bare text search is not sufficient and will pass names that do not exist. `Config`, `Result`, `get`, `Client`, and `Handler` all match something in almost any repository; a plan that meant `ReconciliationConfig` and wrote `Config` resolves cleanly against an unrelated class, an import line, a test fixture, or a comment, and the wrong signature reaches the tester anyway — which is the exact failure this phase exists to prevent.
+
+For each symbol, establish **that this name is defined, and where**:
+
+- Search for the *definition* form the language uses — `class X`/`def X`/`X =` in Python, `function X`/`const X`/`class X`/`export` in JS/TS, `func X`/`type X` in Go, and so on — not a bare occurrence of the identifier.
+- Check it against **the module the plan says it lives in**. A symbol that exists somewhere else in the repo is not the symbol the plan named; that is a different defect wearing the same name, and it is the one most likely to survive review.
+- Where the plan names a method, confirm it on the type it was attributed to. A method that exists on a sibling class is a `RESOLVED` that will fail at red.
+
+Report:
 
 ```
 RESOLVED    ReconciliationCaseLayout        src/layouts.py:41
 UNRESOLVED  CaseLayout                      -- nearest: ReconciliationCaseLayout
 UNRESOLVED  build_manifest_conflict_detail  -- no match
+UNRESOLVED  Config                          -- defined at src/app/config.py:8,
+                                               not src/recon/ as the plan says
 ```
 
 Where a name does not resolve, offer the nearest match if there is a plausible one. Most instances are a shortened or half-remembered form of a real symbol rather than an invention.

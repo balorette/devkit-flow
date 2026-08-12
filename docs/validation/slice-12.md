@@ -26,6 +26,8 @@ The dogfood target is Enterprise API, which has an open PR (#141) from the run t
 
 **Secondary check:** a plan that names a symbol it *introduces* must not halt. The phase's whole output is the distinction between a deliberate new name and a wrong one.
 
+**Third check (added after the PR #4 review).** Give the plan a signature block naming `Config`, in a project where `Config` is defined somewhere unrelated. **Predicted:** UNRESOLVED, naming the module mismatch — not RESOLVED against the unrelated definition. The first version of this phase claimed a plain identifier search was enough and that *"a false 'resolved' is not possible"*; that claim was wrong, and a common identifier is exactly where it fails.
+
 ---
 
 ### Prediction T2 — the build loop runs the project's fourth gate
