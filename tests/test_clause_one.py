@@ -47,10 +47,32 @@ EXCEPTION = "**Clause 1 exception:**"
 ANY_HEADING = re.compile(r"^#{2,4}\s+.*$", re.MULTILINE)
 
 
+def strip_fences(text):
+    """Blank out fenced code blocks, preserving line count.
+
+    Fenced blocks are templates and examples: a `**Writes:**` line inside one
+    is content the command emits into someone else's file, not a declaration
+    about the phase. A `##` heading inside one is not a phase boundary either.
+    Counting them produced both halves of the same bug — a declaration written
+    into every generated domain doc, and a test that passed because it matched
+    that copy.
+    """
+    out, in_fence = [], False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            out.append("")
+        else:
+            out.append("" if in_fence else line)
+    return "\n".join(out)
+
+
 def pack_documents():
-    """Every command and skill file, as (path, text) pairs."""
-    yield from ((p, p.read_text()) for p in sorted(PACK.glob("commands/*.md")))
-    yield from ((p, p.read_text()) for p in sorted(PACK.glob("skills/*/SKILL.md")))
+    """Every command and skill file, as (path, fence-stripped text) pairs."""
+    for p in sorted(PACK.glob("commands/*.md")):
+        yield p, strip_fences(p.read_text())
+    for p in sorted(PACK.glob("skills/*/SKILL.md")):
+        yield p, strip_fences(p.read_text())
 
 
 def phase_sections(text):

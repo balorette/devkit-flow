@@ -90,8 +90,6 @@ For each **confirmed** domain, draft a terse `docs/domains/<slug>.md` and propos
 
 <One-sentence purpose.>
 
-**Writes:** one `docs/domains/<domain>.md` per confirmed domain.
-
 ## Responsibilities
 
 - <what this context owns>
@@ -114,6 +112,8 @@ genuinely load-bearing.>
 ```
 
 Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-run), propose a **delta** against it — don't overwrite; add what's missing or deepen a thin section.
+
+**Writes:** one `docs/domains/<domain>.md` per confirmed domain.
 
 ### Phase D — Conventions into CLAUDE.md
 
