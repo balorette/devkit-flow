@@ -41,6 +41,8 @@ PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, the f
 
 If the framing confirmation surfaces a misunderstanding, restate and reconfirm. Do not proceed to brainstorm against a wrong frame.
 
+**Writes:** none — discovery is recorded for this invocation and consumed by later phases.
+
 ### Phase B — Brainstorm
 
 PM skill runs the brainstorm-to-spec dialogue with the user (see the skill for the dialogue pattern). The brainstorm is visible and interactive; this command does not interfere with it.
@@ -71,6 +73,8 @@ related_adrs: [<numbers>]
 
 Write the spec to the path. If `docs/specs/` doesn't exist, create it. If a spec with that slug already exists, **stop and surface** — the user resolves (rename, replace, or abandon) explicitly.
 
+**Writes:** the spec at its discovered path.
+
 ### Phase E — ADRs (if any)
 
 If the architect was invoked during brainstorm and drafted an ADR:
@@ -79,6 +83,8 @@ If the architect was invoked during brainstorm and drafted an ADR:
 2. **Allocate and write** per that reference's *Allocate* section — floor + 1, ask before relocating, write in the registry's own format.
 3. Update the spec's front-matter `related_adrs` to include the new number.
 4. **Update the recorded high-water mark** in `CLAUDE.md` conventions to the number just written, so the record stays a useful hint rather than decaying into a wrong one. The re-scan in step 1 is the authority regardless; this keeps the two from disagreeing.
+
+**Writes:** the ADR at its discovered path · the `CLAUDE.md` high-water mark updated by step 4.
 
 ### Phase F — Branch
 
@@ -102,6 +108,8 @@ Update `.claude/state.md`:
 - `Next step: —`
 
 Leave `## Open questions` alone unless the brainstorm surfaced something deferred.
+
+**Writes:** `.claude/state.md`.
 
 ### Phase H — Commit and hand off
 

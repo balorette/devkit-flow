@@ -91,6 +91,8 @@ Strict order. Each stage completes before the next begins.
 
 An earlier version of this command had replies last, reasoning that *"a reply saying 'fixed in `<sha>`' is true when it posts."* That reads as correct and is exactly backwards: the SHA is true **locally**, and the reply is a statement about the remote. Verifying the tip — rather than assuming a successful `git push` implies it — closes the remaining gap where the push reports success against a stale remote ref.
 
+**Writes:** the confirmed code fixes and doc amendments · `REV` rows in the findings ledger · `.claude/state.md`.
+
 ### Phase E — Hand off
 
 One short report: items per bucket, commits made (fixes **and** the metadata commit), replies posted, **findings recorded in the ledger** (cross-feature deferrals), items left in `state.md` Open questions (in-feature only), and threads skipped as already-answered. Keep those last two distinct — reporting a cross-feature deferral as "parked in Open questions" invites it back into a section `/feature-merge` clears.

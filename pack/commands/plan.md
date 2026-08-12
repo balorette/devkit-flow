@@ -45,6 +45,8 @@ Then discover the ADR registry and **record the result for the rest of this invo
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
+**Writes:** none — discovery is recorded for this invocation and consumed by later phases.
+
 ### Phase B — Research (REQUIRED)
 
 Per the pm skill's "Research phase (required, not optional)" section, produce three buckets of grounded evidence:
@@ -64,6 +66,8 @@ For each first-of-kind cross-cutting decision found, **invoke the `architect` su
 If the architect drafts an ADR, allocate and write it per `.claude/references/adr-registry.md` — § *Discover* to locate the registry, § *Allocate* to take the next number, § *Never cache the number* for why a recorded high-water mark is not it. `/plan` allocating from a mark `/feature-start` already consumed is exactly how two ADRs end up claiming one ID. Reference it in the plan's front-matter `related_adrs`.
 
 This is the slice-2 forward-reference: the pm skill almost missed a cross-cutting pattern at spec time; the same risk applies even more sharply at plan time when decisions get baked into multiple steps.
+
+**Writes:** any ADR the architect drafts, at its discovered path.
 
 ### Phase D — Step decomposition
 
@@ -114,6 +118,8 @@ Update `.claude/state.md`:
 
 Leave `## Open questions` alone unless the research or architect invocation surfaced something to defer.
 
+**Writes:** the plan at its discovered path · `.claude/state.md`.
+
 ### Phase F2 — Conformance review
 
 Invoke the `conformance-reviewer` subagent in fresh context. Pass **only** two paths: the approved spec and the plan you just wrote. It has no tools to reach the codebase, deliberately.
@@ -130,6 +136,8 @@ Surface the full findings document either way, including a clean result. A confo
 **Record every advisory the user leaves outstanding as a `CONF` row in the findings ledger** (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). Advisories do not block approval, which is exactly why they evaporate — the `/plan` conversation ends and the finding goes with it. The ledger defines `CONF` for this producer specifically so a deliberate deferral is still readable by the next `/feature-start`.
 
 You wrote this plan. That is exactly why you are not the one checking it — the fresh-context reviewer has not spent the last hour making these choices sound reasonable.
+
+**Writes:** the findings ledger, when an advisory is left outstanding as a `CONF` row.
 
 ### Phase F3 — Symbol verification
 

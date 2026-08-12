@@ -89,6 +89,8 @@ The distinction is not cosmetic. Any project with a CI config has already define
 - **Green:** proceed to Gate 2.
 - **Red:** halt. Surface what failed and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red result invalidates downstream assumptions. Lint and type-check failures block at the same severity as failing tests.
 
+**Writes:** none — runs the project's recorded gates and reports.
+
 ### Gate 2 — Docs reconciliation
 
 Load the `documenter` skill. Run a final-pass version of Pattern D (see the documenter skill's "Pattern D — On-demand reconciliation") **plus** an additional acceptance-criteria-coverage check:
@@ -107,6 +109,8 @@ If anything is unaddressed:
 
 The user picks. Don't proceed past Gate 2 with a coverage gap silently.
 
+**Writes:** whatever the reconciliation amends — the summary, domain docs, and any spec or plan amendment.
+
 ### Gate 3 — Security review
 
 Invoke the `security-reviewer` subagent in fresh context. Pass:
@@ -119,6 +123,8 @@ The subagent returns a structured findings document with severity-bucketed entri
 
 - **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
 - **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Re-run Gate 3 (or the full sequence from Gate 1, since fixes touch code) after resolution.
+
+**Writes:** the findings ledger, when the review produces non-critical `SEC` rows.
 
 ### After all three gates pass — Summary and supersede
 

@@ -40,7 +40,11 @@ CARRIER_HEADING = re.compile(r"commit|hand off", re.IGNORECASE)
 
 WRITES_LINE = re.compile(r"^\*\*Writes:\*\*\s+\S", re.MULTILINE)
 EXCEPTION = "**Clause 1 exception:**"
-STAGING = re.compile(r"git add|Stage (these|the) files|staging list", re.IGNORECASE)
+
+# The carrier is looked for as a *heading*, not as prose containing "git add".
+# Every command mentions `git add` — in a sentence forbidding `git add -A` —
+# so a prose match passes for a document that has no carrier at all.
+ANY_HEADING = re.compile(r"^#{2,4}\s+.*$", re.MULTILINE)
 
 
 def pack_documents():
@@ -86,7 +90,8 @@ class TestClauseOne(unittest.TestCase):
                 continue
             if not WRITES_LINE.search(text):
                 continue
-            if not STAGING.search(text):
+            headings = (m.group(0) for m in ANY_HEADING.finditer(text))
+            if not any(CARRIER_HEADING.search(h) for h in headings):
                 offenders.append(str(path.relative_to(PACK.parent)))
         self.assertEqual(
             [],

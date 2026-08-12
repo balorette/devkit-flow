@@ -65,6 +65,8 @@ If a convention isn't observable (no file demonstrates it yet), it isn't a conve
 
 When scoped to an `<area>`, survey conventions within that area; don't claim project-wide conventions from one subsystem.
 
+**Writes:** none — this phase surveys and reports. Phase D writes the survey into `CLAUDE.md`.
+
 ### Phase B — Discover the ADR registry, then the domain map
 
 **This phase owns ADR discovery for the run; Phase E does not re-discover.** Run `.claude/references/adr-registry.md` § *Discover* now, before the architect invocation below that might need it. Record the registry's location, format, and current high-water number for the rest of this invocation — Phase E records this same result into `CLAUDE.md` and re-scans only if it goes on to actually write an ADR (per that reference's *Allocate* step 1 and *Never cache the number*).
@@ -77,6 +79,8 @@ Invoke the `architect` subagent (fresh context, `subagent_type: architect`) **on
 
 Default to the spine: if the repo has many candidate contexts, propose the few that carry the project and say so ("Proposing the 4 core domains; re-run `/adopt` to document the rest"). Silent truncation reads as "covered everything" — name what you're deferring.
 
+**Writes:** none — discovery and confirmation only. Phase C and Phase E write what this phase finds.
+
 ### Phase C — Write the domain docs
 
 For each **confirmed** domain, draft a terse `docs/domains/<slug>.md` and propose it before writing (documenter discipline). Keep it lean — a starting point the documenter will keep current at future merges, not an exhaustive manual:
@@ -85,6 +89,8 @@ For each **confirmed** domain, draft a terse `docs/domains/<slug>.md` and propos
 # <Domain name>
 
 <One-sentence purpose.>
+
+**Writes:** one `docs/domains/<domain>.md` per confirmed domain.
 
 ## Responsibilities
 
@@ -119,6 +125,8 @@ Propose writing the Phase A block into that resolved section (replacing the `{{L
 
 Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
 
+**Writes:** the project's `CLAUDE.md` — the *Project conventions* section, including the **Blocking gates** list.
+
 ### Phase E — Record the registry, then contested decisions (opt-in, sparse)
 
 **Discovery already ran, in Phase B; this phase does not re-run it as a matter of course.** Record what Phase B found in `CLAUDE.md` conventions: *"ADRs live in `<path>` (`<format>`); highest is `<N>`."* Recording it is still worth doing even though nothing allocates from the record — it makes the registry's shape visible to a human reading `CLAUDE.md`. That reference is what `/feature-start` and `/plan` read too, so adoption and allocation cannot drift into disagreeing about where the registry is.
@@ -134,6 +142,8 @@ Write an ADR **only** when, during the run, the user flags an existing decision 
 3. Reference it from the relevant domain doc.
 
 If nothing is flagged, skip this phase's ADR-writing entirely and say so.
+
+**Writes:** the ADR-registry location into `CLAUDE.md` conventions · any opt-in ADRs at their discovered path.
 
 ### Phase F — Commit and hand off
 

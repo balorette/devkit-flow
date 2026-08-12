@@ -6,6 +6,8 @@ Drive an interactive merge between the project's existing `CLAUDE.md` and the ca
 
 `/claude-md-merge` is **housekeeping**, not feature work. It is not gated on an active feature — run it before adopting the pack, after declining `install.sh`'s append prompt, or after a pack update changed the canonical template.
 
+**Clause 1 exception:** this command may run before a project is a git repository — its preconditions require only `CLAUDE.md` and `.claude/devkit-orientation.md`, and neither implies a repo. With no repo there is no carrier commit to propose, so ADR-0008 clause 1 does not apply here and this command names no staging step; the user commits at their own cadence. Stating the exception is required rather than optional: an unstated one is indistinguishable from the oversight the clause exists to catch. `/adopt` writes the same artifact and does **not** qualify, because it gates on being a repo and always has somewhere to commit.
+
 ## Arguments
 
 None. Operates on `CLAUDE.md` in the current working directory (the project root).

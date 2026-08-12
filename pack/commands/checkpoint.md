@@ -38,6 +38,8 @@ Read, in this order:
 
 If the active feature's spec or plan can't be read, surface that and stop — checkpoint can't propose amendments against missing docs.
 
+**Writes:** none — reads the spec, plan, and `.claude/state.md` to ground the proposal.
+
 ### Phase B — Identify scope
 
 Based on arguments:
@@ -60,6 +62,8 @@ Per the documenter skill's "Propose before writing. Always." discipline:
 
 Surface the proposal to the user. Wait for confirmation.
 
+**Writes:** none — proposes only. Phase D applies what the user confirms; that separation is the documenter skill's cardinal discipline.
+
 ### Phase D — Apply
 
 Once the user confirms, apply only the confirmed edits. If the user revised the proposal, apply the revised version, not the original. Do not "iterate" by applying a first version and refining — re-propose first, apply once.
@@ -67,6 +71,8 @@ Once the user confirms, apply only the confirmed edits. If the user revised the 
 After applying:
 - Routine state.md fields (`Phase`, `Next step`) get updated without further confirmation.
 - Substantive state.md changes (Active feature clear, Parked features entry, Open questions add) are part of the proposal and were already confirmed.
+
+**Writes:** the confirmed doc amendments · `.claude/state.md`.
 
 ### Phase E — Hand off
 
