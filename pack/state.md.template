@@ -5,6 +5,7 @@
 **Phase:** idle
 **Spec:** —
 **Plan:** —
+**Summary:** —
 **PR:** —
 **Gated baseline:** —
 **Next step:** —
@@ -36,6 +37,11 @@ Field meanings:
   Phase           one of: idle | spec-draft | spec-approved | plan-draft |
                   plan-approved | building | checkpoint | merging | in-review
   Spec / Plan     paths to the active spec and plan, or "—" when idle
+  Summary         path to the feature summary once /feature-merge writes
+                  it, or "—". Recorded because the filename carries a
+                  creation date a later invocation cannot compute --
+                  /pr-review amends this file days later. Cleared at
+                  closeout with the rest.
   PR              URL or owner/repo#N while Phase is in-review; "—" otherwise.
                   Set by /feature-merge when it opens the PR; cleared at
                   closeout once the PR has merged.

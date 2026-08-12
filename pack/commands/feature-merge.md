@@ -144,7 +144,7 @@ The subagent returns a structured findings document with severity-bucketed entri
 
 Load the `documenter` skill again. Run the "Summary authoring" pattern (see the documenter skill):
 
-1. Write the summary per the documenter's summary checklist, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section.
+1. Write the summary per the documenter's summary checklist, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
 2. Update `docs/domains/<domain>.md` if the feature shifted domain vocabulary (per the documenter's "Domain doc updates" guidance). If `docs/domains/` doesn't exist and the feature is the project's first in a domain, create it.
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
@@ -225,7 +225,7 @@ In PR flow this section runs on a **later invocation** — the one that found `P
 
 Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
 
-1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
+1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/**Summary**/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).

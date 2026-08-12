@@ -24,6 +24,22 @@ Run once per invocation, **before the first consumer**.
 
 Report exactly one of: a path per artifact type, or an explicit `"none found"`. **Silence is not a result** — a consumer cannot distinguish "no directory exists" from "discovery never ran," and those call for opposite behavior.
 
+Discovery is **per artifact type**, not all-or-nothing. A project commonly has plans and no specs; report each independently.
+
+## Default, when nothing is found
+
+`"none found"` is an **answer**, not a dead end. On a greenfield project — the common case, not the edge case — use:
+
+| Artifact | Default |
+|---|---|
+| Specs | `docs/specs/` |
+| Plans | `docs/plans/` |
+| Summaries | `docs/summaries/` |
+
+Create the directory on first write. **No confirmation is needed for a default into an unoccupied namespace** — there is nothing to collide with, and asking would put friction on the ordinary path. § *Confirm* exists for the *occupied* case, which is a different question with a different answer.
+
+Record the choice per § *Record* anyway, even when it is the default. A recorded default is what stops the next invocation re-deriving it, and it is what makes a later move read as a decision rather than as drift.
+
 ## Confirm
 
 **An occupied namespace is a user decision, not a default.**
@@ -52,7 +68,9 @@ Specs, plans, and summaries are named:
 
 The date is the artifact's **creation** date and does not change when the artifact is amended — a spec drafted on the 10th and amended on the 20th keeps the 10th. The directory carries the type, so no type suffix is added.
 
-**The date prefix is why every consumer must read the path rather than build it.** A slug alone is no longer sufficient to reconstruct a filename, and that is deliberate: a path that *can* be derived *will* be derived, and derivation is what put artifacts in the wrong directory in the first place. Read the path from `.claude/state.md`'s `Spec:` / `Plan:` fields, or from this discovery — never assemble it from a slug.
+**The date prefix is why every consumer must read the path rather than build it.** A slug alone is no longer sufficient to reconstruct a filename, and that is deliberate: a path that *can* be derived *will* be derived, and derivation is what put artifacts in the wrong directory in the first place. Read the path from `.claude/state.md`'s `Spec:` / `Plan:` / `Summary:` fields, or from this discovery — never assemble it from a slug.
+
+**Write the path into `state.md` the moment the artifact is created.** The date in the filename is the *creation* date, which belongs to the invocation that created it — a later invocation cannot compute it, and `/pr-review` amends the summary in a session that may be days after `/feature-merge` wrote it. All three fields exist for this reason; a discovered *directory* is not enough to find a dated *file*.
 
 Two artifacts are deliberately excluded:
 

@@ -47,6 +47,26 @@ Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guara
 
   Without this, your `state.md` tells a model it can rebuild the spec path from the slug. 0.12.0 made that false **deliberately**: specs, plans, and summaries now carry a date prefix and live wherever `.claude/references/artifact-locations.md` discovers, so that discovery is load-bearing rather than merely recommended. A model that reconstructs `docs/specs/<slug>.md` from the field meaning will look in the wrong place, or write to a directory that belongs to another system.
 
+- **Template hunk:** the `Summary:` field in the header block, and its entry in the field-meanings block. Both new; nothing is replaced.
+
+  Add a `**Summary:** —` line to the header, directly after `**Plan:** —`:
+
+  ```
+  **Summary:** —
+  ```
+
+  And add its meaning to the field-meanings block, directly after the `Spec / Plan` entry:
+
+  ```
+  Summary         path to the feature summary once /feature-merge writes
+                  it, or "—". Recorded because the filename carries a
+                  creation date a later invocation cannot compute --
+                  /pr-review amends this file days later. Cleared at
+                  closeout with the rest.
+  ```
+
+  Without it, `/pr-review` cannot locate the summary it is required to amend: discovery returns the summary *directory*, and the dated filename belongs to the invocation that created it.
+
 **Existing artifacts are not renamed.** Files already at `docs/specs/<slug>.md` keep their names and keep working — `state.md`'s `Spec:` and `Plan:` fields already hold real paths, and every consumer now reads them. The date prefix applies to artifacts created from 0.12.0 onward.
 
 ---
