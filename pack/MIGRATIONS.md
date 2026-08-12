@@ -12,6 +12,14 @@ Files the manifest tracks (`.claude/.devkit-manifest.json`) are pack-tracked, no
 
 A Claude Code session can do this for you: ask it to apply the pending entries. It will propose the edits before writing, like every other durable-doc change in the pack.
 
+## How entries are written
+
+Each entry **names the template hunk it corresponds to** and replaces the **smallest anchored unit** that carries the change — a sentence or a field line, not a whole paragraph.
+
+The asymmetry is the reason. An entry that says too much is merely redundant. An entry that says too little **silently deletes**: "replace paragraph X" is destructive when your paragraph X grew a sentence the replacement omits, and neither you nor the pack will notice, because the result is a well-formed paragraph that simply says less than it did. That is not hypothetical — 0.11.0's `Open questions` entry replaced a paragraph and dropped a sentence the template still keeps.
+
+Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guarantees a changed template is *looked at*; nothing guarantees every hunk in that diff reaches an entry, and the 0.10.0 section is what that gap produces — two things changed and the entry documented one. An entry that names its hunk lets the snapshot diff and the migration list be cross-checked by reading rather than by recollection.
+
 ---
 
 ## 0.11.0
