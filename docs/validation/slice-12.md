@@ -122,3 +122,35 @@ Worth recording because both were machinery the pack already had, working on the
 
 - **`test_migrations_snapshot.py` (slice 11) caught a clause-1 violation in slice 12's own plan.** The plan sequenced the `MIGRATIONS.md` entry into Task 17 while the seeded-template change was in Task 9 — deferring a carrier two phases from its artifact, in the slice implementing clause 1. The guard went red the instant the template changed and would not go green until the entry existed. ADR-0008 was explicit that no test can verify an entry is semantically *complete*; what this one enforces is *timing*, and timing was enough.
 - **`test_pack_references_resolve.py` caught a dangling path in `artifact-locations.md`.** The new reference used the brownfield target's real plans directory as a narrative example; in an installed file a backticked path reads as a pointer, and that directory does not exist in a target project.
+
+---
+
+## PR #4 review round (2026-08-12)
+
+Two automated reviewers — Cursor Bugbot and Codex — on commit `51d2510`. **10 raw findings → 9 unique** (C1 and X3 are the same defect reported by both). **All nine verified against source and all nine real; none pushed back on.**
+
+### The theme
+
+**Five of nine are one root cause: the clause-3 sweep shipped consumers without a producer.** `artifact-locations.md` was written, 34 sites were rewritten to cite it, and nothing ran it. See ADR-0009 § *A citation is not a wiring*.
+
+That matters more than the individual fixes, because it says something the slice's own thesis missed: a rule can be swept *and still not wired*. The citations resolved, `test_pack_references_resolve` was green, `test_clause_one` was green, and flow-4 was not closed.
+
+### Disposition
+
+| # | Reviewer | Finding | Fix |
+|---|---|---|---|
+| C2 | Cursor high | Artifact discovery never runs | `pm` Orient + `/feature-start` Phase A + `/plan` Phase A run § *Discover*; `/adopt` records homes |
+| X1 | Codex P1 | No default when discovery finds nothing | § *Default* — `docs/{specs,plans,summaries}/`, no confirmation for an unoccupied namespace |
+| X5 | Codex P2 | Exemplar scans read hardcoded dirs | Both scans read the discovered homes |
+| X2 | Codex P2 | § *Record*'s `CLAUDE.md` write not carried | Declared in Phase A, so the derived carrier commits it |
+| X6 | Codex P2 | Summary path not persisted | New `state.md` `Summary:` field + migration entry |
+| C3 | Cursor med | Halt list still one-directional | Matches precondition 2 in both directions |
+| X7 | Codex P2 | Merged-state jump skips clean-tree check | Remote comparison skipped; clean tracked tree still required before `git checkout <mainline>` |
+| C1/X3 | Both | `Writes:` declaration inside a fenced template | Declaration moved out **and `test_clause_one` made fence-aware** |
+| X4 | Codex P2 | Phase F3 false-RESOLVEs on common identifiers | Definition-site resolution at the attributed module |
+
+### What this round says about the guards
+
+- **`test_clause_one` passed for the wrong reason** and now cannot: fenced blocks are templates the command emits into someone else's file, so their content is not a declaration and their headings are not phase boundaries. The fence-aware version went red naming exactly `adopt.md` Phase C.
+- **No existing guard could have caught C2.** The citation resolves, so `test_pack_references_resolve` is satisfied; nothing goes unwritten, so `test_clause_one` is satisfied. The gap between *a reference that exists* and *a reference that is reached* has no mechanical check. **This is now the strongest argument for slice 13's `reviewer` gate.**
+- **X4 was a false claim I wrote**, not an omission: *"a plain identifier search is enough — a false 'resolved' is not possible."* Clause 5 applies to the pack's authors as much as to the pack.

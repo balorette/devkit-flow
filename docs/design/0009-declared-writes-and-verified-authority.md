@@ -6,6 +6,7 @@
 **Evidence:** [`docs/validation/flow-execution-0.11.0.md`](../validation/flow-execution-0.11.0.md) findings 1–9 (the pack's first end-to-end execution) and [`docs/validation/pr140-pack-findings.md`](../validation/pr140-pack-findings.md) findings 1–7 plus its unnumbered `MIGRATIONS.md` finding. Every quotation re-verified against `pack/` source before this ADR was written.
 **Extends:** [ADR-0008](0008-step-invariants.md) — cited throughout, not amended.
 **Amended:** 2026-08-12 — clause 5 added at the owner's direction, generalizing a rule the pack already states fourteen times in ten formulations. See *Clause 5* and Decision 5.
+**Amended:** 2026-08-12 (second) — the PR #4 review found that clause 3's sweep shipped **consumers without a producer**. See *A citation is not a wiring*, below.
 
 ---
 
@@ -147,6 +148,18 @@ Specs, plans, and summaries are written to `docs/{specs,plans,summaries}/YYYY-MM
 **This is in the ADR rather than filed as a naming preference because it is the mechanism, not the decoration.** The clause-3 sweep for artifact locations is otherwise pure discipline: twenty sites that currently derive a path from a slug would be rewritten to discover it, and nothing would stop the twenty-first from deriving it again. A filename that cannot be reconstructed from a slug makes discovery *load-bearing* — a component that skips it produces a path that does not resolve, which `tests/test_pack_references_resolve.py` already fails on.
 
 Domains are excluded: `docs/domains/<domain>.md` is a per-domain living document amended at every merge, and a creation date on it would assert something false. ADRs are excluded: they carry a monotonic ID and `adr-registry.md` already owns their discovery, so a date would compete with the registry.
+
+### A citation is not a wiring
+
+**Added 2026-08-12, after the PR #4 review.** The first implementation of § *Spec, plan, and summary locations become discovered* added `artifact-locations.md` and rewrote 34 sites to cite *"the location § Discover returned."* It did not add anything that **runs** § *Discover*. Orient and Phase A ran ADR discovery only; the exemplar scans still read `docs/specs/` and `docs/plans/` literally; the reference never said what `"none found"` meant for a greenfield project; and § *Record*'s write had no producer.
+
+Seven consumers, zero producers. **That is clause 3 failing in its most complete form** — not discovery ordered after its consumer, but discovery that never executes at all — shipped inside the slice whose stated purpose was sweeping clause 3. Two automated reviewers found it; neither author did.
+
+The lesson is narrow and worth stating, because it is not the same lesson ADR-0008 already teaches:
+
+> **Citing a procedure is not the same as invoking it.** A write site that names a discovered value reads as correct — the citation resolves, the reference exists, the test suite is green — while the value it names was never produced. A clause-3 sweep is complete only when something *runs* the discovery, something *defines* its answer for the unoccupied case, and something *persists* the result for consumers in later invocations.
+
+`tests/test_pack_references_resolve.py` cannot catch this: the citation *does* resolve. Nor can `test_clause_one.py`: nothing goes unwritten. The gap is between a reference that exists and a reference that is reached, and the pack currently has no mechanical check for it. That is a candidate for slice 13's `reviewer` gate — the cross-step lens no single component owns — and it is a better argument for that component than the one this ADR originally recorded.
 
 ## What the clauses decide
 
