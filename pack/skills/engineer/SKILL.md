@@ -34,7 +34,15 @@ This check costs about five seconds. The class of bug it catches — eager impor
 3. Receive test files. Place them at the paths the plan specifies.
 4. Run the tests. They must fail. If any pass on first run, something is wrong — either the test isn't testing what it claims, or the production code already exists. Stop and investigate before continuing.
 
-If the tester returns **findings instead of tests**, do not work around them and do not re-invoke with a looser brief. Evaluate them per `.claude/references/findings-triage.md` (internal source). Most tester findings mean the plan's type signatures are wrong or incomplete — which is a `/checkpoint` amendment, not a build-time improvisation.
+**The tester returns two things, and the second one is not a fault.** Expect tests *plus* findings — observations about what the test list omits, fixtures the new code will break, paths the existing suite cannot distinguish. On the first full run this happened in every one of six steps, and one of them caught a gate applied to one endpoint while a sibling method bypassed it: the exact hole that feature existed to close. Findings arriving alongside green tests are the shape most likely to be skimmed.
+
+Triage them per `.claude/references/findings-triage.md` (internal source):
+
+- **In scope and cheap** → fix now, in this step.
+- **A contract gap** — the plan's type signatures are wrong or incomplete → `/checkpoint` amendment, not a build-time improvisation.
+- **Out of scope for this feature** → the findings ledger, so it outlives the step.
+
+If the tester returns **findings and no tests**, that is a refusal, and it means the brief was unbuildable. Do not work around it and do not re-invoke with a looser brief — fix the contract.
 
 ### Green
 

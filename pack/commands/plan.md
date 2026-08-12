@@ -135,6 +135,10 @@ Surface the full findings document either way, including a clean result. A confo
 
 **Record every advisory the user leaves outstanding as a `CONF` row in the findings ledger** (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). Advisories do not block approval, which is exactly why they evaporate — the `/plan` conversation ends and the finding goes with it. The ledger defines `CONF` for this producer specifically so a deliberate deferral is still readable by the next `/feature-start`.
 
+**An advisory you fix in the plan needs no row.** There are three dispositions, not two: fix it now, defer it to a `CONF` row, or resolve it with the user. **Prefer the first when the fix is cheap** — the ledger is for what you deliberately leave, and a ledger full of postponed two-minute edits stops reading as a record of real decisions.
+
+The phase's own best case is the one that used to go unnamed. On the first full run all three advisories were cheap, all three were fixed in the plan, and no rows were written — which is the right outcome, and a literal reader of the previous text would have deferred them instead. A branch left unstated does not go unhandled; it gets handled inconsistently, by whoever is reading.
+
 You wrote this plan. That is exactly why you are not the one checking it — the fresh-context reviewer has not spent the last hour making these choices sound reasonable.
 
 **Writes:** the findings ledger, when an advisory is left outstanding as a `CONF` row.

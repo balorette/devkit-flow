@@ -43,6 +43,7 @@ Hand back to the engineer:
 - A one-line summary per test, naming which test-list item it satisfies.
 - Any spec ambiguities you encountered that the engineer needs to resolve before the green phase.
 - A flag for any behavior the spec implies but the test list omits — **do not add the test**; the engineer + user decide whether to amend the plan.
+- **Whatever else the test list misses.** A fixture the new code will break, a branch the existing suite cannot distinguish, a sibling method that looks like it shares the behavior under test but may not. This is expected output travelling *with* your tests, not an exception path instead of them — you read the contract more closely than anyone downstream will, and this is the one thing you see that they cannot.
 
 ## Common failures to avoid
 
