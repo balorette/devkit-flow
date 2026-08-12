@@ -169,9 +169,9 @@ Where a name does not resolve, offer the nearest match if there is a plausible o
 
 ### Phase G — Commit and hand off
 
-Before the pause, propose a single commit for the artifacts this invocation produced: the plan, any Phase-C ADRs, the Phase-F `.claude/state.md` updates, **and the findings ledger if Phase F2 recorded a `CONF` row** (its path is the discovered one, not assumed).
+Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases rather than from a list maintained here. On a full run that is the plan and `.claude/state.md` (Phase F), any ADR the architect drafted (Phase C), and the findings ledger if Phase F2 recorded a `CONF` row (its path is the discovered one, not assumed).
 
-A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Every artifact this invocation writes is named in this list; that is the rule, not a fixed enumeration.
+A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Deriving the list from the declarations is what makes "every artifact this invocation writes is named here" a property rather than a promise: this list was correct and the equivalent list in `/feature-start` was not, which is exactly what a hand-maintained enumeration decays into.
 
 Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
 

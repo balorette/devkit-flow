@@ -113,7 +113,11 @@ Leave `## Open questions` alone unless the brainstorm surfaced something deferre
 
 ### Phase H — Commit and hand off
 
-Before the pause, propose a single commit for the artifacts this invocation produced: the spec, any Phase-E ADRs, and the Phase-G `.claude/state.md` updates. Subject: `spec: <slug> (draft)`. Body: one short paragraph — the feature framing in one sentence, plus ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. The user may legitimately want to split (separate commits for spec vs ADR) — let them.
+Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases rather than from a list maintained here. On a full run that is the spec (Phase D), any ADRs **and the `CLAUDE.md` high-water mark** (Phase E), and `.claude/state.md` (Phase G).
+
+The high-water mark is the one this list used to omit, and the omission was self-cancelling: Phase E step 4 exists specifically to stop the recorded mark decaying into a wrong one, so leaving it uncommitted un-does step 4 and the next `/feature-start` re-reads the stale number the update was written to fix. Deriving the list from the declarations is what stops that recurring — a hand-maintained enumeration at a distance from the writes it covers is the failure mode clause 1 names.
+
+Subject: `spec: <slug> (draft)`. Body: one short paragraph — the feature framing in one sentence, plus ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. The user may legitimately want to split (separate commits for spec vs ADR) — let them.
 
 Then pause for the user. Surface, in one short message:
 

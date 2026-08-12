@@ -21,7 +21,7 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
 | `in-review`, PR open, **gated content unchanged** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this content already passed them. |
-| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen — then update `Gated baseline`, commit `.claude/state.md` only, and push (same recipe as *PR creation*'s transition commit, below). Do **not** re-create the PR. |
+| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen. **Commit whatever the gates wrote first** (Gate 2's reconciliation, Gate 3's `SEC` rows — see each gate's `**Writes:**`), *then* update `Gated baseline` and commit `.claude/state.md` alone, and push. Two commits, in that order — see *Why two commits* below. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
 
 The `in-review` rows have their own preconditions, checked **before** the discriminator runs:
@@ -49,6 +49,12 @@ Two things this gets right that the obvious versions do not:
 
 - **Not tip versus tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on that would skip tests, docs reconciliation, and security review on precisely the code about to merge.
 - **Not SHA equality against the baseline.** Writing `Gated baseline` requires committing `state.md`, which changes the tip — so tip *never* equals baseline, and an equality check makes the no-gates branch unreachable from the moment the PR opens. The exclusion of `.claude/state.md` is what makes the comparison survive the command's own bookkeeping write. It is a **content** diff rather than a commit walk so that a change reverted within the PR correctly reads as unchanged.
+
+**Why two commits on a gate rerun.** Gate 2 reconciles documentation and Gate 3 can write `SEC` rows to the findings ledger — both leave files modified other than `state.md`, as each gate's `**Writes:**` declares. A single `state.md`-only commit strands them, and does so in two directions at once: the tree stays dirty, so the *next* invocation's own precondition ("no uncommitted changes to tracked files") halts on it — the row breaks the path it returns to — and the pushed `Gated baseline` asserts that content passed the gates while the gates' own output is absent from the branch.
+
+So: commit the gates' artifacts first, then set `Gated baseline` to *that* commit and commit `state.md` alone. The order matters in both directions. Baseline-then-artifacts would name a tip whose content the artifacts postdate; one combined commit would put non-`state.md` content in the transition commit, and the discriminator above excludes only `.claude/state.md`, so the next invocation would read the difference as ungated content and re-run gates that already passed.
+
+This is the same reasoning the closeout commit already applies one section down, where the ledger is staged "if Gate 3 wrote `SEC` rows to it" — an uncommitted ledger row is the durable-memory failure the ledger was added to fix, reproduced one layer down.
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
