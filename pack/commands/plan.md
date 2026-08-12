@@ -97,7 +97,9 @@ related_adrs: [<numbers including any drafted in Phase C>]
 
 Sections in order:
 
-1. **Approach** — TDD throughout; dependency order rationale; test runner / linter / typecheck identification (concrete commands like `uv run pytest`, not abstract "we use pytest").
+1. **Approach** — TDD throughout; dependency order rationale; and **the per-step verify command**. Copy the project's **Blocking gates** list from `CLAUDE.md` conventions verbatim — concrete commands like `uv run pytest`, never abstract "we use pytest." If no list is recorded, state the commands you inferred and mark them as inferred.
+
+   This is what the `engineer` skill's Verify substep 3 reads at every step. Recording the gate in the *Framework constraints* table below is **not** enough: on the first full run a diff-coverage gate was captured there, with its caveat and its exact reproduction command, and the build loop still never ran it. A constraint the loop does not read is a constraint the loop does not have.
 2. **Conventions and constraints** — three subsections from Phase B (Repo conventions, Project-firsts, Framework constraints), each with its evidence table.
 3. **Step order** — each step entry per the engineer skill's "Each step's required entries" list.
 4. **Acceptance mapping** — the table from Phase E.
