@@ -33,11 +33,13 @@ Also load the `grill-me` skill. `/plan` is mostly automatic — research and dec
 Read, in this order:
 - `CLAUDE.md` (project conventions).
 - The active spec (path from state.md).
-- `docs/specs/` for one or two recent merged specs — gives shape context.
-- `docs/plans/` for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like.
+- The **discovered specs directory** for one or two recent merged specs — gives shape context.
+- The **discovered plans directory** for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like. Both directories come from `.claude/references/artifact-locations.md` § *Discover*, run below; a scan of the defaults on a project that keeps them elsewhere returns nothing and silently costs you the precedent.
 - `docs/domains/<domain>.md` for each domain the spec touches.
 
-Then discover the ADR registry and **record the result for the rest of this invocation** — Phase C's architect invocation, and the engineer skill's plan-time architect calls, both read this record rather than re-discovering:
+Then run **both** discoveries and **record their results for the rest of this invocation**. Phase C's architect invocation and the engineer skill's plan-time architect calls read the ADR record rather than re-discovering; Phase F writes the plan at the location the artifact record names.
+
+0. **Discover the artifact locations.** Run `.claude/references/artifact-locations.md` § *Discover* in full and record the spec, plan, and summary directories — or their § *Default* values where discovery found none. This is what the exemplar scans above and Phase F's write both read. Running it after Phase F would be discovery arriving behind its consumer, which is the shape clause 3 exists to forbid.
 
 1. **Discover.** Run `.claude/references/adr-registry.md` § *Discover* in full. Record the registry's location, its format, and its current high-water number — the number is a reported hint only, never an allocation source (see that reference's § *Never cache the number*; allocation always re-scans). Report what was found per that reference's § *Report what was found*.
 2. **Record the ADR paths.** The actual file paths discovery found, or the explicit `"registry: none found"` when discovery finds nothing. This is the piece the architect contract in "Invoking the architect" below needs verbatim — a directory pattern is not a substitute for either.

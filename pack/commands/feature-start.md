@@ -31,9 +31,11 @@ The phases below mirror the `pm` skill's loop. The skill is the source of truth 
 
 ### Phase A — Orient, discover, and confirm
 
-PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, the findings ledger, and — per the `pm` skill's Orient step — runs `.claude/references/adr-registry.md` § *Discover* in full). Then:
+PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior specs, the findings ledger, and — per the `pm` skill's Orient step — runs **both** `.claude/references/adr-registry.md` § *Discover* and `.claude/references/artifact-locations.md` § *Discover* in full). Then:
 
-1. **Record what pm's Orient just discovered.** Note for the rest of this invocation: the registry's location, its format, and its current high-water number. Report what was found per that reference's *Report what was found* step. Discovery itself runs once, inside Orient — this step records and reports that result rather than re-running the scan.
+1. **Record what pm's Orient just discovered.** Note for the rest of this invocation: the registry's location, its format, and its current high-water number, **and the spec / plan / summary directories** (or their § *Default* values when discovery found none).
+
+   **Both discoveries run here for the same reason.** Phase D writes the spec at a location this phase resolved; a write site that says "the location § *Discover* returned" is a consumer, and clause 3 puts discovery before every consumer. Discovery that never runs is that clause failing in its most complete form — the citation reads as though a value exists when nothing produced one. Report what was found per that reference's *Report what was found* step. Discovery itself runs once, inside Orient — this step records and reports that result rather than re-running the scan.
 
    Orient must run discovery before Phase B because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs kept as headings in a single decisions log, invisible to the subagent asked to avoid contradicting them.
 2. Propose the slug derived from the user's argument. Confirm with the user.
@@ -41,7 +43,7 @@ PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior `docs/specs/`, the f
 
 If the framing confirmation surfaces a misunderstanding, restate and reconfirm. Do not proceed to brainstorm against a wrong frame.
 
-**Writes:** none — discovery is recorded for this invocation and consumed by later phases.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, when § *Record* had nothing to read and this invocation resolved them. Otherwise none — discovery is recorded for this invocation and consumed by later phases.
 
 ### Phase B — Brainstorm
 

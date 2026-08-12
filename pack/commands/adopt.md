@@ -41,6 +41,7 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Logging / config access (singletons vs injection; env vs file; the project-wide config object).
 - Branch naming, commit conventions, anything else load-bearing.
 - **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
+- **Artifact homes** — where this project keeps specs, plans, and summaries. Run `.claude/references/artifact-locations.md` § *Discover*, confirm anything occupied per its § *Confirm*, and record the result per its § *Record*. `/feature-start`, `/plan`, and `/feature-merge` all read this record instead of re-deriving it, and its § *Discover* step 1 treats what you write here as authoritative — so this is the one place the answer is settled rather than re-litigated per feature.
 
 **Blocking gates.** Read `.github/workflows/*.yml` **and `*.yaml`** (GitHub Actions accepts both, and a project using `.yaml` would otherwise look like it has no CI at all), plus `.gitlab-ci.yml` / `.gitlab-ci.yaml` and `Makefile` targets named `ci` / `check` / `verify` if present and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
 
