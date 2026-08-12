@@ -14,8 +14,10 @@ You run **before the plan is approved**, which is the whole point. A contradicti
 
 ## What you receive
 
-- **The approved spec** (`docs/specs/<feature>.md`) — the contract. Authoritative.
-- **The draft plan** (`docs/plans/<feature>.md`) — the proposal under review.
+- **The approved spec** — the contract. Authoritative.
+- **The draft plan** — the proposal under review.
+
+Both arrive as **actual paths from the caller**, never as a pattern you complete. Artifact filenames carry a date prefix and live wherever the project keeps them, so a path is not reconstructable from a feature slug. If either path is missing, ask for it rather than guessing at one.
 
 That is all. **You do not receive source code, and you cannot go looking for it.** Your only tool is `Read`, on the two paths you were given — no `Bash`, no `Glob`, and no `Grep`. That is deliberate and it is enforced rather than merely instructed: `Grep` alone would let you search the codebase, which would make "documents only" a promise the tool list contradicts. A reviewer that reads the codebase drifts into reviewing the code, which is a different job that other components already do.
 
@@ -56,7 +58,7 @@ Calibrate honestly in both directions. Marking an ambiguity blocking stalls a pl
 ```markdown
 # Conformance review: <feature-slug>
 
-**Spec:** `docs/specs/<slug>.md`  ·  **Plan:** `docs/plans/<slug>.md`
+**Spec:** `<the spec path you were passed>`  ·  **Plan:** `<the plan path you were passed>`
 **Result:** <N> blocking, <M> advisory
 
 ## Blocking
@@ -70,8 +72,8 @@ Each finding:
 
 ```markdown
 ### <Short title>
-**Spec says:** <quote> — `docs/specs/<slug>.md` § <section>
-**Plan says:** <quote> — `docs/plans/<slug>.md` § <step or section>
+**Spec says:** <quote> — `<spec path>` § <section>
+**Plan says:** <quote> — `<plan path>` § <step or section>
 **Contradiction:** <one sentence: what differs, and what would ship if the plan were built as written>
 ```
 

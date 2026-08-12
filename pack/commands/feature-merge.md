@@ -136,7 +136,7 @@ The subagent returns a structured findings document with severity-bucketed entri
 
 Load the `documenter` skill again. Run the "Summary authoring" pattern (see the documenter skill):
 
-1. Write `docs/summaries/<feature>.md` per the documenter's summary checklist. Include the security-reviewer's non-critical findings in the "Security review notes" section.
+1. Write the summary per the documenter's summary checklist, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section.
 2. Update `docs/domains/<domain>.md` if the feature shifted domain vocabulary (per the documenter's "Domain doc updates" guidance). If `docs/domains/` doesn't exist and the feature is the project's first in a domain, create it.
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
@@ -146,7 +146,7 @@ Surface all proposed doc writes to the user before applying. The documenter skil
 
 Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
 
-Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+Propose a commit staging exactly the closeout files: the summary just written, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
 **Record this commit's SHA.** It becomes `Gated baseline` at PR creation — it is the tip as it stands before the `state.md`-only transition commit, which is the one commit the discriminator's exclusion accounts for.
 
@@ -192,7 +192,7 @@ Replaces *Merge proposal* when flow detection selected PR flow. The summary doc 
 Propose, in one short message:
 
 - The push (`git push -u origin feature/<slug>`).
-- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths. Reviewers should arrive with the contract in front of them.
+- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths. Reviewers should arrive with the contract in front of them.
 - Whether the PR is a draft. Default is not-draft; honor a `CLAUDE.md` convention if one states otherwise.
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.

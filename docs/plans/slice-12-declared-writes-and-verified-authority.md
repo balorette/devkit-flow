@@ -491,7 +491,10 @@ Expected: `test_write_phases_declare_writes` PASSES. `test_declared_writes_have_
 - [ ] **Step 4: Commit**
 
 ```bash
-git add pack/commands/
+git add pack/commands/feature-start.md pack/commands/plan.md \
+        pack/commands/adopt.md pack/commands/checkpoint.md \
+        pack/commands/pr-review.md pack/commands/feature-merge.md \
+        pack/commands/claude-md-merge.md
 git commit -m "pack: every artifact-producing phase declares what it writes
 
 Clause 1 by construction, taking the alternative ADR-0008 considered and
@@ -774,7 +777,11 @@ Expected: `OK`. `test_pack_references_resolve` is the one that matters here — 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add pack/ && git reset pack/MIGRATIONS.md
+git add pack/skills/pm/SKILL.md pack/skills/documenter/SKILL.md \
+        pack/agents/conformance-reviewer.md pack/agents/security-reviewer.md \
+        pack/agents/tester.md pack/commands/plan.md \
+        pack/commands/feature-merge.md pack/commands/feature-start.md \
+        pack/devkit-orientation.md pack/state.md.template
 git commit -m "pack: artifact paths are discovered and dated, never derived
 
 Closes flow-4. 34 sites across 9 files constructed docs/specs/<slug>.md rather
@@ -966,7 +973,12 @@ Expected: `OK`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add pack/
+git add pack/references/clean-architecture-layers.md pack/references/findings-triage.md \
+        pack/references/spec-and-plan-depth.md pack/agents/architect.md \
+        pack/agents/tester.md pack/skills/engineer/SKILL.md \
+        pack/skills/pm/SKILL.md pack/skills/documenter/SKILL.md \
+        pack/commands/plan.md pack/commands/adopt.md \
+        pack/commands/pr-review.md pack/commands/feature-merge.md
 git commit -m "pack: fourteen restatements of clause 5 become citations
 
 Including the verbatim triplicate (clean-architecture-layers.md:23,
@@ -1246,6 +1258,10 @@ multi-agent fan-out belongs to its reviewer gate."
 ```
 
 ## Task 17: Release 0.12.0
+
+> **Corrected during execution (2026-08-12).** Steps 1–3 were **pulled forward into Task 9**, where the seeded-template change actually happens. As written, this task deferred the `MIGRATIONS.md` carrier two phases away from the artifact it carries — a clause-1 violation, in the slice that implements clause 1. The `test_migrations_snapshot` guard caught it by going red the moment T9 edited the template, which is the guard behaving exactly as ADR-0008 designed it.
+>
+> What remains here is verification: confirm no *later* task introduced a second seeded hunk, and that `VERSION`, the snapshot, and the entry still agree.
 
 Follows the release cycle in this project's `CLAUDE.md`. **Step 1 is the one that matters** — the 0.10.0 failure was a migration entry written from recollection.
 

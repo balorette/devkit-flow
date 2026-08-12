@@ -57,7 +57,7 @@ PM skill proposes the domain decomposition. The user confirms or corrects. Do no
 
 ### Phase D — Spec draft
 
-PM skill drafts `docs/specs/<slug>.md` to typical depth, with front-matter:
+PM skill drafts the spec to typical depth, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with front-matter:
 
 ```yaml
 ---
@@ -71,7 +71,7 @@ related_adrs: [<numbers>]
 ---
 ```
 
-Write the spec to the path. If `docs/specs/` doesn't exist, create it. If a spec with that slug already exists, **stop and surface** — the user resolves (rename, replace, or abandon) explicitly.
+Write the spec to the path. If the discovered directory doesn't exist, create it. If a spec with that slug already exists, **stop and surface** — the user resolves (rename, replace, or abandon) explicitly.
 
 **Writes:** the spec at its discovered path.
 
@@ -103,7 +103,7 @@ Update `.claude/state.md`:
 - `Active feature: <slug>`
 - `Active branch: feature/<slug>`
 - `Phase: spec-draft`
-- `Spec: docs/specs/<slug>.md`
+- `Spec: <the path just written>`
 - `Plan: —`
 - `Next step: —`
 

@@ -32,10 +32,10 @@ The pack's memory layout has each document owning a different facet of project m
 
 | Document | Owns | Amend when | Don't amend for |
 |---|---|---|---|
-| `docs/specs/<feature>.md` | *What* we're building: scope, contracts, data model, error handling, acceptance criteria | Scope changes, contract changes, new acceptance criteria, requirements clarification | Implementation choices (those go in the plan) |
-| `docs/plans/<feature>.md` | *How* we're building it: steps, test lists, conventions, ordering | Step changes (add/remove/reorder), test-list updates, plan-time conventions changes, type-signature corrections | Behavioral changes (those need the spec amended first) |
+| **The spec** (path from `state.md`'s `Spec:`) | *What* we're building: scope, contracts, data model, error handling, acceptance criteria | Scope changes, contract changes, new acceptance criteria, requirements clarification | Implementation choices (those go in the plan) |
+| **The plan** (path from `state.md`'s `Plan:`) | *How* we're building it: steps, test lists, conventions, ordering | Step changes (add/remove/reorder), test-list updates, plan-time conventions changes, type-signature corrections | Behavioral changes (those need the spec amended first) |
 | `docs/adr/NNNN-*.md` | Irreversible architectural decisions | **Almost never.** ADRs are immutable once accepted. If a decision needs revisiting, write a new ADR that supersedes (with reference). For *when* a decision warrants an ADR in the first place, see the pm skill's *When to invoke the architect* quick-reference table | Wording cleanups, retroactive justification, anything that rewrites history |
-| `docs/summaries/<feature>.md` | Feature retrospective (one per merged feature) | Authored at `/feature-merge`; amended only to add late-discovered context within a couple of days of merge | After "soon after merge" passes, the summary is history; further commentary belongs in the next feature's spec |
+| **The summary** (one per merged feature, at the discovered location) | Feature retrospective | Authored at `/feature-merge`; amended only to add late-discovered context within a couple of days of merge | After "soon after merge" passes, the summary is history; further commentary belongs in the next feature's spec |
 | `docs/domains/<domain>.md` | Living domain model: vocabulary, bounded contexts, ubiquitous language | When a feature adds, renames, or shifts a domain concept | Adding implementation details (those belong in the spec/plan or in code comments) |
 | `.claude/state.md` | Working pointer: active feature/branch/phase/spec/plan, Open questions, Parked features | Continuously (Phase + Next step are routine); substantively when transitioning lifecycle (park, resume, etc.) | n/a — state.md is always live |
 | `docs/findings.md` *(or the project's existing review system — see below)* | Findings that outlive their feature: security, conformance, external review, architect recommendations without an ADR | A finding is recorded, or an existing one is resolved | Anything scoped to one feature — that belongs in the spec, plan, or summary |
@@ -99,7 +99,7 @@ This is a lighter-weight pass than what the `doc-drift-detector` hook automates 
 
 ## Summary authoring (loaded by `/feature-merge`)
 
-At merge time, you are also the **author** of `docs/summaries/<feature>.md` — the feature's retrospective. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
+At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
 
 ### What goes in a summary
 
@@ -125,8 +125,8 @@ Sections:
 ---
 feature: <slug>
 merged: YYYY-MM-DD
-spec: docs/specs/<slug>.md
-plan: docs/plans/<slug>.md
+spec: <the actual spec path>
+plan: <the actual plan path>
 related_adrs: [<numbers>]
 supersedes: [<parked-feature-slugs, if any>]
 ---
@@ -166,7 +166,7 @@ Per the discipline at the top of this skill, summaries are not edited beyond a b
 
 `/feature-merge` builds the pull-request body from the summary you just wrote. That is *why* the summary is authored before the PR opens rather than at merge time — reviewers should have the contract in front of them, not have to go looking for it.
 
-Assemble: the **What shipped** section verbatim, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths.
+Assemble: the **What shipped** section verbatim, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths.
 
 Do **not** include **Followups** or **Security review notes**. Followups invite scope debate inside the review — the reviewer starts arguing about work that was deliberately deferred. Security findings are for the user's judgment, not broadcast to the reviewer pool.
 

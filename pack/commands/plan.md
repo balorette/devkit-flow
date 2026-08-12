@@ -88,13 +88,13 @@ If the mapping reveals a criterion that has no plausible step (because the spec 
 
 ### Phase F — Write plan + update state.md
 
-Write `docs/plans/<slug>.md` with:
+Write the plan at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with:
 
 ```yaml
 ---
 feature: <slug>
 status: draft
-spec: docs/specs/<slug>.md
+spec: <the actual spec path, copied from state.md's Spec: field>
 related_adrs: [<numbers including any drafted in Phase C>]
 ---
 ```
@@ -109,11 +109,11 @@ Sections in order:
 4. **Acceptance mapping** — the table from Phase E.
 5. **Out-of-plan changes that may surface** — lint-rule additions, one-time migrations, anything you anticipate needing that's outside the spec's strict scope. Surface here; don't surprise the user during `/build`.
 
-If `docs/plans/` doesn't exist, create it.
+If the discovered directory doesn't exist, create it.
 
 Update `.claude/state.md`:
 - `Phase: plan-draft`
-- `Plan: docs/plans/<slug>.md`
+- `Plan: <the path just written>`
 - `Next step: Step 1 — <step name>` (the heading of the first step, so `/build` has something to point at the moment the user approves the plan)
 
 Leave `## Open questions` alone unless the research or architect invocation surfaced something to defer.

@@ -1,11 +1,11 @@
 ---
 name: pm
-description: Spec authoring discipline for a devkit project. Owns the brainstorm-to-spec dialogue, domain decomposition heuristic, and the typical spec template the pack writes by default. Invoked by `/feature-start` to take a feature idea from prose to an approvable spec; later by `/plan` for plan-time decomposition. Load whenever drafting or amending a `docs/specs/<feature>.md`.
+description: Spec authoring discipline for a devkit project. Owns the brainstorm-to-spec dialogue, domain decomposition heuristic, and the typical spec template the pack writes by default. Invoked by `/feature-start` to take a feature idea from prose to an approvable spec; later by `/plan` for plan-time decomposition. Load whenever drafting or amending a feature spec.
 ---
 
 # PM
 
-You drive a feature from "we want to do X" to an approvable spec. Your output is a `docs/specs/<feature>.md` written to **typical** depth (see the section checklist below), with the user's understanding visible at every step. You are not the engineer — implementation choices that don't shape the contract belong in the plan. You are not the documenter — doc reconciliation across the project is its concern.
+You drive a feature from "we want to do X" to an approvable spec. Your output is a spec written to **typical** depth (see the section checklist below), with the user's understanding visible at every step. You are not the engineer — implementation choices that don't shape the contract belong in the plan. You are not the documenter — doc reconciliation across the project is its concern.
 
 ## Default to typical depth
 
@@ -84,7 +84,7 @@ The decomposition is the bridge between brainstorm and spec. It's also the user'
 
 ### 4. Draft the spec
 
-Now write `docs/specs/<feature>.md` covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
+Now write the spec — at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* — covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
 
 **Front-matter:**
 
@@ -210,7 +210,7 @@ The architect returns a recommendation, rationale, trade-offs, precedent, and �
 
 `/feature-start`'s job (and yours within it) ends when:
 
-- The spec exists at `docs/specs/<feature>.md` with `status: approved`.
+- The spec exists at the path `state.md`'s `Spec:` field names, with `status: approved`.
 - Any ADRs drafted during brainstorm are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`).
 - The feature branch exists.
 - `.claude/state.md` points at the new spec and reflects `Phase: spec-approved` (or `spec-draft` if the user is reviewing asynchronously).
@@ -221,7 +221,7 @@ The next phase is `/plan`. You'll be loaded again there for plan-time decomposit
 
 When `/plan` loads you, the loop above is over — the spec is approved and is read-only from here. Your plan-time job is different in shape:
 
-- Translate the approved spec into a typical-depth `docs/plans/<feature>.md` that the `engineer` skill can execute step-by-step.
+- Translate the approved spec into a typical-depth plan that the `engineer` skill can execute step-by-step.
 - Produce the *Conventions and constraints* section from real research, not from generic best practice.
 - Map every acceptance criterion in the spec to a step (or to an explicit deferral) — no silent gaps.
 - Surface first-of-kind cross-cutting decisions before they bake into steps, same architect-invocation criteria as at spec time.
@@ -317,13 +317,13 @@ The "Note" column is where deferrals get explained. A criterion mapped to "—" 
 
 ### Producing the plan
 
-Write `docs/plans/<feature>.md` with front-matter:
+Write the plan — at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* — with front-matter:
 
 ```yaml
 ---
 feature: <slug>
 status: draft
-spec: docs/specs/<slug>.md
+spec: <the actual spec path>
 related_adrs: [<numbers, including any drafted during plan-time architect calls>]
 ---
 ```
@@ -340,7 +340,7 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 
 ### What you hand to /plan when you're done
 
-- The plan file exists at `docs/plans/<slug>.md` with `status: draft`.
+- The plan file exists at the path `state.md`'s `Plan:` field names, with `status: draft`.
 - Any ADRs drafted during plan-time architect calls are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`). Plan-time allocation re-scans exactly as brainstorm-time does — `/feature-start` may already have consumed the number you last saw.
 - The plan's front-matter `related_adrs` references them.
 - The state.md update mechanic is /plan's responsibility, not yours. You return; /plan writes Phase + Next step.

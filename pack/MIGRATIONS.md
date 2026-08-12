@@ -22,6 +22,35 @@ Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guara
 
 ---
 
+## 0.12.0
+
+### `.claude/state.md`
+
+- **Template hunk:** the `Active feature` line in the trailing HTML comment's field-meanings block. One line, replaced.
+
+  Replace this **single line**:
+
+  ```
+  Active feature  short slug matching docs/specs/<slug>.md, or "none"
+  ```
+
+  with:
+
+  ```
+  Active feature  short slug identifying the feature, or "none". The slug does
+                  NOT determine the spec path -- artifact files carry a date
+                  prefix (YYYY-MM-DD-<slug>.md) and live wherever discovery
+                  found. Read Spec / Plan below for actual paths.
+  ```
+
+  Leave every other line in that block alone.
+
+  Without this, your `state.md` tells a model it can rebuild the spec path from the slug. 0.12.0 made that false **deliberately**: specs, plans, and summaries now carry a date prefix and live wherever `.claude/references/artifact-locations.md` discovers, so that discovery is load-bearing rather than merely recommended. A model that reconstructs `docs/specs/<slug>.md` from the field meaning will look in the wrong place, or write to a directory that belongs to another system.
+
+**Existing artifacts are not renamed.** Files already at `docs/specs/<slug>.md` keep their names and keep working — `state.md`'s `Spec:` and `Plan:` fields already hold real paths, and every consumer now reads them. The date prefix applies to artifacts created from 0.12.0 onward.
+
+---
+
 ## 0.11.0
 
 ### `.claude/state.md`

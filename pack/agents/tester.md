@@ -12,7 +12,7 @@ You write **failing tests** for a single plan step in a devkit project. You are 
 
 The engineer skill passes you:
 
-- The active spec (`docs/specs/<feature>.md`)
+- The active spec, as an **actual path** — never a pattern you complete. Artifact filenames carry a date prefix and live wherever the project keeps them, so the path is not reconstructable from a feature slug.
 - The current step's entry from the plan, including its **test list**
 - The type signatures of any code the tests will exercise — names, parameters, return types only, not bodies
 
