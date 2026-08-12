@@ -45,3 +45,21 @@ The dogfood target is Enterprise API, which has an open PR (#141) from the run t
 **Predicted:** the written plan's *Approach* section contains those commands verbatim as the per-step verify command — not merely in a *Framework constraints* evidence table.
 
 **Why:** on the 0.11.0 run the gate *was* captured at plan time, in the constraints table, with its caveat and its exact reproduction command. It never reached the loop. A constraint the loop does not read is a constraint the loop does not have.
+
+---
+
+### Prediction T14 — the `in-review` re-entry path
+
+> **UNRUN, and slice 12 does not change that.** These three are authored by reading. The `in-review` re-entry path remains the largest body of never-executed text in the pack, and the dogfood that settles it is: reopen the PR, push a review fix from a second clone, re-run.
+
+**T14a (pr140-2) — merged-state ordering.** On a forge that auto-deletes head branches, re-run `/feature-merge` after the PR merges.
+**Predicted:** closeout runs and clears state.
+**Before this change:** halts on precondition 2, because `git ls-remote` returns an empty result for the deleted ref and that reads as diverged.
+
+**T14b (pr140-1) — tip equality.** Push a commit to the PR from a second clone, then re-run `/feature-merge` locally.
+**Predicted:** halts, reporting that local is *behind* — naming the direction, not just the mismatch.
+**Before this change:** passes, then gates stale local content while the discriminator reads the new remote tip.
+
+**T14c (pr140-4) — untracked files.** Leave an unstaged new test file in the tree and re-run.
+**Predicted:** surfaced and asked about before any gate runs.
+**Before this change:** precondition passes, gates run green against a tree containing the untracked implementation, and the PR gets a `Gated baseline` it did not earn.
