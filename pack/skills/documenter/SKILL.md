@@ -46,6 +46,10 @@ The pack's memory layout has each document owning a different facet of project m
 
 When an amendment touches more than one document, **list them all in the proposal**. A scope change typically touches the spec (the change) and the plan (a new step or test); a project convention change typically touches CLAUDE.md and the next plan's conventions section. Missing the cross-document update is the most common amendment failure mode.
 
+**Three strikes on a class, not just on a bug.** The `engineer` skill stops after three failed hypotheses because repeated failures are evidence about the *design* rather than about the attempts. The same reasoning applies to amendments: when `/checkpoint` corrects the **same class** of defect for the third time in one feature, propose amending the process rule rather than the instance — and say so in the amendment.
+
+On the first full run a symbol slip was corrected at instances 2, 3, and 5. At instance 3 a rule *was* written, narrow enough that instance 5 slipped past it. Three separate `/checkpoint` commits treated one class as three unrelated cases, and the narrow rule is itself the tell: a rule written for the instances seen rather than for the class is the third strike, not the fix.
+
 ## Amendment patterns
 
 ### Pattern A — User-described change

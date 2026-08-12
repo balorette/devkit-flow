@@ -141,7 +141,7 @@ When the PM skill identifies an architectural question during brainstorm (see th
 
 The architect returns a recommendation in its response. Reflect it back to the user before accepting; the user's confirmation is the gate before applying it to the spec or writing an ADR.
 
-> **Slice-2 simulation note:** while the pack's subagent format is being stabilized in the host project, `subagent_type: architect` may not yet resolve. The validated fallback is `subagent_type: general-purpose` with the *contents* of `pack/agents/architect.md` (or `.claude/agents/architect.md` in the installed pack) passed as the prompt body. Either way preserves fresh context; the user experience is identical.
+**Verify the architect's source-level claims before reflecting them.** That confirmation is a *user* gate, not a *truth* gate — the user cannot evaluate a fresh-context agent's confident `file:line` assertions from the reflection alone, and reflecting them unchecked launders an inference into a fact the spec may then be built on. Check the load-bearing ones against source first. On the first full run the architect made five source-level claims and all five held, including one that a prior ADR's override was unwired dead code — correct, load-bearing, and expensive to have passed on wrong. See `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 
 ## Halt conditions
 
