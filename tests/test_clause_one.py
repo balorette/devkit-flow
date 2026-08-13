@@ -34,6 +34,23 @@ DURABLE_TARGET = re.compile(
 # skills use them for illustrative content that is not a phase at all.
 PHASE_HEADING = re.compile(r"^#{2,4}\s+(Phase|Gate)\s+\S+.*$", re.MULTILINE)
 
+# A command's executable steps are not always named `Phase N` or `Gate N`.
+# /feature-merge names its by what they do -- "After all three gates pass",
+# "PR creation (PR flow)" -- and three of those wrote durable artifacts with no
+# declaration while this test stayed green, because the heading regex above
+# never reached them. So a command's `## Run` section contributes all of its
+# `###` subsections as steps, whatever they are called.
+#
+# Scoped to `## Run`, and to commands, on purpose. Widening to every heading in
+# every file flags 54 sections, nearly all of them `## Arguments` and
+# `## Preconditions` prose that *mentions* a write the command performs
+# elsewhere. This scoping flags 4, and 3 were real. A guard that cries wolf is
+# a guard that gets an allowlist, and an allowlist here is the cached-discovery
+# failure clause 3 forbids.
+RUN_HEADING = re.compile(r"^##\s+Run\b.*$", re.MULTILINE)
+TOP_HEADING = re.compile(r"^##\s+\S.*$", re.MULTILINE)
+SUB_HEADING = re.compile(r"^###\s+\S.*$", re.MULTILINE)
+
 # Clause 1 has two sides. A phase named for committing is the *carrier*, not the
 # producer, so it quotes the artifacts it stages without producing them.
 CARRIER_HEADING = re.compile(r"commit|hand off", re.IGNORECASE)
@@ -68,29 +85,55 @@ def strip_fences(text):
 
 
 def pack_documents():
-    """Every command and skill file, as (path, fence-stripped text) pairs."""
+    """Every command and skill file, as (path, text, is_command) triples."""
     for p in sorted(PACK.glob("commands/*.md")):
-        yield p, strip_fences(p.read_text())
+        yield p, strip_fences(p.read_text()), True
     for p in sorted(PACK.glob("skills/*/SKILL.md")):
-        yield p, strip_fences(p.read_text())
+        yield p, strip_fences(p.read_text()), False
 
 
-def phase_sections(text):
-    """Split a document into (heading, body) pairs, one per phase heading."""
-    matches = list(PHASE_HEADING.finditer(text))
+def _split(text, pattern):
+    matches = list(pattern.finditer(text))
     for i, match in enumerate(matches):
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         yield match.group(0).strip(), text[match.end():end]
+
+
+def run_body(text):
+    """The body of the document's `## Run` section, or "" if it has none."""
+    for heading, body in _split(text, TOP_HEADING):
+        if RUN_HEADING.match(heading):
+            return body
+    return ""
+
+
+def phase_sections(text, is_command=False):
+    """Split a document into (heading, body) pairs, one per step heading.
+
+    Phase and Gate headings anywhere in the document, plus -- for commands --
+    every `###` subsection of `## Run`. The two overlap on `### Gate 1` and
+    friends; dedupe by heading so an overlapping section is checked once.
+    """
+    seen = set()
+    sources = [_split(text, PHASE_HEADING)]
+    if is_command:
+        sources.append(_split(run_body(text), SUB_HEADING))
+    for source in sources:
+        for heading, body in source:
+            if heading in seen:
+                continue
+            seen.add(heading)
+            yield heading, body
 
 
 class TestClauseOne(unittest.TestCase):
     def test_write_phases_declare_writes(self):
         """A phase whose body describes a durable write declares it."""
         offenders = []
-        for path, text in pack_documents():
+        for path, text, is_command in pack_documents():
             if EXCEPTION in text:
                 continue
-            for heading, body in phase_sections(text):
+            for heading, body in phase_sections(text, is_command):
                 if CARRIER_HEADING.search(heading):
                     continue
                 if not (WRITE_VERBS.search(body) and DURABLE_TARGET.search(body)):
@@ -107,7 +150,7 @@ class TestClauseOne(unittest.TestCase):
     def test_declared_writes_have_a_carrier(self):
         """A document that declares writes has a step that stages them."""
         offenders = []
-        for path, text in pack_documents():
+        for path, text, _ in pack_documents():
             if EXCEPTION in text:
                 continue
             if not WRITES_LINE.search(text):

@@ -168,13 +168,19 @@ Load the `documenter` skill again. Run the "Summary authoring" pattern (see the 
 
 Surface all proposed doc writes to the user before applying. The documenter skill's cardinal "propose before writing" discipline holds at merge time too.
 
+**Writes:** the summary at the resolved summaries directory · `.claude/state.md` (the `Summary:` field, and the Parked features section when step 3 supersedes anything) · `docs/domains/<domain>.md` for each domain the feature shifted.
+
+This is the command's largest producer, and it is the one the closeout below is most likely to under-stage — the summary and the domain docs are new or newly-amended files that no other step names, and the `Summary:` field is what `/pr-review` reads days later to find the summary at all.
+
 ### Commit the closeout docs — before proposing any integration
 
 Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
 
-Propose a commit for **the union of every `**Writes:**` declaration the steps that ran produced** — read them off those steps. On a full run the sections carrying declarations are **Orient, Gate 2, Gate 3, and this closeout**: the `CLAUDE.md` artifact-homes entry if § *Resolve* recorded one, whatever Gate 2's reconciliation amended, the findings ledger if Gate 3 wrote `SEC` rows to it (at its resolved path, not an assumed one), plus the summary just written, any domain-doc updates, and `.claude/state.md`.
+Propose a commit for **the union of every `**Writes:**` declaration the steps that ran produced** — read them off those steps. On a full run the sections carrying declarations are **Orient, Gate 2, Gate 3, and *After all three gates pass***; go read those four and stage what they name.
 
-A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. The `CLAUDE.md` entry is the same shape and quieter: it is written on the rare run where nothing had recorded the summaries directory before, and dropping it sends the next feature back to re-deriving a location this one settled. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+**That is a list of sections to read, deliberately, and not a list of files to stage** — the same rule `/feature-start` Phase H and `/plan` Phase G follow, and for the same reason. This paragraph previously enumerated the artifacts and named this closeout itself as one of the declaring sections. It is not: a carrier stages what producers declare, and the actual producer of the summary, the domain docs, and the `Summary:` field had no declaration at all. A reader following the derivation rule to the letter would have staged the `CLAUDE.md` entry, Gate 2's amendments, and the ledger — and dropped the summary.
+
+Two of the four are quiet in opposite ways. Gate 3's ledger row is **remote**: written at the ledger's resolved path, not somewhere obvious in the diff. A row written and not committed is absent from the pushed branch in PR flow and left untracked after integration in local flow, which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Orient's `CLAUDE.md` entry is **conditional**: written only for an artifact type nothing had recorded before, and dropping it sends the next feature back to re-deriving a location this one settled. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
 **Record this commit's SHA.** It becomes `Gated baseline` at PR creation — it is the tip as it stands before the `state.md`-only transition commit, which is the one commit the discriminator's exclusion accounts for.
 
@@ -191,6 +197,8 @@ Before proposing anything, determine whether this project merges locally or thro
 3. **Ask.** If neither is conclusive, ask. The wrong guess opens an unwanted PR or merges something that should have been reviewed.
 
 If `gh` is absent or unauthenticated but the project is otherwise PR-shaped, say so and offer the **draft-only path**: the pack prepares the branch, the summary, and a PR body, and the user opens the PR by hand. Same for non-GitHub forges — the pack does not shell out to `glab` or equivalents.
+
+**Writes:** none — reads the project's convention and the repo's shape, and reports which flow applies.
 
 ### Merge strategy
 
@@ -237,6 +245,8 @@ Update `Gated baseline` after **every** successful gate rerun — to the tip as 
 
 A stale baseline is worse than none: it makes ungated commits look gated.
 
+**Writes:** `.claude/state.md` — `Phase: in-review`, `PR: <url>`, and `Gated baseline: <SHA>` at PR creation, and `Gated baseline` again after every gate rerun. This section carries its own writes rather than deferring them to the closeout above: both the transition commit and the rerun commit stage `.claude/state.md` alone, and both land *after* the closeout commit has already been made and pushed.
+
 ### After the merge
 
 In PR flow this section runs on a **later invocation** — the one that found `Phase: in-review` with a merged PR. The merge may have been performed by someone else, days ago, in a session that no longer exists. Everything below applies unchanged; only the trigger differs.
@@ -249,6 +259,8 @@ Once the merge has been executed (by the user locally, by you on their instructi
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).
+
+**Writes:** `.claude/state.md`, cleared to the idle pointer shape. Propose a commit staging it alone — subject `/feature-merge: closeout (<feature> merged)`. This runs after the integration the closeout commit above was written for, so it has no carrier but its own; an uncleared `state.md` leaves the next `/feature-start` blocked on its `Active feature is none` precondition, holding a feature that no longer exists.
 
 ## Halt conditions
 
