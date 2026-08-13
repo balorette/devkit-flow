@@ -188,3 +188,51 @@ It now resolves in an Orient step ahead of the gates — placed there rather tha
 - **The structural fix is new and is the part worth keeping.** A reference whose sections form a chain now names the chain. `adr-registry.md` was checked and does *not* need this — its sections are separate operations at separate times, so subset-picking there is correct. That distinction is recorded in ADR-0009 so the next reference is written on the right side of it.
 - **`/plan` Phase G's enumeration had cited itself as the one that got it right** — "this list was correct and the equivalent list in `/feature-start` was not" — and had decayed within the same slice. Both now derive. An enumeration that documents the danger of enumerations is still an enumeration.
 - **Two consecutive rounds, both closed by reasoning, neither by execution.** Everything in slice 12 that has run is `test_clause_one`, `test_migrations_snapshot`, and `test_pack_references_resolve`. The behavioural predictions above remain unrun, and the `/feature-merge` Orient step added here is new unexecuted text on the `in-review` path that has still never executed.
+
+---
+
+## PR #4 review round 3 (2026-08-13)
+
+**Owner-reported**, reading the diff after the round-2 fixes were pushed. Two findings, both **regressions introduced by `9f21d8f`** — the round-2 fix commit — and neither surfaced by either automated reviewer, both of which had passed over rounds 1 and 2.
+
+### Disposition
+
+| # | Finding | Sev | Fix |
+|---|---|---|---|
+| C8 | § *Discover* step 1 exits the whole scan on any `CLAUDE.md` record, against a chain § *Resolve* declares per-artifact-type | high | Step 1 and step 3 are per type; § *Record* states an entry claims nothing about the types it omits; three `**Writes:**` declarations rescoped | `65b647d` |
+| C9 | `/feature-merge`'s largest producer carries no `**Writes:**` line, so the new derived closeout drops the summary | high | The producing section declares; the crutch enumeration is deleted; `test_clause_one` widened and three sibling declarations added | `df271d4` |
+
+### What each one was
+
+**C8 — an exit outliving its producer's granularity.** The § *Resolve* fix generalized § *Discover* step 1 from *"if `/adopt` recorded artifact homes"* to *"if artifact homes are recorded,"* because four commands now record. The exit was sound only by accident of the old producer: `/adopt` resolves all three types at once, so its records were always complete. The feature commands produce partial records **by design**, and against a partial record the unchanged exit skips § *Default* and § *Confirm* for every unnamed type — writing into an occupied `docs/plans/` without asking, which is the harm the reference was written to prevent, on the type its own anecdote names.
+
+Both `/plan` and `/feature-merge` stated the contradiction in their own text and neither was reconciled against the exit they depend on.
+
+**C9 — a derivation over an incomplete set of declarations.** The closeout was converted to derive from `**Writes:**` declarations and named four sections, one being the closeout itself — a carrier, not a producer — while the real producer of the summary, domain docs, and `Summary:` field declared nothing. Following the rule exactly drops the summary: the untracked-summary failure that section warns about, caused by the rule written to prevent it.
+
+This is the C6 fix re-creating C6 in the third command. `/feature-start` and `/plan` had their enumerations **deleted**; `/feature-merge` kept one alongside the derivation as a crutch, and the crutch is what hid the missing declaration.
+
+### The first guard that moved
+
+`test_clause_one` matched `Phase N` / `Gate N` headings only. `/feature-merge` names its steps for what they do, so three producers sat outside the scan entirely — the suite's 44 passing tests were never evidence about them. A command's `## Run` now contributes all its `###` subsections.
+
+The scoping was **measured, not guessed**: every-heading-everywhere flags 54 sections, nearly all `## Arguments` / `## Preconditions` prose that mentions writes performed elsewhere; `## Run`-scoped flags 4, of which 3 were real writes and the 4th now declares `**Writes:** none`. Verified red against `65b647d` naming all four, green after.
+
+**This is the only guard that has moved in slice 12**, and the reason is worth keeping: C9 was *syntactic* — a heading that writes without a declaration. C2, C5, and C8 were semantic, and no regex expresses them.
+
+### What three rounds say
+
+Three consecutive rounds, each finding the previous round's correction carrying a defect of the same family:
+
+| Round | Defect | Producer state |
+|---|---|---|
+| 1 | C2 — discovery never runs | never ran |
+| 2 | C5 — § *Confirm* / § *Record* never invoked | ran partially |
+| 3 | C8 — exit taken on behalf of unresolved types | ran correctly, exited early |
+| 3 | C9 — derivation over a missing declaration | ran, declared nothing |
+
+Each is harder to see than the last, and for the same reason each time: **more of the mechanism visibly works.** By C8, something runs, a location comes back, and the type that comes back is genuinely settled — it is the other types that hold nothing while a write site cites them as answered.
+
+Recorded in ADR-0009 as *Widening a producer invalidates its consumers' exits*, *A derivation is only as strong as its declarations*, and *What three rounds say about sequencing slice 13*. The last of those is the substantive change: **every high-severity finding across three rounds landed in the cross-step semantic gap no component owns**, two of them found by the owner after two automated reviewers had passed. That is the argument for slice 13's `reviewer` gate being a precondition for the next slice rather than a component scheduled after it.
+
+**Still true, and worth not losing:** the behavioural predictions above remain unrun, and everything in rounds 2 and 3 was closed by reading. `/feature-merge`'s Orient step, its four new declarations, and the whole `in-review` path are text that has never executed.

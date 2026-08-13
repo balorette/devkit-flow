@@ -8,6 +8,7 @@
 **Amended:** 2026-08-12 — clause 5 added at the owner's direction, generalizing a rule the pack already states fourteen times in ten formulations. See *Clause 5* and Decision 5.
 **Amended:** 2026-08-12 (second) — the PR #4 review found that clause 3's sweep shipped **consumers without a producer**. See *A citation is not a wiring*, below.
 **Amended:** 2026-08-13 (third) — the round-2 review found the *fix* for that finding partial in the same shape. See *A partial wiring reads as a complete one*, below.
+**Amended:** 2026-08-13 (fourth) — round 3, owner-reported, found two regressions in the round-2 fix. See *Widening a producer invalidates its consumers' exits* and *A derivation is only as strong as its declarations*, below.
 
 ---
 
@@ -177,6 +178,37 @@ The structural cause is worth stating separately from the instance:
 The narrow lesson, then, is about how the two rounds' defects present:
 
 > A *missing* wiring is invisible because the citation resolves. A *partial* wiring is invisible for a stronger reason: something demonstrably runs, the finding it closed is closed, and the diff shows work done at exactly the right sites. Verifying that a producer exists is not the same as verifying that it produces everything its consumers cite.
+
+### Widening a producer invalidates its consumers' exits
+
+**Added 2026-08-13, after round 3.** The § *Resolve* fix above changed § *Discover* step 1 from *"if `/adopt` recorded artifact homes, use them and stop"* to *"if artifact homes are recorded, use them and stop"* — generalizing the producer set from one command to four, because four commands now record. The exit clause was left exactly as it was.
+
+It had been sound only by accident of the old producer. **`/adopt` resolves all three artifact types in a single pass, so any record it wrote was a complete record**, and a whole-scan exit on "a record exists" was therefore approximately correct. The four feature commands each resolve only the types they write, so they produce *partial* records by design — and against a partial record the same exit returns a settled answer for specs, no answer at all for plans, and never reaches § *Confirm* for an occupied `docs/plans/`. That is the reference's own motivating harm, restored by the commit that was strengthening the reference, on the artifact type its anecdote is about.
+
+Both consuming commands stated the contradiction in their own text — `/plan` said it expects to arrive with plans unresolved, `/feature-merge` said the others leave summaries unsettled — and neither statement was reconciled against the exit they both depend on.
+
+> **An early exit encodes an assumption about its producer's granularity.** Widening who may produce a value silently invalidates every exit that consumes it, and the exit keeps passing review because it is unchanged. When a producer set grows, the diff to inspect is not the producer's — it is every consumer that decides it already has enough.
+
+### A derivation is only as strong as its declarations
+
+**Added 2026-08-13, after round 3.** Clause 1's staging mechanism — a carrier derives what it stages from the `**Writes:**` declarations of the steps that ran — has a precondition this ADR never wrote down: **every producer declares.** Where one does not, derivation is not merely as weak as the enumeration it replaced. It is *weaker*, because it reads as principled while silently omitting whatever went undeclared.
+
+`/feature-merge` reached that state. Its closeout was converted to derive and named four sections, one of which was the closeout itself — a carrier, not a producer — while the actual producer of the summary, the domain docs, and `state.md`'s `Summary:` field declared nothing. A reader following the rule exactly would have staged three artifacts and dropped the summary, which is the untracked-summary failure that section exists to warn about.
+
+Two things kept it hidden, and both generalize:
+
+- **An inline enumeration beside a derivation conceals a missing declaration.** The converted paragraph still listed the summary and domain docs in prose. The output therefore looked correct, so nobody checked whether the inputs were complete. A derivation rule and a hand-written list of its expected output must not coexist; the list is what gets read, and it is what stops the gap from surfacing.
+- **`test_clause_one` scanned `Phase N` and `Gate N` headings only.** `/feature-merge` names its steps for what they do, so three of its producers were never scanned. The guard was not weak here — it was *pointed somewhere else*, which is harder to notice than a weak assertion, because the count of passing tests does not change.
+
+> A carrier that derives is correct only over the declarations that exist. Before converting an enumeration to a derivation, verify that every producer in scope declares — and delete the enumeration rather than keeping it alongside, because a redundant list is what prevents the missing declaration from ever being felt.
+
+### What three rounds say about sequencing slice 13
+
+Rounds 1, 2, and 3 each found the previous round's correction carrying a defect of the same family. That is no longer an anecdote about one slice; it is the shape of this work, and it bears on **when** slice 13's `reviewer` gate lands rather than merely whether.
+
+The distinguishing evidence is which findings a mechanical guard could take. Round 3's declaration gap was **syntactic** — a heading that writes without a `**Writes:**` line — and `test_clause_one` was widened to catch it, verified red against the commit that introduced it. The other four across the three rounds were **semantic**: whether a cited procedure is ever reached, whether a chain runs to its end, whether an exit is scoped to the granularity of its producer. No regex expresses those, and the two guards that exist are each satisfied by the defective text for a defensible reason — the citation does resolve, and nothing does go unwritten.
+
+So the by-construction program this ADR committed to has a ceiling, and slice 12 found it. Declarations and tests hold the syntactic floor. **The cross-step semantic lens has no owner, and every high-severity finding in three rounds has landed in exactly that gap** — including two found by the owner reading the diff after two automated reviewers had passed over them. That argues the `reviewer` gate is a precondition for the next slice rather than a component scheduled after it.
 
 ## What the clauses decide
 
