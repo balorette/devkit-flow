@@ -55,6 +55,10 @@ Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guara
   **Summary:** —
   ```
 
+  **Then backfill it, if a summary already exists on disk.** `—` is the right value only when no summary has been written yet. If your active feature has already been through `/feature-merge` — the `in-review` case, which is exactly the state an upgrade is most likely to interrupt — find the file in your summaries directory and record its real path instead. A pre-0.12.0 summary is at `<summaries-dir>/<slug>.md` with no date prefix; keep that name, per *Existing artifacts are not renamed* below.
+
+  Seeding the field blank and walking away is a hard stop, not a cosmetic gap: `/pr-review` stage 2 halts when the field is `—`, because a summary it cannot locate is one it must not silently duplicate. That halt is correct for a feature whose summary was never written and wrong for a feature whose summary is sitting in the tree — and the second is the path a dogfood traverses.
+
   And add its meaning to the field-meanings block, directly after the `Spec / Plan` entry:
 
   ```
