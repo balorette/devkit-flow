@@ -105,7 +105,7 @@ This is a lighter-weight pass than what the `doc-drift-detector` hook automates 
 
 ## Summary authoring (loaded by `/feature-merge`)
 
-At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
+At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
 
 ### What goes in a summary
 

@@ -90,6 +90,18 @@ If any precondition fails, **stop and report**. Common cases:
 
 ## Run
 
+### Orient — resolve the summary's home
+
+Run `.claude/references/artifact-locations.md` § *Resolve* in full and record the **summaries** directory for the rest of this invocation. The summary write below is a consumer of that result, and clause 3 puts the producer before every consumer.
+
+This command is the pack's **only** producer of a summary, so it is the only place the summaries directory is ever resolved — `/feature-start` and `/plan` resolve their own artifact types and can leave this one unsettled. Do not assume an earlier command answered it. In practice § *Resolve* step 1 usually finds the record they left and returns without asking; on the runs where it doesn't, this is where the question belongs.
+
+Resolving here rather than beside the write is deliberate: it keeps every location question in front of the gates, so the user is never asked to settle a directory during closeout for a feature that Gate 1 is about to send back.
+
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none.
+
+### The gates
+
 The three gates run in fixed order: tests → docs → security. Each gate's failure surfaces concrete remediation. The gates are independent — a Gate-2 failure doesn't tell you anything about Gate 3 — but they execute sequentially because each is cheap to re-run after a fix and there's no value in showing the user three problems at once.
 
 ### Gate 1 — Tests pass
@@ -148,7 +160,7 @@ The subagent returns a structured findings document with severity-bucketed entri
 
 Load the `documenter` skill again. Run the "Summary authoring" pattern (see the documenter skill):
 
-1. Write the summary per the documenter's summary checklist, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
+1. Write the summary per the documenter's summary checklist, at the summaries directory the Orient step above resolved, named per that reference's § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
 2. Update `docs/domains/<domain>.md` if the feature shifted domain vocabulary (per the documenter's "Domain doc updates" guidance). If `docs/domains/` doesn't exist and the feature is the project's first in a domain, create it.
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
@@ -158,7 +170,9 @@ Surface all proposed doc writes to the user before applying. The documenter skil
 
 Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
 
-Propose a commit staging exactly the closeout files: the summary just written, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+Propose a commit for **the union of every `**Writes:**` declaration the steps that ran produced** — read them off those steps. On a full run the sections carrying declarations are **Orient, Gate 2, Gate 3, and this closeout**: the `CLAUDE.md` artifact-homes entry if § *Resolve* recorded one, whatever Gate 2's reconciliation amended, the findings ledger if Gate 3 wrote `SEC` rows to it (at its resolved path, not an assumed one), plus the summary just written, any domain-doc updates, and `.claude/state.md`.
+
+A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. The `CLAUDE.md` entry is the same shape and quieter: it is written on the rare run where nothing had recorded the summaries directory before, and dropping it sends the next feature back to re-deriving a location this one settled. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
 **Record this commit's SHA.** It becomes `Gated baseline` at PR creation — it is the tip as it stands before the `state.md`-only transition commit, which is the one commit the discriminator's exclusion accounts for.
 

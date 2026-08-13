@@ -30,24 +30,28 @@ Also load the `grill-me` skill. `/plan` is mostly automatic — research and dec
 
 ### Phase A — Orient
 
-Read, in this order:
-- `CLAUDE.md` (project conventions).
+**Both discoveries run before the first read that consumes them**, and their results are recorded for the rest of this invocation. Phase C's architect invocation and the engineer skill's plan-time architect calls read the ADR record rather than re-discovering; Phase F writes the plan at the location the artifact record names; and the exemplar scans below read the artifact homes rather than the defaults.
+
+1. **Read `CLAUDE.md`** (project conventions). Both discoveries below open it first regardless — a recorded artifact home or ADR-registry note is authoritative for its own question — so reading it here is not a duplicate pass.
+2. **Resolve the artifact locations.** Run `.claude/references/artifact-locations.md` § *Resolve* in full — the whole chain, not § *Discover* alone — and record the spec, plan, and summary directories it settles on. This is what the exemplar scans below and Phase F's write both read. Running it after either of them would be the producer arriving behind its consumer, which is the shape clause 3 exists to forbid.
+
+   **Expect the plans question here specifically, and do not skip it as automation friction.** § *Resolve* asks only when a directory exists and holds files the pack did not write, and `docs/plans/` is the likeliest place in this pack for that to be true: plans are not a new idea, so the name is commonly already taken, while `docs/specs/` on the same project is often free. That asymmetry is the reference's own motivating case. A user-facing decision the spec didn't pin is exactly what the `grill-me` discipline above is loaded for — recommend an answer, then let the user settle it.
+3. **Discover the ADR registry.** Run `.claude/references/adr-registry.md` § *Discover* in full. Record the registry's location, its format, and its current high-water number — the number is a reported hint only, never an allocation source (see that reference's § *Never cache the number*; allocation always re-scans). Report what was found per that reference's § *Report what was found*.
+4. **Record the ADR paths.** The actual file paths discovery found, or the explicit `"registry: none found"` when discovery finds nothing. This is the piece the architect contract in "Invoking the architect" below needs verbatim — a directory pattern is not a substitute for either.
+
+Then read, in this order:
+
 - The active spec (path from state.md).
 - The **discovered specs directory** for one or two recent merged specs — gives shape context.
-- The **discovered plans directory** for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like. Both directories come from `.claude/references/artifact-locations.md` § *Discover*, run below; a scan of the defaults on a project that keeps them elsewhere returns nothing and silently costs you the precedent.
+- The **discovered plans directory** for any merged plans on adjacent features — these are the best evidence of what a typical plan in *this* project looks like. Scan the homes step 2 returned, not `docs/specs/` and `docs/plans/` literally: on a project that keeps them elsewhere the defaults return nothing, and the precedent is lost silently.
 - `docs/domains/<domain>.md` for each domain the spec touches.
-
-Then run **both** discoveries and **record their results for the rest of this invocation**. Phase C's architect invocation and the engineer skill's plan-time architect calls read the ADR record rather than re-discovering; Phase F writes the plan at the location the artifact record names.
-
-0. **Discover the artifact locations.** Run `.claude/references/artifact-locations.md` § *Discover* in full and record the spec, plan, and summary directories — or their § *Default* values where discovery found none. This is what the exemplar scans above and Phase F's write both read. Running it after Phase F would be discovery arriving behind its consumer, which is the shape clause 3 exists to forbid.
-
-1. **Discover.** Run `.claude/references/adr-registry.md` § *Discover* in full. Record the registry's location, its format, and its current high-water number — the number is a reported hint only, never an allocation source (see that reference's § *Never cache the number*; allocation always re-scans). Report what was found per that reference's § *Report what was found*.
-2. **Record the ADR paths.** The actual file paths discovery found, or the explicit `"registry: none found"` when discovery finds nothing. This is the piece the architect contract in "Invoking the architect" below needs verbatim — a directory pattern is not a substitute for either.
-3. **Read titles; read in full what's relevant.** Read in full any ADR named in the spec's `related_adrs` front-matter or whose title is keyword-relevant to the spec.
+- **Any relevant ADR, in full**, read from the paths step 4 recorded — one named in the spec's `related_adrs` front-matter, or one whose title is keyword-relevant to the spec.
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
-**Writes:** none — discovery is recorded for this invocation and consumed by later phases.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none — both results are held for this invocation and consumed by later phases.
+
+This phase writes on a first run and stays silent on every run after, because § *Resolve* step 3 skips a resolution `CLAUDE.md` already holds. `/plan` is usually the second command to run and usually finds the record `/feature-start` left — but "usually" is not "always": locations resolve **per artifact type**, so a project whose specs were settled at `/feature-start` can still reach `/plan` with its plans directory unresolved. Phase G derives its staging list from this declaration and will carry the write on the runs that produce one.
 
 ### Phase B — Research (REQUIRED)
 
@@ -90,7 +94,7 @@ If the mapping reveals a criterion that has no plausible step (because the spec 
 
 ### Phase F — Write plan + update state.md
 
-Write the plan at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with:
+Write the plan at the location `.claude/references/artifact-locations.md` § *Resolve* returned, named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with:
 
 ```yaml
 ---
@@ -185,9 +189,11 @@ Where a name does not resolve, offer the nearest match if there is a plausible o
 
 ### Phase G — Commit and hand off
 
-Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases rather than from a list maintained here. On a full run that is the plan and `.claude/state.md` (Phase F), any ADR the architect drafted (Phase C), and the findings ledger if Phase F2 recorded a `CONF` row (its path is the discovered one, not assumed).
+Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases. On a full run the phases carrying declarations are **A, C, F, and F2**; go read those four and stage what they name.
 
-A `CONF` row that is written and not committed reaches no other clone and no PR — defeating the stated purpose of surfacing to the next `/feature-start`'s orient phase, which reads the ledger from the repo rather than from this conversation. Deriving the list from the declarations is what makes "every artifact this invocation writes is named here" a property rather than a promise: this list was correct and the equivalent list in `/feature-start` was not, which is exactly what a hand-maintained enumeration decays into.
+**That is a list of phases to read, deliberately, and not a list of files to stage.** This paragraph used to enumerate the artifacts, and it used to cite itself as the version that got it right while `/feature-start`'s equivalent got it wrong. Both were wrong within one slice: Phase A gained a conditional `CLAUDE.md` artifact-homes write and neither enumeration grew it. Being correct at the moment of writing is not a property a hand-maintained list keeps — which is the whole argument for deriving it, and the reason this one no longer names files.
+
+Two of the four are easy to drop for opposite reasons. Phase A's write is **conditional** — § *Resolve* records to `CLAUDE.md` only when nothing was recorded before, so most runs produce nothing and the run that does looks like an anomaly. Phase F2's `CONF` row is **remote** — written to the findings ledger at its resolved path, not somewhere obvious in the diff. A `CONF` row written and not committed reaches no other clone and no PR, defeating its stated purpose of surfacing to the next `/feature-start`'s orient, which reads the ledger from the repo rather than from this conversation.
 
 Subject: `plan: <slug> (draft, <N> steps)`. Body: one short paragraph — the plan's approach in one sentence, ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. If Phase C produced architect-driven ADRs, the user may prefer per-ADR commits — surface that option in the decline branch.
 

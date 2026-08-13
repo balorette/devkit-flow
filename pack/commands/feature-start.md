@@ -31,11 +31,13 @@ The phases below mirror the `pm` skill's loop. The skill is the source of truth 
 
 ### Phase A — Orient, discover, and confirm
 
-PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior specs, the findings ledger, and — per the `pm` skill's Orient step — runs **both** `.claude/references/adr-registry.md` § *Discover* and `.claude/references/artifact-locations.md` § *Discover* in full). Then:
+PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior specs, the findings ledger, and — per the `pm` skill's Orient step — runs **both** `.claude/references/adr-registry.md` § *Discover* and `.claude/references/artifact-locations.md` § *Resolve* in full). Then:
 
-1. **Record what pm's Orient just discovered.** Note for the rest of this invocation: the registry's location, its format, and its current high-water number, **and the spec / plan / summary directories** (or their § *Default* values when discovery found none).
+1. **Record what pm's Orient just resolved.** Note for the rest of this invocation: the registry's location, its format, and its current high-water number, **and the spec / plan / summary directories** § *Resolve* settled on.
 
-   **Both discoveries run here for the same reason.** Phase D writes the spec at a location this phase resolved; a write site that says "the location § *Discover* returned" is a consumer, and clause 3 puts discovery before every consumer. Discovery that never runs is that clause failing in its most complete form — the citation reads as though a value exists when nothing produced one. Report what was found per that reference's *Report what was found* step. Discovery itself runs once, inside Orient — this step records and reports that result rather than re-running the scan.
+   **Artifact locations are *resolved*, not merely discovered, and the difference is a user question.** § *Resolve* takes the scan to an answer: a default where the namespace is empty, the user's decision where the directory exists and belongs to the project, and a `CLAUDE.md` record either way. That middle branch is the one that cannot be skipped — writing this feature's spec into a directory the project already uses for its own is the brownfield harm the reference was written to prevent, and it passes every precondition on the way in. If § *Resolve* surfaced that question, it was answered here, before Phase D writes anything.
+
+   **Both run here for the same reason.** Phase D writes the spec at a location this phase resolved; a write site that says "the location § *Resolve* returned" is a consumer, and clause 3 puts the producer before every consumer. A producer that never runs is that clause failing in its most complete form — the citation reads as though a value exists when nothing produced one. Report what was found per each reference's *Report what was found* step. Both run once, inside Orient — this step records and reports their results rather than re-running the scans.
 
    Orient must run discovery before Phase B because **Phase B may invoke the `architect`**. An architect handed a default path on a project whose registry lives elsewhere forms its recommendation having read none of the existing decisions — and allocating correctly at Phase E does not un-form a recommendation already made. On the first brownfield target that meant twelve ADRs kept as headings in a single decisions log, invisible to the subagent asked to avoid contradicting them.
 2. Propose the slug derived from the user's argument. Confirm with the user.
@@ -43,7 +45,7 @@ PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior specs, the findings 
 
 If the framing confirmation surfaces a misunderstanding, restate and reconfirm. Do not proceed to brainstorm against a wrong frame.
 
-**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, when § *Record* had nothing to read and this invocation resolved them. Otherwise none — discovery is recorded for this invocation and consumed by later phases.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none — § *Resolve* stopped at the existing record, and the resolution is held for this invocation and consumed by later phases.
 
 ### Phase B — Brainstorm
 
@@ -59,7 +61,7 @@ PM skill proposes the domain decomposition. The user confirms or corrects. Do no
 
 ### Phase D — Spec draft
 
-PM skill drafts the spec to typical depth, at the location `.claude/references/artifact-locations.md` § *Discover* returned and named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with front-matter:
+PM skill drafts the spec to typical depth, at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name* (`YYYY-MM-DD-<slug>.md`), with front-matter:
 
 ```yaml
 ---
@@ -115,9 +117,11 @@ Leave `## Open questions` alone unless the brainstorm surfaced something deferre
 
 ### Phase H — Commit and hand off
 
-Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases rather than from a list maintained here. On a full run that is the spec (Phase D), any ADRs **and the `CLAUDE.md` high-water mark** (Phase E), and `.claude/state.md` (Phase G).
+Before the pause, propose a single commit for **the union of every `**Writes:**` declaration the phases that ran produced** — read them off those phases. On a full run the phases carrying declarations are **A, D, E, and G**; go read those four and stage what they name.
 
-The high-water mark is the one this list used to omit, and the omission was self-cancelling: Phase E step 4 exists specifically to stop the recorded mark decaying into a wrong one, so leaving it uncommitted un-does step 4 and the next `/feature-start` re-reads the stale number the update was written to fix. Deriving the list from the declarations is what stops that recurring — a hand-maintained enumeration at a distance from the writes it covers is the failure mode clause 1 names.
+**That is a list of phases to read, deliberately, and not a list of files to stage.** This paragraph used to enumerate the artifacts, and the enumeration was wrong twice. It first omitted Phase E's `CLAUDE.md` high-water mark, self-cancellingly: Phase E step 4 exists to stop the recorded mark decaying into a wrong one, so leaving it uncommitted un-does step 4 and the next `/feature-start` re-reads the stale number the update was written to fix. It was then wrong again the moment Phase A gained its artifact-homes write — the same omission, in the paragraph that had just finished naming the failure. A file list maintained at a distance from the writes it covers is what clause 1 forbids, and it does not stop decaying because you have described the decay.
+
+Phase A's write is conditional and is the one most easily missed, because most runs do not produce it: § *Resolve* writes the `CLAUDE.md` record only when nothing was recorded before. On the run that does produce it, dropping it means the next invocation re-derives locations this feature already settled — and re-derivation is what puts artifacts in a directory that belongs to someone else.
 
 Subject: `spec: <slug> (draft)`. Body: one short paragraph — the feature framing in one sentence, plus ADR numbers if any. Stage these files explicitly; never `git add -A` (same reasoning as the engineer skill's commit substep). Wait for confirmation; on decline, leave the proposal visible and proceed to the pause without committing. The user may legitimately want to split (separate commits for spec vs ADR) — let them.
 

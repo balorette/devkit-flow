@@ -14,11 +14,26 @@ The precondition that missed it asked whether a *file* existed. The question tha
 
 Note the asymmetry that made it findable: specs were fine on that project, because `docs/specs/` did not exist and spec-as-contract was a genuinely new concept there. Plans are not new. **The collision risk scales with how ordinary the artifact's name is**, which is why the common names are the ones that need discovery most.
 
+## Resolve
+
+**Run this, not its parts.** Once per invocation, before the first consumer, and independently **per artifact type** — a project commonly has plans and no specs.
+
+1. **§ *Discover*.**
+2. **Act on what it returned**, per artifact type:
+   - `"none found"` → **§ *Default***. Take the default path; no confirmation is needed for an unoccupied namespace.
+   - a directory holding files the pack wrote → it is the pack's; use it.
+   - a directory holding files the pack did not write → **§ *Confirm***. Ask. Do not resolve it by picking.
+3. **§ *Record* the outcome** — including when the outcome was a default. Skip only when step 1 stopped at an existing `CLAUDE.md` record: that is already a recorded resolution, and rewriting it is how a settled answer gets re-litigated.
+
+**A caller that runs only § *Discover* has resolved nothing.** It holds a reading, not a decision. An occupied foreign directory has been *identified* and never *asked about* — so the pack writes into it, which is the harm above. A derived default has been *chosen* and never *persisted* — so the next invocation derives it again, and a later move of the directory reads as drift rather than as a decision.
+
+That failure is not hypothetical and not visible in review: every write site here cites *the location this section returned*, and a citation resolves whether or not anything ran. **Cite this section; run this section.** If you are naming § *Discover* at a write site, you are naming the scan and not the answer.
+
 ## Discover
 
-Run once per invocation, **before the first consumer**.
+Run as step 1 of § *Resolve*, once per invocation, **before the first consumer**. Running it alone is not resolution — see § *Resolve*.
 
-1. **Read `CLAUDE.md` conventions first.** If `/adopt` recorded artifact homes, they are authoritative — use them and stop. Re-deriving what adoption settled is wasted motion and risks contradicting it.
+1. **Read `CLAUDE.md` conventions first.** If artifact homes are recorded there, they are authoritative — use them and stop, and § *Resolve* stops with you. Any of `/adopt`, `/feature-start`, `/plan`, or `/feature-merge` may have written that record; which one did is irrelevant, and re-deriving what one of them settled is wasted motion that risks contradicting it.
 2. **Otherwise scan** for existing artifact directories: `docs/specs/`, `docs/plans/`, `docs/summaries/`, and any directory under `docs/` or the repo root whose name contains `spec`, `plan`, `summary`, or `design`.
 3. **Rank by provenance, not by name.** A directory holding files the pack wrote is the pack's. A directory holding files it did not is the project's, whatever it happens to be called.
 
@@ -54,7 +69,9 @@ Do not resolve it by picking. The cost of guessing wrong is two vocabularies in 
 
 ## Record
 
-Once confirmed, record the chosen locations in `CLAUDE.md` conventions so the next invocation reads instead of re-asking. This is the treatment the ADR registry already gets, for the same reason.
+Record the resolved locations in `CLAUDE.md` conventions so the next invocation reads instead of re-deriving. This is the treatment the ADR registry already gets, for the same reason.
+
+**Every branch of § *Resolve* step 2 lands here** — a confirmed occupied directory, a directory recognized as the pack's own, and a default taken into an empty namespace. The default is the branch most easily skipped and the one that most needs recording: nobody was asked, so nothing feels decided, and an unrecorded default is re-derived by every later invocation until one of them derives differently.
 
 **The location may be recorded. The path may not be reconstructed.** See § *Name*.
 

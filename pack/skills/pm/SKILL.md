@@ -42,7 +42,7 @@ Before asking the user a single question:
 
 - Read `CLAUDE.md` for project conventions.
 - Read `docs/domains/` to understand the project's existing vocabulary and bounded contexts.
-- Run `.claude/references/artifact-locations.md` § *Discover* in full, and record what it returns for the rest of the invocation. Every later write site reads this result.
+- Run `.claude/references/artifact-locations.md` § *Resolve* in full — the whole chain, not § *Discover* alone — and record what it returns for the rest of the invocation. Every later write site reads this result. Resolution is what makes the result usable: it asks before writing into a directory that belongs to the project, and it records the answer so the next invocation reads instead of re-deriving. Running the scan and stopping leaves both undone.
 - Skim the **discovered specs directory** for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*). Read exemplars from the discovered home, not from `docs/specs/`: on a project whose specs live elsewhere, scanning the default finds nothing and the shape you match is the walkthrough's rather than the project's.
 - **Discover the ADR registry and record it for this invocation.** Follow `.claude/references/adr-registry.md` § *Discover* in full — a `CLAUDE.md` note left by a prior `/adopt` is a useful hint for where to look, not a substitute for running the scan (see that reference's *Never cache the number*). Record the location, format, and current high-water number; every architect invocation and ADR write for the rest of this invocation reads from that record. If any ADRs are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec.
 - **Read the findings ledger** (`docs/findings.md`, or the existing review system `CLAUDE.md` names). Open rows touching the area this feature will change are prior art, and they cut two ways: some are fix-now candidates that belong in this feature's scope, and the rest are known hazards to design around. A deferred security or conformance finding in the code you're about to extend is exactly the context a brainstorm should start from — rediscovering it as a bug three features later is the failure this ledger exists to prevent.
@@ -85,7 +85,7 @@ The decomposition is the bridge between brainstorm and spec. It's also the user'
 
 ### 4. Draft the spec
 
-Now write the spec — at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* — covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
+Now write the spec — at the location `.claude/references/artifact-locations.md` § *Resolve* returned, named per its § *Name* — covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
 
 **Front-matter:**
 
@@ -318,7 +318,7 @@ The "Note" column is where deferrals get explained. A criterion mapped to "—" 
 
 ### Producing the plan
 
-Write the plan — at the location `.claude/references/artifact-locations.md` § *Discover* returned, named per its § *Name* — with front-matter:
+Write the plan — at the location `.claude/references/artifact-locations.md` § *Resolve* returned, named per its § *Name* — with front-matter:
 
 ```yaml
 ---
