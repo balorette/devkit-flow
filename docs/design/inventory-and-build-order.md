@@ -351,6 +351,27 @@ What that costs, none of which buys anything:
 
 ---
 
+### Slice 14 — Cursor as a second host (scoped, not authored)
+
+Asked 2026-08-13: what would it take to run the pack on Cursor projects. Scoped in [ADR-0010](0010-cursor-as-a-second-host.md), which is **Proposed, not Accepted** — the sequencing argument below is part of why.
+
+**The scoping finding inverts the expected shape of the work.** Cursor loads `.claude/skills/`, `.claude/agents/`, and `.claude/settings.json` hooks for compatibility, and reads `CLAUDE.md` as always-applied context. The pack's references and state file need no host mechanism at all — they are files cited by path. So four of five installed surfaces already work behind one settings toggle, and the port is **one missing surface plus four semantic losses**, not a rewrite.
+
+- **The missing surface** is `.claude/commands/` — eight commands, ~1,320 lines, the entire orchestration layer. Cursor's documented equivalent is a skill with `disable-model-invocation: true`.
+- **The losses** come from Cursor having no subagent `tools:` allowlist, only a `readonly` boolean. `architect` is fine and `security-reviewer` probably is; `conformance-reviewer` is degraded; **`tester`'s "runs nothing" is inexpressible** — that guarantee is the absence of `Bash` from its allowlist, and TDD integrity rests on it. Separately, the drift hook warns on **stderr**, which Cursor does not document as a channel to the model, so it would run, exit 0, and warn nobody.
+
+**Three of the four losses are silent** — the class ADR-0008 clause 2 and ADR-0009 clause 4 each name, here reappearing at the host boundary. And one of them lands in `doc-drift-detector.py`, the same component ADR-0004 caught failing silently for an unrelated reason.
+
+**Three shapes, costed in the ADR:** (A) keep `.claude/`, generate eight `.cursor/skills/` shims that delegate to the existing command files — one copy of the prose, smallest possible change; (B) a real second install target, `install.sh --host cursor`, which makes [ADR-0004](0004-configurable-state-path.md)'s prose-indirection sweep a prerequisite rather than a nice-to-have; (C) a Cursor Plugin, which is **[ADR-0007](0007-artifact-dispositions.md)'s disposition split handed a mechanism** — owned files become Cursor's to install and refresh, seeded files stay with a much smaller installer, and `MIGRATIONS.md` shrinks to exactly the set ADR-0007 argued it was always for.
+
+**Also blocking: `/plan` is a Cursor built-in.** So are `/review`, `/review-security`, `/babysit`, and `/loop`, and the last three overlap the pack's gates functionally. Precedence against built-ins is undocumented, and a prefix rename is ~198 citation sites (`/plan` 63, `/checkpoint` 67, `/adopt` 36, `/build` 32) — slice 12's path-sweep shape, again.
+
+**Dogfood task — the spike, and it is not deferred.** Five behavioural predictions are recorded in the ADR, unrun. They cost one Cursor session on an already-installed target and they settle the shape: **P3** (does a shim carry `/feature-start "…"`'s quoted argument, given that Cursor documents no argument mechanism for skills) and **P5** (does `/plan` reach the pack or plan mode). P4 is written to *confirm* the mute drift hook rather than hope against it.
+
+**Why slice 14 here:** the spike happens now; the port waits for slice 13. A second wiring layer is the largest untested surface the pack could add, and it multiplies precisely the cross-step semantic gap that ADR-0009 § *What three rounds say about sequencing slice 13* argues no current component reviews — on top of slices 9, 11, and 12, all shipped and unvalidated.
+
+---
+
 ## Build order rationale
 
 A different order was tempting: **start with `/feature-start`** because it's where the user enters the workflow. Rejected for two reasons:
