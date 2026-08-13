@@ -263,3 +263,76 @@ Cursor Bugbot on `b7ecfb6`. **1 finding, medium, verified real** — plus one un
 
 It does not change what remains unvalidated. Every round so far has been closed by reading, and the behavioural predictions above are still unrun.
 
+
+---
+
+## Running this dogfood — Enterprise API, 0.11.0 → 0.12.0
+
+Written 2026-08-13, after slice 12 merged (`800284b`). The target is the brownfield project with an open PR; it has the widest overlap with what has never executed. **Nothing below has been run** — this is a procedure, not a report. Record outcomes against the predictions above as you go.
+
+### The sequencing trap, first
+
+`/feature-merge`'s discriminator is a content diff:
+
+```
+git diff --quiet <Gated baseline> <PR tip> -- . ':(exclude).claude/state.md'
+```
+
+**`.claude/state.md` is the only exclusion.** Updating the pack writes `.claude/commands/`, `.claude/skills/`, `.claude/references/` — all tracked, none excluded. Commit that to the feature branch and the diff is loud, so gates re-run.
+
+That is **correct behaviour**, not a defect: the PR genuinely carries content no gate has seen. But it means **T18a cannot be the first thing you run.** Testing "no gates on an unchanged PR" on a PR you just changed tests nothing, and the temptation is to read the resulting gate run as a T18a failure.
+
+The order below turns that into an advantage: the update forces the *changed* row, that run rewrites `Gated baseline` to the new tip, and only then is a clean T18a available. Both rows of the re-entry table get exercised, in the order that makes each one meaningful.
+
+### Step 0 — record the starting state
+
+Before touching anything: `cat .claude/.devkit-version`, `git branch --show-current`, the PR number and state, and `.claude/state.md`'s `Phase` / `Spec` / `Plan` / `PR` / `Gated baseline`. A dogfood report that cannot say what the starting state was cannot attribute what changed.
+
+### Step 1 — update the install
+
+1. `./install.sh --dry-run` first. Read the plan; expect `SKIP` on anything hand-edited, and note every `TEMPLATE-CHANGED` advisory.
+2. `./install.sh`.
+3. **Apply `pack/MIGRATIONS.md` § 0.12.0 by hand** — two entries, neither applied by the installer, because `state.md` is seeded:
+   - the `Active feature` field-meaning (the slug no longer determines the spec path);
+   - the new `Summary:` field **and its backfill step**.
+4. **The backfill is the one to get right.** If the feature is `in-review` and its summary is already on disk, seeding `Summary: —` walks straight into `/pr-review` stage 2's hard stop. Find the file — pre-0.12.0 it is `<summaries-dir>/<slug>.md`, undated — and record its real path. That entry is the newest text in the pack and has never been applied by anyone.
+5. Commit the update on the feature branch and push.
+
+**Watch for:** an installer that reports `UNMANAGED` or overwrites something hand-edited, and any `TEMPLATE-CHANGED` advisory whose migration entry does not exist.
+
+### Step 2 — the *changed* row (not T18a)
+
+Re-run `/feature-merge`. Expected: the discriminator is loud, gates 1–3 re-run, and `Gated baseline` is rewritten to the new tip **before** the `state.md`-only transition commit.
+
+**Watch for:** Gate 1 running the project's four recorded blocking gates rather than three (prediction **T2**'s merge-time sibling — the coverage-delta gate is the one historically missed); and the two-commit ordering actually happening, since a baseline written after the transition commit is the defect slice 11 relocated.
+
+### Step 3 — T18a, now meaningful
+
+Change nothing. Re-run `/feature-merge`.
+
+**Predicted:** the content diff is quiet and **no gates run** — no tests, no docs reconciliation, no fresh-context security review.
+
+This is the branch ADR-0008 called the highest-value thing for a dogfood to exercise, and it has been structurally unreachable until now. Two minutes, no feature required.
+
+### Step 4 — T14a/b/c, the `in-review` re-entry path
+
+Run the three predictions above as written. **T14b needs a second clone** (push a commit from it, then re-run locally and expect a halt naming *behind*, not merely "mismatch"). **T14c needs an untracked file** left in the tree. **T14a needs the PR merged** and the head branch deleted, so it runs last.
+
+This is the largest body of never-executed text in the pack, and slice 12 changed it in three places — all authored by reading.
+
+### Step 5 — one feature end-to-end
+
+Only now start something new, and keep it small. This is what exercises § *Resolve* and the four rounds of PR-review rewrites that no execution has touched:
+
+- **§ *Resolve* per-type.** `/feature-start` resolves specs; `/plan` should resolve **plans** even though the record already names specs. A `/plan` run that writes nothing to `CLAUDE.md` because "a record already exists" is finding C12 alive.
+- **§ *Confirm*.** If `docs/plans/` exists and holds the project's own files, expect to be **asked**, not defaulted into. This is the harm the whole reference was written for.
+- **T1** — Phase F3 halting on an unresolvable symbol, including the third check (a common identifier resolving against an unrelated module).
+- **T2 / T3** — the gate list reaching the build loop's Verify substep 3, not merely the plan's constraints table.
+- **T18b** — watch passively for the drift hook warning at edit time when a file outside `owned_files` is touched.
+
+### Recording it
+
+Divergences go against the predictions above, which already state their "before this change" behaviour — so a divergence is a diff against text that exists. Per working principle 4, **if behaviour diverges, the pack needs revision, not the prediction.**
+
+Flip this document's **Status** line from `predictions recorded, unrun` when the run happens, and say which predictions were exercised and which were not. A partial run recorded as a full one is the failure this pack keeps finding in itself.
+
