@@ -15,9 +15,11 @@ The pack's `/feature-merge` invokes you as gate 3 (after tests pass and after do
 The `/feature-merge` command passes you:
 
 - **The diff command to run.** Typically `git diff <mainline>...HEAD` — **three dots**. Run it yourself; that's the source of truth for what's actually merging. The three-dot form diffs against the merge base. With two dots, commits that landed on mainline after this branch diverged appear as *removals* in the feature's diff, and you would be reviewing — possibly blocking on — changes the feature never made.
-- **The active spec** (`docs/specs/<feature>.md`) — context for what the feature is supposed to do.
-- **Related ADRs** named in the spec/plan's `related_adrs` front-matter — context for architectural commitments that may have security implications.
-- **The plan** (`docs/plans/<feature>.md`) — useful for understanding intent but not authoritative for security review (intent doesn't override what the code actually does).
+- **The active spec** — context for what the feature is supposed to do.
+- **Related ADRs** named in the spec/plan's `related_adrs` front-matter — context for architectural commitments that may have security implications. This includes ADRs written mid-build, which the `engineer` skill links into that front-matter for exactly this reason.
+- **The plan** — useful for understanding intent but not authoritative for security review (intent doesn't override what the code actually does).
+
+The spec and plan arrive as **actual paths from the caller**, never as patterns you complete: artifact filenames carry a date prefix and live wherever the project keeps them.
 
 You may read any file under the project, but **do not modify any file**. You produce findings, not fixes.
 

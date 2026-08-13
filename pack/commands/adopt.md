@@ -41,6 +41,7 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Logging / config access (singletons vs injection; env vs file; the project-wide config object).
 - Branch naming, commit conventions, anything else load-bearing.
 - **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
+- **Artifact homes** — where this project keeps specs, plans, and summaries. Run `.claude/references/artifact-locations.md` § *Resolve* through steps 1 and 2 — discovery and the occupied-directory question — and **hold the answer for Phase D rather than recording it here**, per that section's deferral branch. This phase surveys and proposes; it does not write, and a § *Record* firing mid-survey would put artifact homes into `CLAUDE.md` before the user has confirmed the block they belong to. Resolve all three types while you are here: unlike the feature commands, which settle one type at a time mid-feature with a spec already in flight, adoption decides the whole set at once against a project you are surveying anyway, before any of it is load-bearing. § *Resolve* step 1 treats what Phase D records as authoritative, so a later feature reads the answer instead of re-deriving it.
 
 **Blocking gates.** Read `.github/workflows/*.yml` **and `*.yaml`** (GitHub Actions accepts both, and a project using `.yaml` would otherwise look like it has no CI at all), plus `.gitlab-ci.yml` / `.gitlab-ci.yaml` and `Makefile` targets named `ci` / `check` / `verify` if present and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
 
@@ -52,7 +53,7 @@ If no CI config exists, say so and record nothing — Gate 1 falls back to the r
 
 `documenter` writes findings to whatever this records. If it finds nothing, the pack creates `docs/findings.md`; if it finds something, `/feature-merge` and `/pr-review` **ask** whether to adopt that format or sit alongside it. Skipping this step is how devkit becomes the fifth review system on a project that already had a working one — the duplication the pack's whole brownfield posture exists to prevent.
 
-**Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge. The format is the evidence table the `pm` skill already uses:
+**Every entry carries `file:line` evidence.** This is the same rule the `/plan` research phase enforces — no folk knowledge, and the shared rationale is `.claude/references/evidence-and-uncertainty.md` § *Facts*. An entry without evidence is an assertion about someone else's codebase made by a reader who has been in it for an hour. The format is the evidence table the `pm` skill already uses:
 
 ```markdown
 | Convention | Evidence | Note |
@@ -65,6 +66,8 @@ If a convention isn't observable (no file demonstrates it yet), it isn't a conve
 
 When scoped to an `<area>`, survey conventions within that area; don't claim project-wide conventions from one subsystem.
 
+**Writes:** none — this phase surveys, resolves, and reports. Phase D writes the survey into `CLAUDE.md`, artifact homes included.
+
 ### Phase B — Discover the ADR registry, then the domain map
 
 **This phase owns ADR discovery for the run; Phase E does not re-discover.** Run `.claude/references/adr-registry.md` § *Discover* now, before the architect invocation below that might need it. Record the registry's location, format, and current high-water number for the rest of this invocation — Phase E records this same result into `CLAUDE.md` and re-scans only if it goes on to actually write an ADR (per that reference's *Allocate* step 1 and *Never cache the number*).
@@ -76,6 +79,8 @@ Propose the map to the user as a list — one line per domain — and **wait for
 Invoke the `architect` subagent (fresh context, `subagent_type: architect`) **only** when a boundary is genuinely ambiguous — "is this one context or two?" where the answer constrains future work. Pass it the ADR paths discovered above — or the explicit `"registry: none found"` signal when discovery found nothing. A genuinely empty registry is common and legitimate on a brownfield project; pass it explicitly rather than omitting the field, so the architect can tell that apart from a caller that forgot to discover. Reflect its recommendation back before adopting it. Do not invoke it to rubber-stamp an obvious clustering.
 
 Default to the spine: if the repo has many candidate contexts, propose the few that carry the project and say so ("Proposing the 4 core domains; re-run `/adopt` to document the rest"). Silent truncation reads as "covered everything" — name what you're deferring.
+
+**Writes:** none — discovery and confirmation only. Phase C and Phase E write what this phase finds.
 
 ### Phase C — Write the domain docs
 
@@ -109,15 +114,21 @@ genuinely load-bearing.>
 
 Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-run), propose a **delta** against it — don't overwrite; add what's missing or deepen a thin section.
 
+**Writes:** one `docs/domains/<domain>.md` per confirmed domain.
+
 ### Phase D — Conventions into CLAUDE.md
 
 **Resolve the conventions section using `.claude/references/claude-md-elements.md` — element 5, including its equivalence set.** A section named `## Conventions`, `## Setup`, `## Stack`, or similar **is** the conventions section. Write into it. Do not propose a rename: an equivalent element is a satisfied element.
 
 Propose writing the Phase A block into that resolved section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
 
+**Include the artifact homes Phase A resolved and held** — this is where § *Resolve* step 3 lands for this command, deferred out of Phase A so it arrives inside the proposal rather than ahead of it. Record every type Phase A settled, and no type it did not: § *Discover* step 1 treats what is written here as authoritative per type, so a home listed without having been resolved is worse than an absent one.
+
 **Before writing, check for machine-owned regions** per that reference's *Machine-owned regions* section. If the resolved section sits inside another tool's sentinel pair, write **adjacent** to the region rather than inside it, and say why — that text may be regenerated from a source file at any time, silently discarding whatever devkit put there.
 
 Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
+
+**Writes:** the project's `CLAUDE.md` — the *Project conventions* section, including the **Blocking gates** list and the artifact homes Phase A resolved.
 
 ### Phase E — Record the registry, then contested decisions (opt-in, sparse)
 
@@ -134,6 +145,8 @@ Write an ADR **only** when, during the run, the user flags an existing decision 
 3. Reference it from the relevant domain doc.
 
 If nothing is flagged, skip this phase's ADR-writing entirely and say so.
+
+**Writes:** the ADR-registry location into `CLAUDE.md` conventions · any opt-in ADRs at their discovered path.
 
 ### Phase F — Commit and hand off
 

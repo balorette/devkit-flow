@@ -573,7 +573,10 @@ if [[ "$CLAUDE_MD_NEEDS_REFERENCE" -eq 1 ]]; then
   echo "     anywhere in CLAUDE.md."
   step=$((step + 1))
 fi
-echo "  $step. Restart Claude Code so it picks up the new .claude/ contents."
+echo "  $step. Restart Claude Code ONLY if this install added new commands"
+echo "     or skills -- the slash-command index is built at startup."
+echo "     Changed bodies of existing commands and skills load fresh at"
+echo "     invocation time; those need no restart."
 step=$((step + 1))
 if [[ "$MODE" == "fresh" ]]; then
   echo "  $step. Existing codebase? Run /adopt first to build the baseline domain"

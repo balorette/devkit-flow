@@ -12,6 +12,67 @@ Files the manifest tracks (`.claude/.devkit-manifest.json`) are pack-tracked, no
 
 A Claude Code session can do this for you: ask it to apply the pending entries. It will propose the edits before writing, like every other durable-doc change in the pack.
 
+## How entries are written
+
+Each entry **names the template hunk it corresponds to** and replaces the **smallest anchored unit** that carries the change — a sentence or a field line, not a whole paragraph.
+
+The asymmetry is the reason. An entry that says too much is merely redundant. An entry that says too little **silently deletes**: "replace paragraph X" is destructive when your paragraph X grew a sentence the replacement omits, and neither you nor the pack will notice, because the result is a well-formed paragraph that simply says less than it did. That is not hypothetical — 0.11.0's `Open questions` entry replaced a paragraph and dropped a sentence the template still keeps.
+
+Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guarantees a changed template is *looked at*; nothing guarantees every hunk in that diff reaches an entry, and the 0.10.0 section is what that gap produces — two things changed and the entry documented one. An entry that names its hunk lets the snapshot diff and the migration list be cross-checked by reading rather than by recollection.
+
+---
+
+## 0.12.0
+
+### `.claude/state.md`
+
+- **Template hunk:** the `Active feature` line in the trailing HTML comment's field-meanings block. One line, replaced.
+
+  Replace this **single line**:
+
+  ```
+  Active feature  short slug matching docs/specs/<slug>.md, or "none"
+  ```
+
+  with:
+
+  ```
+  Active feature  short slug identifying the feature, or "none". The slug does
+                  NOT determine the spec path -- artifact files carry a date
+                  prefix (YYYY-MM-DD-<slug>.md) and live wherever discovery
+                  found. Read Spec / Plan below for actual paths.
+  ```
+
+  Leave every other line in that block alone.
+
+  Without this, your `state.md` tells a model it can rebuild the spec path from the slug. 0.12.0 made that false **deliberately**: specs, plans, and summaries now carry a date prefix and live wherever `.claude/references/artifact-locations.md` discovers, so that discovery is load-bearing rather than merely recommended. A model that reconstructs `docs/specs/<slug>.md` from the field meaning will look in the wrong place, or write to a directory that belongs to another system.
+
+- **Template hunk:** the `Summary:` field in the header block, and its entry in the field-meanings block. Both new; nothing is replaced.
+
+  Add a `**Summary:** —` line to the header, directly after `**Plan:** —`:
+
+  ```
+  **Summary:** —
+  ```
+
+  **Then backfill it, if a summary already exists on disk.** `—` is the right value only when no summary has been written yet. If your active feature has already been through `/feature-merge` — the `in-review` case, which is exactly the state an upgrade is most likely to interrupt — find the file in your summaries directory and record its real path instead. A pre-0.12.0 summary is at `<summaries-dir>/<slug>.md` with no date prefix; keep that name, per *Existing artifacts are not renamed* below.
+
+  Seeding the field blank and walking away is a hard stop, not a cosmetic gap: `/pr-review` stage 2 halts when the field is `—`, because a summary it cannot locate is one it must not silently duplicate. That halt is correct for a feature whose summary was never written and wrong for a feature whose summary is sitting in the tree — and the second is the path a dogfood traverses.
+
+  And add its meaning to the field-meanings block, directly after the `Spec / Plan` entry:
+
+  ```
+  Summary         path to the feature summary once /feature-merge writes
+                  it, or "—". Recorded because the filename carries a
+                  creation date a later invocation cannot compute --
+                  /pr-review amends this file days later. Cleared at
+                  closeout with the rest.
+  ```
+
+  Without it, `/pr-review` cannot locate the summary it is required to amend: discovery returns the summary *directory*, and the dated filename belongs to the invocation that created it.
+
+**Existing artifacts are not renamed.** Files already at `docs/specs/<slug>.md` keep their names and keep working — `state.md`'s `Spec:` and `Plan:` fields already hold real paths, and every consumer now reads them. The date prefix applies to artifacts created from 0.12.0 onward.
+
 ---
 
 ## 0.11.0

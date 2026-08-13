@@ -34,7 +34,15 @@ This check costs about five seconds. The class of bug it catches — eager impor
 3. Receive test files. Place them at the paths the plan specifies.
 4. Run the tests. They must fail. If any pass on first run, something is wrong — either the test isn't testing what it claims, or the production code already exists. Stop and investigate before continuing.
 
-If the tester returns **findings instead of tests**, do not work around them and do not re-invoke with a looser brief. Evaluate them per `.claude/references/findings-triage.md` (internal source). Most tester findings mean the plan's type signatures are wrong or incomplete — which is a `/checkpoint` amendment, not a build-time improvisation.
+**The tester returns two things, and the second one is not a fault.** Expect tests *plus* findings — observations about what the test list omits, fixtures the new code will break, paths the existing suite cannot distinguish. On the first full run this happened in every one of six steps, and one of them caught a gate applied to one endpoint while a sibling method bypassed it: the exact hole that feature existed to close. Findings arriving alongside green tests are the shape most likely to be skimmed.
+
+Triage them per `.claude/references/findings-triage.md` (internal source):
+
+- **In scope and cheap** → fix now, in this step.
+- **A contract gap** — the plan's type signatures are wrong or incomplete → `/checkpoint` amendment, not a build-time improvisation.
+- **Out of scope for this feature** → the findings ledger, so it outlives the step.
+
+If the tester returns **findings and no tests**, that is a refusal, and it means the brief was unbuildable. Do not work around it and do not re-invoke with a looser brief — fix the contract.
 
 ### Green
 
@@ -54,7 +62,9 @@ Before declaring the step complete:
 
 1. Run the affected test files in full.
 2. Run neighboring tests that touch the changed modules to catch regressions.
-3. Run the linter and type-checker if the project uses them. Identify them from `CLAUDE.md`, `pyproject.toml`, `package.json`, etc. If unclear, ask.
+3. **Run the project's gates.** If `CLAUDE.md` conventions record a **Blocking gates** list (written by `/adopt`), run exactly that list, in order — it is the whole of this substep. Do not add your own lint or type-check on top: the list already contains whatever the project blocks on, and adding to it risks running a *different* lint profile than CI does, or running the same step twice. Only when no such list exists do you infer the runner and checks from the plan's *Approach* section or from project config (`pyproject.toml`, `package.json`, `Cargo.toml`) — and when you infer, **say that you are inferring**.
+
+   This is the same rule `/feature-merge` Gate 1 follows, for the same reason, and it is the per-step half of it. A gate that only runs at merge is a gate you learn about across the whole feature's diff instead of in the step that broke it. The first brownfield target had four blocking gates where this loop ran two; the missing one was a diff-coverage threshold, which surfaced after step 6 at 80% and cost six new tests written against code from several different steps. Had the loop run it per step, the failure would have been three tests in the step that caused it.
 4. Update `.claude/state.md`:
    - Append a one-line entry to a `## Completed steps` section (create the section on first use of a feature): `- Step N — <heading>. <one-line summary including test count if relevant>.`
    - Set `Next step` to the next plan item, or `—` if this was the last step.
@@ -68,7 +78,7 @@ See `.claude/references/solid-checklist.md` for the five principles. Apply per-d
 
 ## Clean Architecture layering
 
-See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. See "Invoking the architect" below for what to pass. Do not guess on architectural boundaries; the cost of getting it wrong propagates.
+See `.claude/references/clean-architecture-layers.md` for the layer definitions, the dependency rule, and the in-practice import constraints. When unsure which layer a piece of code belongs in — or whether a new module justifies a new layer — invoke the `architect` subagent in fresh context with the design question. See "Invoking the architect" below for what to pass. Do not guess on architectural boundaries — the specific obligation here is that a layer question goes to the architect rather than being settled inline. Rationale: `.claude/references/evidence-and-uncertainty.md` § *The discriminator*.
 
 ## Invoking the architect
 
@@ -79,6 +89,8 @@ Every architect call in this skill — the layer-ambiguity call above, the three
 **At build time** (`/build` loads this skill), nothing has discovered the registry yet this session. `/feature-start` Phase A discovered it once, but `.claude/state.md` doesn't carry that record forward — nothing persists it between invocations, and the state file has no field for it — so the engineer cannot assume it's still available. **Discover it yourself, once, before the first architect call of the `/build` session:** follow `.claude/references/adr-registry.md` § *Discover* in full, record the location, format, and high-water number for the rest of the session, and pass the resulting ADR paths — or the explicit `"registry: none found"` when discovery finds nothing — to every architect call the session makes.
 
 If the architect drafts an ADR in response (build-time or plan-time), allocate and write it per `.claude/references/adr-registry.md` § *Allocate* — re-scanning for the current highest number rather than reusing one recorded earlier, exactly as `pm` does at spec and plan time.
+
+Then **add the new number to the applicable `related_adrs` front-matter** — the spec's if the decision changes the contract, the plan's otherwise — via `/checkpoint`, before continuing the build. `pm` closes this loop at brainstorm time and `/feature-start` closes it at Phase E; `engineer` is the one architect caller that could write an ADR and leave it unlinked. `security-reviewer` reads `related_adrs` at merge, so an unlinked build-time ADR is invisible to the review of the very architecture it authorized — and invisible to the next `/feature-start`, which reads the same field to find precedent.
 
 ## Karpathy discipline
 
@@ -92,7 +104,7 @@ Small reversible steps. Verify as you go. Think out loud.
 
 ## When something breaks
 
-Root cause before fix. The rule is not "investigate thoroughly" — it is **no fix without a stated cause.** A fix applied to a symptom you haven't explained is a guess, and it will be indistinguishable from a real fix until it fails again somewhere else.
+Root cause before fix. The rule is not "investigate thoroughly" — it is **no fix without a stated cause.** A fix applied to a symptom you haven't explained is a guess, and it will be indistinguishable from a real fix until it fails again somewhere else. See `.claude/references/evidence-and-uncertainty.md` § *Facts* — a stated cause is what provenance means for a bug.
 
 1. **Read the error completely.** The whole stack trace, the line numbers, the exit code. Most are more specific than they look at a glance, and the specific part is usually further down.
 2. **Reproduce it.** If it isn't reliably reproducible, gather data — don't start changing things. An intermittent failure that disappears after an edit has not been fixed; it has been disturbed.
@@ -220,7 +232,7 @@ Invoke the architect at plan time when the layer-boundary question would otherwi
 - The `architect` returns a recommendation you believe is wrong. Disagreement is legitimate; silent deviation is not. Evaluate it per `.claude/references/findings-triage.md` and surface the disagreement with technical reasoning.
 - Any time you would otherwise guess at intent.
 
-The cost of asking is one round-trip. The cost of guessing wrong propagates through every subsequent step.
+The cost of asking is one round-trip. The cost of guessing wrong propagates through every subsequent step. Before asking, apply `.claude/references/evidence-and-uncertainty.md` § *The discriminator*: if the repo can answer it, read the repo — a question sent to the user that the code could have settled spends their attention to save your own.
 
 ## Common rationalizations
 

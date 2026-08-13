@@ -54,7 +54,7 @@ Also read the active spec, the plan, and any ADRs named in their front-matter. Y
 
 ### Phase B — Triage
 
-Classify every item into exactly one bucket from `.claude/references/findings-triage.md` → *Classification buckets*. This is an **external** source: verify the claim against the repo before accepting it.
+Classify every item into exactly one bucket from `.claude/references/findings-triage.md` → *Classification buckets*. This is an **external** source: verify the claim against the repo before accepting it. An external reviewer's confident claim is exactly the case `.claude/references/evidence-and-uncertainty.md` § *Facts* names — provenance you did not establish reads as verified unless you check.
 
 The reviewer has not read the spec. That is a fact about their access, not a judgment about them — cite the spec, don't condescend to it. If the PR body doesn't link the spec, that is a `/feature-merge` problem worth fixing rather than a reviewer failing.
 
@@ -75,7 +75,7 @@ Propose the whole set before applying any of it — the same discipline the `doc
 Strict order. Each stage completes before the next begins.
 
 1. **Code fixes**, one at a time, each under the `engineer` skill's Verify discipline: tests green, lint and type-check clean, its own commit. Subject `review: <short summary>`. Stage explicitly; never `git add -A`. A review fix that cannot be brought green is not a fix — halt and surface it.
-2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. Through the `documenter` skill, propose-before-write as always.
+2. **Doc amendments** — the summary's *Review notes*, and where shipped behavior changed, *What shipped*. The summary's path is `.claude/state.md`'s `Summary:` field; read it there rather than reconstructing it, since the filename carries the creation date of the invocation that wrote it. If the field is `—`, surface that and stop — a summary that cannot be located cannot be amended, and writing a second one is worse than not writing. Through the `documenter` skill, propose-before-write as always.
 3. **The findings ledger and `.claude/state.md`.** Anything accepted but deferred past this feature goes in the ledger as a `REV` row (see the documenter skill's *The findings ledger*; its location is discovered, not assumed). `state.md`'s `## Open questions` holds only what must be resolved *within this feature* — `/feature-merge` clears that section, so a finding parked there and not fixed before merge is a finding silently discarded. Remove entries whose fix just landed.
 4. **Commit the metadata.** Stage exactly what stages 2 and 3 wrote — the summary doc, the discovered findings-ledger path, and `.claude/state.md` — and propose a commit. Subject: `review: findings ledger + state`. Stage explicitly; never `git add -A`.
 
@@ -90,6 +90,8 @@ Strict order. Each stage completes before the next begins.
 **Push before replying.** A reply citing a SHA is a public, unrecallable claim about the remote — and until the push succeeds that SHA does not exist there. If the push then fails (auth, network, a rejected non-fast-forward because someone else pushed), the PR is left carrying citations to code it does not contain, in comments addressed to the reviewers who will go looking.
 
 An earlier version of this command had replies last, reasoning that *"a reply saying 'fixed in `<sha>`' is true when it posts."* That reads as correct and is exactly backwards: the SHA is true **locally**, and the reply is a statement about the remote. Verifying the tip — rather than assuming a successful `git push` implies it — closes the remaining gap where the push reports success against a stale remote ref.
+
+**Writes:** the confirmed code fixes and doc amendments · `REV` rows in the findings ledger · `.claude/state.md`.
 
 ### Phase E — Hand off
 

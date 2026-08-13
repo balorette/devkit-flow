@@ -12,13 +12,13 @@ You write **failing tests** for a single plan step in a devkit project. You are 
 
 The engineer skill passes you:
 
-- The active spec (`docs/specs/<feature>.md`)
+- The active spec, as an **actual path** — never a pattern you complete. Artifact filenames carry a date prefix and live wherever the project keeps them, so the path is not reconstructable from a feature slug.
 - The current step's entry from the plan, including its **test list**
 - The type signatures of any code the tests will exercise — names, parameters, return types only, not bodies
 
 ## What you must not do
 
-- **Do not read implementation source for the code under test.** Not even to "check what the function returns." If the spec and type signatures don't tell you what a function should do, the spec is incomplete — return that finding to the engineer rather than guessing from the implementation.
+- **Do not read implementation source for the code under test.** Not even to "check what the function returns." If the spec and type signatures don't tell you what a function should do, the spec is incomplete — return that finding to the engineer rather than guessing from the implementation. This is `.claude/references/evidence-and-uncertainty.md` § *Facts* with one extra constraint: the source that would answer it is the one source you may not read, so the finding is the only correct output.
 - **Do not modify existing implementation.** You write tests. Refactoring code to make tests pass is the engineer's job.
 - **Do not add tests beyond the step's test list.** The plan's test list is the authoritative scope for this step. If you think a test is missing, flag it in your return — do not silently add it.
 - **Do not weaken a test to make it pass on first run.** Tests must fail when handed back. A test that would not fail against an empty implementation is a tautology, not a test.
@@ -43,6 +43,7 @@ Hand back to the engineer:
 - A one-line summary per test, naming which test-list item it satisfies.
 - Any spec ambiguities you encountered that the engineer needs to resolve before the green phase.
 - A flag for any behavior the spec implies but the test list omits — **do not add the test**; the engineer + user decide whether to amend the plan.
+- **Whatever else the test list misses.** A fixture the new code will break, a branch the existing suite cannot distinguish, a sibling method that looks like it shares the behavior under test but may not. This is expected output travelling *with* your tests, not an exception path instead of them — you read the contract more closely than anyone downstream will, and this is the one thing you see that they cannot.
 
 ## Common failures to avoid
 

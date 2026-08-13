@@ -21,15 +21,27 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
 | `in-review`, PR open, **gated content unchanged** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this content already passed them. |
-| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen — then update `Gated baseline`, commit `.claude/state.md` only, and push (same recipe as *PR creation*'s transition commit, below). Do **not** re-create the PR. |
+| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen. **Commit whatever the gates wrote first** (Gate 2's reconciliation, Gate 3's `SEC` rows — see each gate's `**Writes:**`), *then* update `Gated baseline` and commit `.claude/state.md` alone, and push. Two commits, in that order — see *Why two commits* below. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
 
-The `in-review` rows have their own preconditions, checked **before** the discriminator runs:
+**Check merged state first, before any other precondition.** Read `gh pr view --json state,mergedAt`. If the PR has merged, skip to closeout (*After the merge*) — the *remote-agreement* preconditions below apply only while the PR is still **open**, and applying them to a merged PR breaks the closeout path outright.
+
+**One precondition still applies on the merged path: the tracked worktree must be clean.** Closeout runs `git checkout <mainline>` as its first act, and a dirty tracked tree either aborts that checkout on an overlap or carries unrelated modifications onto mainline. Neither is a state transition anyone can complete safely. Check `git diff --quiet && git diff --cached --quiet` before the checkout; if it fails, halt and report what is uncommitted rather than proceeding. Untracked files are surfaced and asked about, as everywhere else.
+
+What does **not** apply on this path is the remote comparison — the head ref may be gone, which is exactly why the merged check has to come first.
+
+The failure is specific enough to be worth naming. Forges that delete the head branch on merge leave `git ls-remote origin <branch>` returning no OID, and `git ls-remote -h` does not error on no-match unless `--exit-code` is passed. So precondition 2 sees an empty result rather than a failure, reads the local checkout as diverged or unpushed, and **halts before the closeout that would have cleared state** — on a PR whose only remaining work is that closeout. The halt list further down does mention a merged-state check; nothing ordered it ahead of precondition 2.
+
+With the PR confirmed open, the `in-review` rows have their own preconditions, checked **before** the discriminator runs:
 
 1. `PR:` is set in state.md, or a PR is discoverable for the current branch.
-2. **Local and remote agree.** No uncommitted changes to tracked files, and the local branch is not ahead of the remote. Check the latter with `git ls-remote origin <branch>`, compared against local `HEAD` — **not** `gh pr view --json headRefOid`. The API can serve a stale `headRefOid` for a moment after a push (see `/pr-review`'s push-verification step for the same distinction); using it here risks a false negative on a genuinely diverged branch, which is exactly the case this check exists to catch. `git ls-remote` reads the ref directly and is authoritative.
+2. **Local and remote agree.** No uncommitted changes to tracked files, and local `HEAD` **equals** the OID `git ls-remote origin <branch>` reports — not merely "is not ahead of" it. Use `git ls-remote`, **not** `gh pr view --json headRefOid`: the API can serve a stale `headRefOid` for a moment after a push (see `/pr-review`'s push-verification step for the same distinction), which risks a false negative on a genuinely diverged branch, and `git ls-remote` reads the ref directly.
 
-If either check fails — uncommitted tracked changes, or local ahead of what `ls-remote` reports — **halt**. Report what's uncommitted (`git status`) or unpushed (`git log <remote-tracking>..HEAD --oneline`); don't guess which it is, and don't run the discriminator anyway. The reason this has to come first: the discriminator below reasons about the PR's **remote** content, and that framing is only correct when local and remote already agree. A review-fix commit made locally and never pushed leaves the remote diff quiet while the code actually about to merge has never passed a gate — gates 1–3 get silently skipped on exactly the commits that most need them.
+   **Equality, because a directional check misses the common direction.** When another clone or the web UI pushes to the PR, local is *behind*, and a "not ahead" test passes. `git fetch` then makes the new tip available without moving `HEAD`, so the discriminator reads the PR's new content while gates 1–3 run against stale local content — and the state-only push that follows is a non-fast-forward. The stated rationale for this precondition is exactly that failure in mirror image: the discriminator reasons about the PR's remote content, and that framing is only correct when local and remote already agree. One-directional agreement is not agreement. On a mismatch, halt and report **which direction**; when local is behind, the fix is to update the checkout before re-running.
+
+3. **Untracked files are surfaced here too.** The building-phase path already handles this — *"An untracked file is as likely to be a source file the engineer forgot to `git add` … as it is to be build detritus"* — and the reasoning applies with more force here. A review fix that adds a new source or test file and forgets to stage it leaves local `HEAD` equal to the remote OID, so precondition 2 passes; the gates then run **green against a working tree containing the untracked implementation**, and the state-only commit pushes a `Gated baseline` the PR did not earn. Surface untracked files and ask before running any gate.
+
+If any check fails — uncommitted tracked changes, or local and remote disagreeing in either direction — **halt**. Report what's uncommitted (`git status`) or unpushed (`git log <remote-tracking>..HEAD --oneline`); don't guess which it is, and don't run the discriminator anyway — git can answer which, so ask git (`.claude/references/evidence-and-uncertainty.md` § *The discriminator*, first row). The reason this has to come first: the discriminator below reasons about the PR's **remote** content, and that framing is only correct when local and remote already agree. A review-fix commit made locally and never pushed leaves the remote diff quiet while the code actually about to merge has never passed a gate — gates 1–3 get silently skipped on exactly the commits that most need them.
 
 With that established, fetch the PR tip locally before diffing against it. `gh pr view --json headRefOid` returns an OID from GitHub's record; if the PR was updated from another clone or the web UI since this checkout, that commit may not exist in the local object database, and the diff below fails on an unknown object instead of deciding anything:
 
@@ -49,6 +61,12 @@ Two things this gets right that the obvious versions do not:
 
 - **Not tip versus tip.** `/pr-review` commits its fixes and pushes them, so after it runs the local and remote tips agree while carrying commits no gate has ever seen. A rerun keyed on that would skip tests, docs reconciliation, and security review on precisely the code about to merge.
 - **Not SHA equality against the baseline.** Writing `Gated baseline` requires committing `state.md`, which changes the tip — so tip *never* equals baseline, and an equality check makes the no-gates branch unreachable from the moment the PR opens. The exclusion of `.claude/state.md` is what makes the comparison survive the command's own bookkeeping write. It is a **content** diff rather than a commit walk so that a change reverted within the PR correctly reads as unchanged.
+
+**Why two commits on a gate rerun.** Gate 2 reconciles documentation and Gate 3 can write `SEC` rows to the findings ledger — both leave files modified other than `state.md`, as each gate's `**Writes:**` declares. A single `state.md`-only commit strands them, and does so in two directions at once: the tree stays dirty, so the *next* invocation's own precondition ("no uncommitted changes to tracked files") halts on it — the row breaks the path it returns to — and the pushed `Gated baseline` asserts that content passed the gates while the gates' own output is absent from the branch.
+
+So: commit the gates' artifacts first, then set `Gated baseline` to *that* commit and commit `state.md` alone. The order matters in both directions. Baseline-then-artifacts would name a tip whose content the artifacts postdate; one combined commit would put non-`state.md` content in the transition commit, and the discriminator above excludes only `.claude/state.md`, so the next invocation would read the difference as ungated content and re-run gates that already passed.
+
+This is the same reasoning the closeout commit already applies one section down, where the ledger is staged "if Gate 3 wrote `SEC` rows to it" — an uncommitted ledger row is the durable-memory failure the ledger was added to fix, reproduced one layer down.
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
@@ -72,6 +90,20 @@ If any precondition fails, **stop and report**. Common cases:
 
 ## Run
 
+### Orient — resolve the summary's home
+
+Run `.claude/references/artifact-locations.md` § *Resolve* in full and record the **summaries** directory for the rest of this invocation. The summary write below is a consumer of that result, and clause 3 puts the producer before every consumer.
+
+This command is the pack's **only** producer of a summary, so outside `/adopt` it is the only place the summaries directory is ever resolved. `/feature-start` and `/plan` resolve the types *they* write and leave this one alone — § *Resolve* runs and exits per artifact type, so the `CLAUDE.md` record they left almost certainly names specs and plans and says nothing about summaries.
+
+**Do not read that record as an answer to this question.** A record naming two types out of three is the ordinary state here, not a sign something went wrong, and summaries is the type most likely to be the missing one. Expect § *Resolve* to reach the scan for it on a project that has never merged a feature through the pack — and on a brownfield target, expect the scan to find something: `docs/summaries/` is an ordinary name, and § *Confirm* is why this step runs ahead of the gates rather than during closeout.
+
+Resolving here rather than beside the write is deliberate: it keeps every location question in front of the gates, so the user is never asked to settle a directory during closeout for a feature that Gate 1 is about to send back.
+
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, for any type § *Resolve* settled here that the record did not already name. Otherwise none.
+
+### The gates
+
 The three gates run in fixed order: tests → docs → security. Each gate's failure surfaces concrete remediation. The gates are independent — a Gate-2 failure doesn't tell you anything about Gate 3 — but they execute sequentially because each is cheap to re-run after a fix and there's no value in showing the user three problems at once.
 
 ### Gate 1 — Tests pass
@@ -88,6 +120,8 @@ The distinction is not cosmetic. Any project with a CI config has already define
 
 - **Green:** proceed to Gate 2.
 - **Red:** halt. Surface what failed and a one-line "fix or amend the plan via `/checkpoint`" prompt. Do not proceed to other gates — a red result invalidates downstream assumptions. Lint and type-check failures block at the same severity as failing tests.
+
+**Writes:** none — runs the project's recorded gates and reports.
 
 ### Gate 2 — Docs reconciliation
 
@@ -107,6 +141,8 @@ If anything is unaddressed:
 
 The user picks. Don't proceed past Gate 2 with a coverage gap silently.
 
+**Writes:** whatever the reconciliation amends — the summary, domain docs, and any spec or plan amendment.
+
 ### Gate 3 — Security review
 
 Invoke the `security-reviewer` subagent in fresh context. Pass:
@@ -120,21 +156,31 @@ The subagent returns a structured findings document with severity-bucketed entri
 - **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
 - **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Re-run Gate 3 (or the full sequence from Gate 1, since fixes touch code) after resolution.
 
+**Writes:** the findings ledger, when the review produces non-critical `SEC` rows.
+
 ### After all three gates pass — Summary and supersede
 
 Load the `documenter` skill again. Run the "Summary authoring" pattern (see the documenter skill):
 
-1. Write `docs/summaries/<feature>.md` per the documenter's summary checklist. Include the security-reviewer's non-critical findings in the "Security review notes" section.
+1. Write the summary per the documenter's summary checklist, at the summaries directory the Orient step above resolved, named per that reference's § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
 2. Update `docs/domains/<domain>.md` if the feature shifted domain vocabulary (per the documenter's "Domain doc updates" guidance). If `docs/domains/` doesn't exist and the feature is the project's first in a domain, create it.
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
 Surface all proposed doc writes to the user before applying. The documenter skill's cardinal "propose before writing" discipline holds at merge time too.
 
+**Writes:** the summary at the resolved summaries directory · `.claude/state.md` (the `Summary:` field, and the Parked features section when step 3 supersedes anything) · `docs/domains/<domain>.md` for each domain the feature shifted.
+
+This is the command's largest producer, and it is the one the closeout below is most likely to under-stage — the summary and the domain docs are new or newly-amended files that no other step names, and the `Summary:` field is what `/pr-review` reads days later to find the summary at all.
+
 ### Commit the closeout docs — before proposing any integration
 
 Everything authored above is **uncommitted**. The preconditions demanded a clean tree, then this command dirtied it — and both `git push` and `git merge` transport only committed changes.
 
-Propose a commit staging exactly the closeout files: `docs/summaries/<feature>.md`, any domain-doc updates, `.claude/state.md`, **and the findings ledger if Gate 3 wrote `SEC` rows to it** (its path is the discovered one, not assumed). A ledger row written and not committed is absent from the pushed branch in PR flow, and left untracked after integration in local flow — which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
+Propose a commit for **the union of every `**Writes:**` declaration the steps that ran produced** — read them off those steps. On a full run the sections carrying declarations are **Orient, Gate 2, Gate 3, and *After all three gates pass***; go read those four and stage what they name.
+
+**That is a list of sections to read, deliberately, and not a list of files to stage** — the same rule `/feature-start` Phase H and `/plan` Phase G follow, and for the same reason. This paragraph previously enumerated the artifacts and named this closeout itself as one of the declaring sections. It is not: a carrier stages what producers declare, and the actual producer of the summary, the domain docs, and the `Summary:` field had no declaration at all. A reader following the derivation rule to the letter would have staged the `CLAUDE.md` entry, Gate 2's amendments, and the ledger — and dropped the summary.
+
+Two of the four are quiet in opposite ways. Gate 3's ledger row is **remote**: written at the ledger's resolved path, not somewhere obvious in the diff. A row written and not committed is absent from the pushed branch in PR flow and left untracked after integration in local flow, which is the durable-memory failure the ledger was added to fix, reproduced one layer down. Orient's `CLAUDE.md` entry is **conditional**: written only for an artifact type nothing had recorded before, and dropping it sends the next feature back to re-deriving a location this one settled. Subject: `/feature-merge: summary + state.md`. Stage them explicitly; never `git add -A`.
 
 **Record this commit's SHA.** It becomes `Gated baseline` at PR creation — it is the tip as it stands before the `state.md`-only transition commit, which is the one commit the discriminator's exclusion accounts for.
 
@@ -151,6 +197,8 @@ Before proposing anything, determine whether this project merges locally or thro
 3. **Ask.** If neither is conclusive, ask. The wrong guess opens an unwanted PR or merges something that should have been reviewed.
 
 If `gh` is absent or unauthenticated but the project is otherwise PR-shaped, say so and offer the **draft-only path**: the pack prepares the branch, the summary, and a PR body, and the user opens the PR by hand. Same for non-GitHub forges — the pack does not shell out to `glab` or equivalents.
+
+**Writes:** none — reads the project's convention and the repo's shape, and reports which flow applies.
 
 ### Merge strategy
 
@@ -180,7 +228,7 @@ Replaces *Merge proposal* when flow detection selected PR flow. The summary doc 
 Propose, in one short message:
 
 - The push (`git push -u origin feature/<slug>`).
-- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths. Reviewers should arrive with the contract in front of them.
+- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths. Reviewers should arrive with the contract in front of them.
 - Whether the PR is a draft. Default is not-draft; honor a `CLAUDE.md` convention if one states otherwise.
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.
@@ -197,6 +245,8 @@ Update `Gated baseline` after **every** successful gate rerun — to the tip as 
 
 A stale baseline is worse than none: it makes ungated commits look gated.
 
+**Writes:** `.claude/state.md` — `Phase: in-review`, `PR: <url>`, and `Gated baseline: <SHA>` at PR creation, and `Gated baseline` again after every gate rerun. This section carries its own writes rather than deferring them to the closeout above: both the transition commit and the rerun commit stage `.claude/state.md` alone, and both land *after* the closeout commit has already been made and pushed.
+
 ### After the merge
 
 In PR flow this section runs on a **later invocation** — the one that found `Phase: in-review` with a merged PR. The merge may have been performed by someone else, days ago, in a session that no longer exists. Everything below applies unchanged; only the trigger differs.
@@ -205,10 +255,12 @@ In PR flow this section runs on a **later invocation** — the one that found `P
 
 Once the merge has been executed (by the user locally, by you on their instruction, or on the forge by anyone):
 
-1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
+1. **Clear state.md** to the idle pointer shape: Active feature `none`, Active branch `<mainline>`, Phase `idle`, Spec/Plan/**Summary**/PR/**Gated baseline**/Next step `—`. Leaving a merged PR's SHA in `Gated baseline` makes the idle pointer assert that some commit passed gates for a feature that no longer exists. Move the just-merged feature's entry to "Last merge: <feature> (YYYY-MM-DD)".
 2. Surface a one-line completion summary (feature merged, summary doc at `<path>`, branch archived/deleted).
 
 The pack expects the user to push the mainline branch themselves; `/feature-merge` does not auto-push (push is also irreversible from a code-review perspective).
+
+**Writes:** `.claude/state.md`, cleared to the idle pointer shape. Propose a commit staging it alone — subject `/feature-merge: closeout (<feature> merged)`. This runs after the integration the closeout commit above was written for, so it has no carrier but its own; an uncleared `state.md` leaves the next `/feature-start` blocked on its `Active feature is none` precondition, holding a feature that no longer exists.
 
 ## Halt conditions
 
@@ -224,7 +276,7 @@ Stop and surface, without auto-recovering:
 - Flow detection is inconclusive and the user has not chosen a flow.
 - PR flow was selected but `gh` is unavailable or unauthenticated, and the user has not opted into the draft-only path.
 - `Phase: in-review` but no PR can be found for the branch — state and reality disagree. Surface both; do not silently re-open a PR or silently reset the phase.
-- `in-review` and local doesn't agree with remote: uncommitted changes to tracked files, or local `HEAD` ahead of what `git ls-remote origin <branch>` reports. Halt and report what's uncommitted or unpushed — do not run the discriminator against content the PR doesn't actually have yet.
+- `in-review` and local doesn't agree with remote: uncommitted changes to tracked files, untracked files not yet resolved, or local `HEAD` **not equal** to what `git ls-remote origin <branch>` reports — **in either direction**. Halt and report which it is; do not run the discriminator against content the PR doesn't actually have yet. Local *behind* the remote is the case a directional check misses, and it is the common one: it happens whenever another clone or the web UI pushes to the PR. This list and precondition 2 state the same rule, and they must keep stating the same rule.
 - `gh pr view` fails while checking merged state. Ask whether the PR merged; never treat a failed call as "not merged."
 
 After any halt, the user resolves; re-running `/feature-merge` picks up from the beginning (Gate 1). Re-running is cheap because gates 1 and 2 are mostly read-only and the security-reviewer's work is fresh-context per invocation — no harm in re-running the full sequence after a fix.

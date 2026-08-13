@@ -297,6 +297,60 @@ A second automated-review round on the Enterprise API 0.10.0 upgrade — the sam
 
 ---
 
+### Slice 12 — Declared writes, discovered locations, verified authority (post-core)
+
+**The first slice with behavioural evidence.** Two validation rounds landed against 0.11.0 within a day: `docs/validation/pr140-pack-findings.md` (seven findings, static review of the pack's *text*) and `docs/validation/flow-execution-0.11.0.md` (nine findings from the pack's **first end-to-end execution** — `/feature-start` → `/plan` → `/build` ×6 → `/checkpoint` ×6 → `/feature-merge`, shipping a real feature to a green PR on a brownfield target). Every prior validation doc in this directory carried the caveat *"no pack command has executed."* For the build lifecycle, that caveat is retired.
+
+Both rounds reached the same diagnosis independently: **0.11.0 stated its clauses correctly and applied them as a patch list.** Eight of seventeen findings are instances of clauses ADR-0008 already names. [ADR-0009](0009-declared-writes-and-verified-authority.md) adds clause 4 (an artifact declared authoritative has a verification pass), adds clause 5 at the owner's direction (decide what is arguable; never assert what is unverified), and takes the by-construction fix ADR-0008 considered and deferred at *"the two staging lists at issue are three lines each"* — an estimate execution falsified by finding two more sites in two commands.
+
+**Phase A — clause 4 and the gate list** (Tasks 1–3; flow-6, flow-7, both high). `/plan` gains **Phase F3**: enumerate every symbol the plan names — signature blocks, conventions table, prose — grep each, halt on unresolved. The plan is declared authoritative for what the tester writes and was the one durable artifact with no verification pass; five wrong symbols shipped in one six-step feature. `engineer`'s Verify substep 3 now runs the project's recorded **Blocking gates** list, the same rule `/feature-merge` Gate 1 already had — clause 3 names the gate list explicitly and had wired two of its three consumers.
+
+**Phase B — clause 1 by construction** (Tasks 4–7; flow-1, pr140-3, pr140-unnumbered). `tests/test_clause_one.py` asserts that a phase describing a durable write declares it with a `**Writes:**` line, and that a document declaring writes has a carrier phase. Twenty declarations land across six commands; staging lists in `/feature-start` Phase H, `/feature-merge`'s gate-rerun row, and `/plan` Phase G become *derived* from those declarations rather than hand-maintained. `/claude-md-merge` states its clause-1 exception rather than leaving it implicit. `MIGRATIONS.md` entries become anchored, hunk-naming replacements — "replace paragraph X" deletes silently when the reader's paragraph grew a sentence.
+
+**Phase C — clauses 3 and 5** (Tasks 8–13; flow-4, flow-5, flow-8, pr140-5/6/7). Two new references: `artifact-locations.md` (discover/confirm/record/name for specs, plans, summaries) and `evidence-and-uncertainty.md` (clause 5's one copy). Specs, plans, and summaries move to `YYYY-MM-DD-<slug>.md`, and **34 sites across 9 files** stop constructing paths — the date prefix is the forcing function, since a filename that cannot be rebuilt from a slug makes discovery load-bearing rather than merely recommended. `adr-registry.md` scans the location `CLAUDE.md` records; `architect.md` stops answering on silence; `engineer` links the ADRs it writes into `related_adrs`. Fifteen clause-5 citations replace fourteen restatements, including one sentence that appeared verbatim in three files.
+
+**Phase D — `/feature-merge` `in-review` corrections** (Task 14; pr140-1, -2, -4). Merged-state detection moves ahead of the sync precondition, which a deleted head ref fails; the tip comparison becomes equality rather than "not ahead"; the untracked-file prompt applies to this path as it already did to the building path. **These three are authored by reading.** The `in-review` re-entry path remains the largest body of never-executed text in the pack.
+
+**Phase E — corrections, doc currency, release** (Tasks 15–18; flow-2, flow-3, flow-9). The stale slice-2 architect fallback is deleted in favour of verify-before-reflect; `install.sh`'s restart guidance narrows to newly-added commands; `documenter` generalizes three-strikes from bugs to process defects. `VERSION` → **0.12.0**, with one seeded hunk and one anchored migration entry naming it.
+
+**What you can do after this slice:** a plan cannot reach approval naming a symbol that does not exist; the build loop runs the gates the project actually blocks on, in the step that breaks them; the pack writes its artifacts where the project keeps them rather than where the pack assumed; and a new command that writes an artifact without naming its carrier fails the suite before it reaches a validation doc.
+
+**Dogfood task:** predictions recorded in `docs/validation/slice-12.md`, unrun. The one that matters most is clause 4's — draft a plan naming a symbol that does not exist and confirm Phase F3 halts before the approval gate. Two carry over unresolved from slice 11: whether the content-diff discriminator runs *no* gates on an unchanged reopened PR, and whether the `PostToolUse` drift hook has a real gap or merely lost its output in a long session.
+
+**Why slice 12 here:** the first slice whose evidence is behavioural rather than textual, and the first to close a clause *as a rule* rather than at the sites a review happened to name. Its own execution proved the point twice — slice 11's release guard caught a clause-1 violation in slice 12's plan, and `test_pack_references_resolve` caught a dangling path in slice 12's new reference file.
+
+---
+
+### Slice 13 — Debugging discipline and the pre-PR reviewer (scoped, not authored)
+
+Two components scoped during the [ADR-0003](0003-pr-lifecycle-and-findings-triage.md) discussion and deliberately deferred. **Renumbered from "slice 9" in slice 12**, resolving a collision: `CLAUDE.md` used that number for both the built Enterprise-API-findings slice and this unbuilt pair, and the inventory listed only the former.
+
+- **A `debugger` skill.** The pack has no debugging discipline at all, and `/build`'s halt conditions hand off to a process that does not exist.
+- **A `reviewer` subagent** as a pre-PR gate 4, covering the cross-step lens no current component owns.
+
+**Multi-agent fan-out belongs here, and only here.** The build loop is serialized on purpose — red → green → refactor, one user gate per step — and parallelism there fights both TDD ordering and the every-gate-pauses property the first full run confirmed. `reviewer` is the opposite case: it is *defined* by the lens no single component holds, which is what diverse-lens fan-out is for. The evidence is slice 12's own two high-severity findings — a plan's symbols going unverified and the build loop running the wrong gates were both **single-lens misses**, invisible to every existing reviewer for structural reasons rather than by oversight.
+
+**Sequencing hardened by slice 12's three review rounds.** Every high-severity finding across those rounds landed in the cross-step semantic gap this component is defined by, and the pack's own guards were green through all of them. Rounds 1, 2, and 3 each found the *previous round's correction* carrying a defect of the same family — the last of which was introduced by a change that read as a simplification. See [ADR-0009](0009-declared-writes-and-verified-authority.md) § *What three rounds say about sequencing slice 13*. The by-construction program has a syntactic ceiling and slice 12 found it, so `reviewer` reads as a **precondition** for further by-construction work rather than a component scheduled after it.
+
+#### Candidate: drop the ADR high-water mark from `CLAUDE.md`
+
+Surfaced 2026-08-13 while auditing the pack's `CLAUDE.md` footprint on target projects. Not a defect — a standing cost with no corresponding benefit, which is why it belongs in a slice rather than a fix commit.
+
+`adr-registry.md` § *Never cache the number* states the contract in bold: **"The location may be recorded. The number may not be trusted."** Every allocator must re-scan the registry regardless of what the record says, because two commands reading the same recorded mark allocate the same ID. So the pack writes a value into the one file loaded into every session's context and then forbids every consumer from acting on it.
+
+What that costs, none of which buys anything:
+
+- **Context on every turn**, in a file whose whole design constraint is that it is always loaded.
+- **A maintenance step** — `/feature-start` Phase E step 4 exists solely to stop the recorded mark decaying, plus its `**Writes:**` declaration and its place in Phase H's derived staging list.
+- **A dirty `CLAUDE.md` during feature work.** It is the only thing that makes the pack touch a target's conventions file mid-feature; everything else written there is settled once.
+- **A layering inconsistency.** The pack's memory split is `docs/` human-first and durable, `.claude/state.md` machine-first and current. A mutating integer only a machine reads is `state.md`-shaped. The registry's *location* is genuinely conventions-shaped — a settled decision a human should see — and stays.
+
+**The proposal is removal, not relocation.** If allocation always re-scans, the hint produces nothing the scan does not already produce; moving it to `state.md` would preserve the maintenance burden while merely relocating the storage. Removal deletes step 4, one `**Writes:**` declaration, one staging-list entry, and the pack's only mid-feature `CLAUDE.md` write.
+
+**It is a contract change, so it wants an ADR, not a patch.** ADR-0006 established the registry's shape and `/adopt` records the mark today; `pack/MIGRATIONS.md` would need an entry telling existing installs the line is now inert. Deliberately kept out of PR #4, which was already three review rounds deep on unrelated work.
+
+---
+
 ## Build order rationale
 
 A different order was tempting: **start with `/feature-start`** because it's where the user enters the workflow. Rejected for two reasons:

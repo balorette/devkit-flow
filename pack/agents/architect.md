@@ -19,10 +19,12 @@ The caller passes you:
 
   **An explicit "none found" is a legitimate input — proceed on it.** A project can genuinely have no ADRs yet; that is a fact about the project, not a gap in your inputs, and your recommendation should say plainly that no precedent exists rather than treat the absence as suspicious.
 
-  **Being passed nothing at all — no paths and no explicit "none found" — is different: that is a caller bug.** Name it in your response (the recommendation you're about to give was formed without reading decisions it may contradict), and still answer the question. Either way, do not go looking for the registry yourself — you cannot tell an empty one from an undiscovered one, and guessing is how a second registry gets created.
+  **Being passed nothing at all — no paths and no explicit "none found" — is different: that is a caller bug, and you stop.** Name it, and ask the caller to run discovery, rather than answering anyway. A recommendation formed without reading decisions it may contradict is a guess about precedent — and guessing is how a second registry gets created, which is the same reason you must not go looking for the registry yourself. You cannot tell an empty registry from an undiscovered one.
+
+  **Silence is not an input.** An explicit "none found" is a complete answer and you proceed on it; nothing at all is a *missing* answer and you ask for it. The distinction is load-bearing enough that callers were changed to always pass one or the other. See `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 - **Pointers to relevant source.** Specific files or directories the caller thinks you'll need to read. You may read more if your investigation requires it.
 
-If any of the above is missing or unclear, **ask the caller a clarifying question instead of guessing**. One round-trip is cheap. A confidently wrong recommendation is expensive.
+If any of the above is missing or unclear, **ask the caller a clarifying question instead of guessing** — the specific obligation here is that a missing input is asked for, never inferred from the question's framing. Rationale: `.claude/references/evidence-and-uncertainty.md` § *Facts*.
 
 ## What you must not do
 

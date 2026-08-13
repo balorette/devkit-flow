@@ -1,11 +1,11 @@
 ---
 name: pm
-description: Spec authoring discipline for a devkit project. Owns the brainstorm-to-spec dialogue, domain decomposition heuristic, and the typical spec template the pack writes by default. Invoked by `/feature-start` to take a feature idea from prose to an approvable spec; later by `/plan` for plan-time decomposition. Load whenever drafting or amending a `docs/specs/<feature>.md`.
+description: Spec authoring discipline for a devkit project. Owns the brainstorm-to-spec dialogue, domain decomposition heuristic, and the typical spec template the pack writes by default. Invoked by `/feature-start` to take a feature idea from prose to an approvable spec; later by `/plan` for plan-time decomposition. Load whenever drafting or amending a feature spec.
 ---
 
 # PM
 
-You drive a feature from "we want to do X" to an approvable spec. Your output is a `docs/specs/<feature>.md` written to **typical** depth (see the section checklist below), with the user's understanding visible at every step. You are not the engineer — implementation choices that don't shape the contract belong in the plan. You are not the documenter — doc reconciliation across the project is its concern.
+You drive a feature from "we want to do X" to an approvable spec. Your output is a spec written to **typical** depth (see the section checklist below), with the user's understanding visible at every step. You are not the engineer — implementation choices that don't shape the contract belong in the plan. You are not the documenter — doc reconciliation across the project is its concern.
 
 ## Default to typical depth
 
@@ -42,7 +42,8 @@ Before asking the user a single question:
 
 - Read `CLAUDE.md` for project conventions.
 - Read `docs/domains/` to understand the project's existing vocabulary and bounded contexts.
-- Skim `docs/specs/` for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*).
+- Run `.claude/references/artifact-locations.md` § *Resolve* in full — the whole chain, not § *Discover* alone — and record what it returns for the rest of the invocation. Every later write site reads this result. Resolution is what makes the result usable: it asks before writing into a directory that belongs to the project, and it records the answer so the next invocation reads instead of re-deriving. Running the scan and stopping leaves both undone. **In full means per artifact type as well as end-to-end** — a `CLAUDE.md` record that already names one type settles that type and nothing else, and does not stand in for the types it omits.
+- Skim the **discovered specs directory** for two or three merged specs — gives you the shape this project actually uses (which may be richer or leaner than the walkthrough's illustrative example, and *the project's shape wins*). Read exemplars from the discovered home, not from `docs/specs/`: on a project whose specs live elsewhere, scanning the default finds nothing and the shape you match is the walkthrough's rather than the project's.
 - **Discover the ADR registry and record it for this invocation.** Follow `.claude/references/adr-registry.md` § *Discover* in full — a `CLAUDE.md` note left by a prior `/adopt` is a useful hint for where to look, not a substitute for running the scan (see that reference's *Never cache the number*). Record the location, format, and current high-water number; every architect invocation and ADR write for the rest of this invocation reads from that record. If any ADRs are obviously relevant to the feature idea, read them in full — decisions already made constrain the spec.
 - **Read the findings ledger** (`docs/findings.md`, or the existing review system `CLAUDE.md` names). Open rows touching the area this feature will change are prior art, and they cut two ways: some are fix-now candidates that belong in this feature's scope, and the rest are known hazards to design around. A deferred security or conformance finding in the code you're about to extend is exactly the context a brainstorm should start from — rediscovering it as a bug three features later is the failure this ledger exists to prevent.
 - Read `.claude/state.md` to confirm no active feature is in progress.
@@ -64,7 +65,7 @@ The brainstorm covers, in roughly this order:
 
 **Make the brainstorm visible.** Each batch of questions is a clear ask, and each answer gets reflected back ("OK, so X means we're committing to Y") before moving on. Silent inference is the enemy of a spec-as-contract.
 
-If a question is genuinely architectural — "should this be a new bounded context or an extension of an existing domain", "does this warrant a new layer", "should we introduce a new cross-cutting pattern" — invoke the `architect` subagent in fresh context (see "When to invoke the architect" below). Do not guess on architectural boundaries.
+If a question is genuinely architectural — "should this be a new bounded context or an extension of an existing domain", "does this warrant a new layer", "should we introduce a new cross-cutting pattern" — invoke the `architect` subagent in fresh context (see "When to invoke the architect" below). Do not guess on architectural boundaries — the specific obligation here is that a bounded-context question is settled before the spec commits to a shape. Rationale: `.claude/references/evidence-and-uncertainty.md` § *The discriminator*.
 
 ### 3. Propose a domain decomposition
 
@@ -84,7 +85,7 @@ The decomposition is the bridge between brainstorm and spec. It's also the user'
 
 ### 4. Draft the spec
 
-Now write `docs/specs/<feature>.md` covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
+Now write the spec — at the location `.claude/references/artifact-locations.md` § *Resolve* returned, named per its § *Name* — covering every section in the typical checklist above. Each section reflects what the brainstorm produced; do not invent content the user didn't agree to.
 
 **Front-matter:**
 
@@ -210,7 +211,7 @@ The architect returns a recommendation, rationale, trade-offs, precedent, and �
 
 `/feature-start`'s job (and yours within it) ends when:
 
-- The spec exists at `docs/specs/<feature>.md` with `status: approved`.
+- The spec exists at the path `state.md`'s `Spec:` field names, with `status: approved`.
 - Any ADRs drafted during brainstorm are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`).
 - The feature branch exists.
 - `.claude/state.md` points at the new spec and reflects `Phase: spec-approved` (or `spec-draft` if the user is reviewing asynchronously).
@@ -221,7 +222,7 @@ The next phase is `/plan`. You'll be loaded again there for plan-time decomposit
 
 When `/plan` loads you, the loop above is over — the spec is approved and is read-only from here. Your plan-time job is different in shape:
 
-- Translate the approved spec into a typical-depth `docs/plans/<feature>.md` that the `engineer` skill can execute step-by-step.
+- Translate the approved spec into a typical-depth plan that the `engineer` skill can execute step-by-step.
 - Produce the *Conventions and constraints* section from real research, not from generic best practice.
 - Map every acceptance criterion in the spec to a step (or to an explicit deferral) — no silent gaps.
 - Surface first-of-kind cross-cutting decisions before they bake into steps, same architect-invocation criteria as at spec time.
@@ -285,7 +286,7 @@ The evidence format is again a small table:
 | Vitest discovers `tests/**/*.test.ts` | `vitest.config.ts:7` | Place test files under `tests/`, suffix `.test.ts` |
 ```
 
-The intent isn't bibliographic completeness — it's enough evidence that the implementer doesn't need to re-research what you already settled. If you can't easily cite the source, the constraint is probably folk knowledge, and folk knowledge belongs in a project-first decision with explicit justification.
+The intent isn't bibliographic completeness — it's enough evidence that the implementer doesn't need to re-research what you already settled. If you can't easily cite the source, the constraint is probably folk knowledge, and folk knowledge belongs in a project-first decision with explicit justification. This is `.claude/references/evidence-and-uncertainty.md` § *Facts* applied to research: evidence or an explicit mark, never a bare assertion.
 
 ### Cross-cutting pattern cue at plan time
 
@@ -317,13 +318,13 @@ The "Note" column is where deferrals get explained. A criterion mapped to "—" 
 
 ### Producing the plan
 
-Write `docs/plans/<feature>.md` with front-matter:
+Write the plan — at the location `.claude/references/artifact-locations.md` § *Resolve* returned, named per its § *Name* — with front-matter:
 
 ```yaml
 ---
 feature: <slug>
 status: draft
-spec: docs/specs/<slug>.md
+spec: <the actual spec path>
 related_adrs: [<numbers, including any drafted during plan-time architect calls>]
 ---
 ```
@@ -340,7 +341,7 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 
 ### What you hand to /plan when you're done
 
-- The plan file exists at `docs/plans/<slug>.md` with `status: draft`.
+- The plan file exists at the path `state.md`'s `Plan:` field names, with `status: draft`.
 - Any ADRs drafted during plan-time architect calls are written **into the discovered registry**, in its format (`.claude/references/adr-registry.md`). Plan-time allocation re-scans exactly as brainstorm-time does — `/feature-start` may already have consumed the number you last saw.
 - The plan's front-matter `related_adrs` references them.
 - The state.md update mechanic is /plan's responsibility, not yours. You return; /plan writes Phase + Next step.

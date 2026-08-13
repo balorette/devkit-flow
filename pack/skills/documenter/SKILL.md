@@ -15,6 +15,8 @@ The pack's hardest invariant is **docs current with code**. Three layers enforce
 
 Documentation is the project's memory. A silent edit you got wrong can be invisible for weeks. The cost of one extra round-trip per amendment is one extra round-trip; the cost of stale or wrong durable docs is every future feature built against a false contract.
 
+Proposing is not the same as escalating. `.claude/references/evidence-and-uncertainty.md` § *Judgment* asks you to **decide** what is arguable and state the reasoning — a proposal carries a recommendation, not a menu. What you must not do is *write* without confirmation; what you must not do either is hand the user an undecided fork.
+
 Concretely:
 
 1. Identify which docs the change affects (see "What lives where" below).
@@ -32,10 +34,10 @@ The pack's memory layout has each document owning a different facet of project m
 
 | Document | Owns | Amend when | Don't amend for |
 |---|---|---|---|
-| `docs/specs/<feature>.md` | *What* we're building: scope, contracts, data model, error handling, acceptance criteria | Scope changes, contract changes, new acceptance criteria, requirements clarification | Implementation choices (those go in the plan) |
-| `docs/plans/<feature>.md` | *How* we're building it: steps, test lists, conventions, ordering | Step changes (add/remove/reorder), test-list updates, plan-time conventions changes, type-signature corrections | Behavioral changes (those need the spec amended first) |
+| **The spec** (path from `state.md`'s `Spec:`) | *What* we're building: scope, contracts, data model, error handling, acceptance criteria | Scope changes, contract changes, new acceptance criteria, requirements clarification | Implementation choices (those go in the plan) |
+| **The plan** (path from `state.md`'s `Plan:`) | *How* we're building it: steps, test lists, conventions, ordering | Step changes (add/remove/reorder), test-list updates, plan-time conventions changes, type-signature corrections | Behavioral changes (those need the spec amended first) |
 | `docs/adr/NNNN-*.md` | Irreversible architectural decisions | **Almost never.** ADRs are immutable once accepted. If a decision needs revisiting, write a new ADR that supersedes (with reference). For *when* a decision warrants an ADR in the first place, see the pm skill's *When to invoke the architect* quick-reference table | Wording cleanups, retroactive justification, anything that rewrites history |
-| `docs/summaries/<feature>.md` | Feature retrospective (one per merged feature) | Authored at `/feature-merge`; amended only to add late-discovered context within a couple of days of merge | After "soon after merge" passes, the summary is history; further commentary belongs in the next feature's spec |
+| **The summary** (one per merged feature, at the discovered location) | Feature retrospective | Authored at `/feature-merge`; amended only to add late-discovered context within a couple of days of merge | After "soon after merge" passes, the summary is history; further commentary belongs in the next feature's spec |
 | `docs/domains/<domain>.md` | Living domain model: vocabulary, bounded contexts, ubiquitous language | When a feature adds, renames, or shifts a domain concept | Adding implementation details (those belong in the spec/plan or in code comments) |
 | `.claude/state.md` | Working pointer: active feature/branch/phase/spec/plan, Open questions, Parked features | Continuously (Phase + Next step are routine); substantively when transitioning lifecycle (park, resume, etc.) | n/a — state.md is always live |
 | `docs/findings.md` *(or the project's existing review system — see below)* | Findings that outlive their feature: security, conformance, external review, architect recommendations without an ADR | A finding is recorded, or an existing one is resolved | Anything scoped to one feature — that belongs in the spec, plan, or summary |
@@ -43,6 +45,10 @@ The pack's memory layout has each document owning a different facet of project m
 | `.claude/devkit-orientation.md` | Pack-owned memory layout, workflow commands, commit cadence, automated guards | Almost never — this file is pack-owned and overwritten by the devkit installer. Edit only if you're customizing the pack itself; otherwise change to pack templates flow back via update | Project-specific anything (that goes in CLAUDE.md) |
 
 When an amendment touches more than one document, **list them all in the proposal**. A scope change typically touches the spec (the change) and the plan (a new step or test); a project convention change typically touches CLAUDE.md and the next plan's conventions section. Missing the cross-document update is the most common amendment failure mode.
+
+**Three strikes on a class, not just on a bug.** The `engineer` skill stops after three failed hypotheses because repeated failures are evidence about the *design* rather than about the attempts. The same reasoning applies to amendments: when `/checkpoint` corrects the **same class** of defect for the third time in one feature, propose amending the process rule rather than the instance — and say so in the amendment.
+
+On the first full run a symbol slip was corrected at instances 2, 3, and 5. At instance 3 a rule *was* written, narrow enough that instance 5 slipped past it. Three separate `/checkpoint` commits treated one class as three unrelated cases, and the narrow rule is itself the tell: a rule written for the instances seen rather than for the class is the third strike, not the fix.
 
 ## Amendment patterns
 
@@ -99,7 +105,7 @@ This is a lighter-weight pass than what the `doc-drift-detector` hook automates 
 
 ## Summary authoring (loaded by `/feature-merge`)
 
-At merge time, you are also the **author** of `docs/summaries/<feature>.md` — the feature's retrospective. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
+At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
 
 ### What goes in a summary
 
@@ -125,8 +131,8 @@ Sections:
 ---
 feature: <slug>
 merged: YYYY-MM-DD
-spec: docs/specs/<slug>.md
-plan: docs/plans/<slug>.md
+spec: <the actual spec path>
+plan: <the actual plan path>
 related_adrs: [<numbers>]
 supersedes: [<parked-feature-slugs, if any>]
 ---
@@ -166,7 +172,7 @@ Per the discipline at the top of this skill, summaries are not edited beyond a b
 
 `/feature-merge` builds the pull-request body from the summary you just wrote. That is *why* the summary is authored before the PR opens rather than at merge time — reviewers should have the contract in front of them, not have to go looking for it.
 
-Assemble: the **What shipped** section verbatim, then links to `docs/specs/<slug>.md`, `docs/plans/<slug>.md`, and any related ADR paths.
+Assemble: the **What shipped** section verbatim, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths.
 
 Do **not** include **Followups** or **Security review notes**. Followups invite scope debate inside the review — the reviewer starts arguing about work that was deliberately deferred. Security findings are for the user's judgment, not broadcast to the reviewer pool.
 
