@@ -330,6 +330,25 @@ Two components scoped during the [ADR-0003](0003-pr-lifecycle-and-findings-triag
 
 **Multi-agent fan-out belongs here, and only here.** The build loop is serialized on purpose — red → green → refactor, one user gate per step — and parallelism there fights both TDD ordering and the every-gate-pauses property the first full run confirmed. `reviewer` is the opposite case: it is *defined* by the lens no single component holds, which is what diverse-lens fan-out is for. The evidence is slice 12's own two high-severity findings — a plan's symbols going unverified and the build loop running the wrong gates were both **single-lens misses**, invisible to every existing reviewer for structural reasons rather than by oversight.
 
+**Sequencing hardened by slice 12's three review rounds.** Every high-severity finding across those rounds landed in the cross-step semantic gap this component is defined by, and the pack's own guards were green through all of them. Rounds 1, 2, and 3 each found the *previous round's correction* carrying a defect of the same family — the last of which was introduced by a change that read as a simplification. See [ADR-0009](0009-declared-writes-and-verified-authority.md) § *What three rounds say about sequencing slice 13*. The by-construction program has a syntactic ceiling and slice 12 found it, so `reviewer` reads as a **precondition** for further by-construction work rather than a component scheduled after it.
+
+#### Candidate: drop the ADR high-water mark from `CLAUDE.md`
+
+Surfaced 2026-08-13 while auditing the pack's `CLAUDE.md` footprint on target projects. Not a defect — a standing cost with no corresponding benefit, which is why it belongs in a slice rather than a fix commit.
+
+`adr-registry.md` § *Never cache the number* states the contract in bold: **"The location may be recorded. The number may not be trusted."** Every allocator must re-scan the registry regardless of what the record says, because two commands reading the same recorded mark allocate the same ID. So the pack writes a value into the one file loaded into every session's context and then forbids every consumer from acting on it.
+
+What that costs, none of which buys anything:
+
+- **Context on every turn**, in a file whose whole design constraint is that it is always loaded.
+- **A maintenance step** — `/feature-start` Phase E step 4 exists solely to stop the recorded mark decaying, plus its `**Writes:**` declaration and its place in Phase H's derived staging list.
+- **A dirty `CLAUDE.md` during feature work.** It is the only thing that makes the pack touch a target's conventions file mid-feature; everything else written there is settled once.
+- **A layering inconsistency.** The pack's memory split is `docs/` human-first and durable, `.claude/state.md` machine-first and current. A mutating integer only a machine reads is `state.md`-shaped. The registry's *location* is genuinely conventions-shaped — a settled decision a human should see — and stays.
+
+**The proposal is removal, not relocation.** If allocation always re-scans, the hint produces nothing the scan does not already produce; moving it to `state.md` would preserve the maintenance burden while merely relocating the storage. Removal deletes step 4, one `**Writes:**` declaration, one staging-list entry, and the pack's only mid-feature `CLAUDE.md` write.
+
+**It is a contract change, so it wants an ADR, not a patch.** ADR-0006 established the registry's shape and `/adopt` records the mark today; `pack/MIGRATIONS.md` would need an entry telling existing installs the line is now inert. Deliberately kept out of PR #4, which was already three review rounds deep on unrelated work.
+
 ---
 
 ## Build order rationale
