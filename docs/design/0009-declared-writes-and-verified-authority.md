@@ -8,7 +8,7 @@
 **Amended:** 2026-08-12 — clause 5 added at the owner's direction, generalizing a rule the pack already states fourteen times in ten formulations. See *Clause 5* and Decision 5.
 **Amended:** 2026-08-12 (second) — the PR #4 review found that clause 3's sweep shipped **consumers without a producer**. See *A citation is not a wiring*, below.
 **Amended:** 2026-08-13 (third) — the round-2 review found the *fix* for that finding partial in the same shape. See *A partial wiring reads as a complete one*, below.
-**Amended:** 2026-08-13 (fourth) — round 3, owner-reported, found two regressions in the round-2 fix. See *Widening a producer invalidates its consumers' exits* and *A derivation is only as strong as its declarations*, below.
+**Amended:** 2026-08-13 (fourth) — round 3 found four regressions in the round-2 fix. See *Widening a producer invalidates its consumers' exits* and *A derivation is only as strong as its declarations*, below.
 
 ---
 
@@ -208,7 +208,11 @@ Rounds 1, 2, and 3 each found the previous round's correction carrying a defect 
 
 The distinguishing evidence is which findings a mechanical guard could take. Round 3's declaration gap was **syntactic** — a heading that writes without a `**Writes:**` line — and `test_clause_one` was widened to catch it, verified red against the commit that introduced it. The other four across the three rounds were **semantic**: whether a cited procedure is ever reached, whether a chain runs to its end, whether an exit is scoped to the granularity of its producer. No regex expresses those, and the two guards that exist are each satisfied by the defective text for a defensible reason — the citation does resolve, and nothing does go unwritten.
 
-So the by-construction program this ADR committed to has a ceiling, and slice 12 found it. Declarations and tests hold the syntactic floor. **The cross-step semantic lens has no owner, and every high-severity finding in three rounds has landed in exactly that gap** — including two found by the owner reading the diff after two automated reviewers had passed over them. That argues the `reviewer` gate is a precondition for the next slice rather than a component scheduled after it.
+So the by-construction program this ADR committed to has a ceiling, and slice 12 found it. Declarations and tests hold the syntactic floor. **The cross-step semantic lens has no owner, and every high-severity finding in three rounds has landed in exactly that gap.**
+
+Be precise about who caught what, because the weaker version of this argument is tempting and wrong. External automated review caught all three rounds; it is not what failed. What failed twice over is **in-repo**: the pack's own guards stayed green through every semantic defect, and the author of each correction read past the defect in the correction. A `reviewer` gate is the component that would run *before* a PR exists, on the same diff, with the cross-step lens no current component holds — which is precisely the position from which all five semantic findings were visible and from which nothing was looking.
+
+There is a further reason to sequence it first rather than merely soon. Round 3's C11 was introduced by a change that read as a simplification: `/adopt`'s three named steps collapsed into one entry point, moving a write across a confirmation boundary the entry point did not know about. **The by-construction fixes themselves have now produced defects in three consecutive rounds**, so shipping more of them without the gate is the pattern this slice is evidence against.
 
 ## What the clauses decide
 

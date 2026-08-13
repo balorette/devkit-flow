@@ -41,7 +41,7 @@ Survey the repo and assemble a proposed `## Project conventions` block for `CLAU
 - Logging / config access (singletons vs injection; env vs file; the project-wide config object).
 - Branch naming, commit conventions, anything else load-bearing.
 - **Blocking CI gates** — see below. Record them as their own list; `/feature-merge` Gate 1 runs it.
-- **Artifact homes** — where this project keeps specs, plans, and summaries. Run `.claude/references/artifact-locations.md` § *Resolve* in full; it chains discovery, the occupied-directory question, and the `CLAUDE.md` record. `/feature-start`, `/plan`, and `/feature-merge` run the same chain and will settle anything you leave unsettled — but they resolve one artifact type at a time, mid-feature, with a spec already in flight. Adoption is where the whole set gets decided at once, against a project you are surveying anyway and before any of it is load-bearing. § *Resolve* step 1 treats what you record here as authoritative, so a later feature reads the answer instead of re-deriving it.
+- **Artifact homes** — where this project keeps specs, plans, and summaries. Run `.claude/references/artifact-locations.md` § *Resolve* through steps 1 and 2 — discovery and the occupied-directory question — and **hold the answer for Phase D rather than recording it here**, per that section's deferral branch. This phase surveys and proposes; it does not write, and a § *Record* firing mid-survey would put artifact homes into `CLAUDE.md` before the user has confirmed the block they belong to. Resolve all three types while you are here: unlike the feature commands, which settle one type at a time mid-feature with a spec already in flight, adoption decides the whole set at once against a project you are surveying anyway, before any of it is load-bearing. § *Resolve* step 1 treats what Phase D records as authoritative, so a later feature reads the answer instead of re-deriving it.
 
 **Blocking gates.** Read `.github/workflows/*.yml` **and `*.yaml`** (GitHub Actions accepts both, and a project using `.yaml` would otherwise look like it has no CI at all), plus `.gitlab-ci.yml` / `.gitlab-ci.yaml` and `Makefile` targets named `ci` / `check` / `verify` if present and extract the commands that actually gate a merge. Record them **verbatim**, with `file:line` evidence like every other entry.
 
@@ -66,7 +66,7 @@ If a convention isn't observable (no file demonstrates it yet), it isn't a conve
 
 When scoped to an `<area>`, survey conventions within that area; don't claim project-wide conventions from one subsystem.
 
-**Writes:** none — this phase surveys and reports. Phase D writes the survey into `CLAUDE.md`.
+**Writes:** none — this phase surveys, resolves, and reports. Phase D writes the survey into `CLAUDE.md`, artifact homes included.
 
 ### Phase B — Discover the ADR registry, then the domain map
 
@@ -122,11 +122,13 @@ Create `docs/domains/` if it doesn't exist. If a domain doc already exists (re-r
 
 Propose writing the Phase A block into that resolved section (replacing the `{{LIST_PROJECT_CONVENTIONS_HERE}}` placeholder if present), via the documenter's propose-before-write.
 
+**Include the artifact homes Phase A resolved and held** — this is where § *Resolve* step 3 lands for this command, deferred out of Phase A so it arrives inside the proposal rather than ahead of it. Record every type Phase A settled, and no type it did not: § *Discover* step 1 treats what is written here as authoritative per type, so a home listed without having been resolved is worse than an absent one.
+
 **Before writing, check for machine-owned regions** per that reference's *Machine-owned regions* section. If the resolved section sits inside another tool's sentinel pair, write **adjacent** to the region rather than inside it, and say why — that text may be regenerated from a source file at any time, silently discarding whatever devkit put there.
 
 Route to `/claude-md-merge` **only when no equivalent exists at all**. Requiring a literal `## Project conventions` here while `/claude-md-merge` treats equivalents as satisfied is what produced an unresolvable loop on the first brownfield target: `/adopt` routed out, `/claude-md-merge` correctly found nothing to merge, and `/adopt` hit the same condition again. `/adopt` fills the conventions slot; `/claude-md-merge` builds one only when there is none.
 
-**Writes:** the project's `CLAUDE.md` — the *Project conventions* section, including the **Blocking gates** list.
+**Writes:** the project's `CLAUDE.md` — the *Project conventions* section, including the **Blocking gates** list and the artifact homes Phase A resolved.
 
 ### Phase E — Record the registry, then contested decisions (opt-in, sparse)
 

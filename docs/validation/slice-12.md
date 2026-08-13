@@ -193,7 +193,7 @@ It now resolves in an Orient step ahead of the gates — placed there rather tha
 
 ## PR #4 review round 3 (2026-08-13)
 
-**Owner-reported**, reading the diff after the round-2 fixes were pushed. Two findings, both **regressions introduced by `9f21d8f`** — the round-2 fix commit — and neither surfaced by either automated reviewer, both of which had passed over rounds 1 and 2.
+Cursor Bugbot on commit `be31756` — the round-2 fix commits — relayed by the owner. **4 findings, all verified against source, all real. Every one is a regression introduced by `9f21d8f`**, the round-2 fix commit.
 
 ### Disposition
 
@@ -201,6 +201,10 @@ It now resolves in an Orient step ahead of the gates — placed there rather tha
 |---|---|---|---|
 | C8 | § *Discover* step 1 exits the whole scan on any `CLAUDE.md` record, against a chain § *Resolve* declares per-artifact-type | high | Step 1 and step 3 are per type; § *Record* states an entry claims nothing about the types it omits; three `**Writes:**` declarations rescoped | `65b647d` |
 | C9 | `/feature-merge`'s largest producer carries no `**Writes:**` line, so the new derived closeout drops the summary | high | The producing section declares; the crutch enumeration is deleted; `test_clause_one` widened and three sibling declarations added | `df271d4` |
+| C10 | `### Orient` sits outside `test_clause_one`'s scan, so deleting its declaration leaves the suite green | med | Closed by C9's widening, *before the finding was read*. Verified against C10's own stated test: stripping Orient's `**Writes:**` line now goes red naming exactly that section | `df271d4` |
+| C11 | `/adopt` Phase A runs § *Resolve* in full — whose step 3 writes `CLAUDE.md` — while declaring `**Writes:** none` and deferring conventions to Phase D's propose-before-write | med | § *Resolve* step 3 gains a deferral branch (on *when*, never *whether*); Phase A holds the resolution, Phase D records it inside the proposal | `<this commit>` |
+
+**C11 is the one worth not glossing.** `9f21d8f` changed `/adopt`'s bullet from "run § *Discover*, confirm per § *Confirm*, record per § *Record*" to "run § *Resolve* in full" — reading as a tidy-up, since the chain is what the old text spelled out. But § *Resolve* ends in a write, and `/adopt` is built so that every `CLAUDE.md` write lands in Phase D behind a proposal. Consolidating three named steps into one entry point moved a write across a confirmation boundary the entry point knew nothing about.
 
 ### What each one was
 
@@ -233,6 +237,8 @@ Three consecutive rounds, each finding the previous round's correction carrying 
 
 Each is harder to see than the last, and for the same reason each time: **more of the mechanism visibly works.** By C8, something runs, a location comes back, and the type that comes back is genuinely settled — it is the other types that hold nothing while a write site cites them as answered.
 
-Recorded in ADR-0009 as *Widening a producer invalidates its consumers' exits*, *A derivation is only as strong as its declarations*, and *What three rounds say about sequencing slice 13*. The last of those is the substantive change: **every high-severity finding across three rounds landed in the cross-step semantic gap no component owns**, two of them found by the owner after two automated reviewers had passed. That is the argument for slice 13's `reviewer` gate being a precondition for the next slice rather than a component scheduled after it.
+Recorded in ADR-0009 as *Widening a producer invalidates its consumers' exits*, *A derivation is only as strong as its declarations*, and *What three rounds say about sequencing slice 13*. The last of those is the substantive change: **every high-severity finding across three rounds landed in the cross-step semantic gap no component owns**, and the pack's own guards were green through all of them.
+
+**A correction to how this was first written up.** The initial version of this section called round 3 owner-reported and said neither automated reviewer had surfaced it. Both claims were false: Bugbot posted all four findings against `be31756` at 12:28:39Z, and the owner relayed two of them. The error is worth leaving visible because it cuts against the argument it was attached to — the automated reviewers **did** catch every round, including this one, and what has consistently failed is the pack's own mechanical guards plus the authors' review of their own corrections. The case for the `reviewer` gate does not need external review to have failed; it rests on three consecutive rounds where an in-repo guard could not see the defect and the author could not either.
 
 **Still true, and worth not losing:** the behavioural predictions above remain unrun, and everything in rounds 2 and 3 was closed by reading. `/feature-merge`'s Orient step, its four new declarations, and the whole `in-review` path are text that has never executed.
