@@ -242,3 +242,24 @@ Recorded in ADR-0009 as *Widening a producer invalidates its consumers' exits*, 
 **A correction to how this was first written up.** The initial version of this section called round 3 owner-reported and said neither automated reviewer had surfaced it. Both claims were false: Bugbot posted all four findings against `be31756` at 12:28:39Z, and the owner relayed two of them. The error is worth leaving visible because it cuts against the argument it was attached to — the automated reviewers **did** catch every round, including this one, and what has consistently failed is the pack's own mechanical guards plus the authors' review of their own corrections. The case for the `reviewer` gate does not need external review to have failed; it rests on three consecutive rounds where an in-repo guard could not see the defect and the author could not either.
 
 **Still true, and worth not losing:** the behavioural predictions above remain unrun, and everything in rounds 2 and 3 was closed by reading. `/feature-merge`'s Orient step, its four new declarations, and the whole `in-review` path are text that has never executed.
+
+---
+
+## PR #4 review round 4 (2026-08-13)
+
+Cursor Bugbot on `b7ecfb6`. **1 finding, medium, verified real** — plus one unreported sibling found while fixing it. The check itself passed; the finding came as a comment.
+
+| # | Finding | Fix |
+|---|---|---|
+| C12 | `/plan` Phase G describes Phase A's write as firing "only when nothing was recorded before" — the whole-record gloss C8 removed from Phase A, left behind in the carrier that reads it | Both carriers now say *conditional per artifact type* and warn against reading "a record exists" as "nothing to write" |
+
+`/feature-start` Phase H carried the identical stale sentence and was not flagged; `/feature-merge`'s closeout was already per-type correct, having been written after the C8 fix rather than before it.
+
+**The defect is a fix's blast radius, not a new rule.** C8 made § *Resolve* per-type and updated Phase A. Two carriers describing Phase A's behaviour in prose were not updated, and prose describing a declaration is not itself a declaration — so `test_clause_one` had nothing to say. The consequence is specific and plausible: on a `/plan` run where `/feature-start` already recorded specs, a carrier following the stale gloss treats a real plans-directory write as an anomaly and drops it from the staged commit.
+
+### The trend across four rounds
+
+**9 → 4 → 4 → 1**, with severity falling alongside: two high in round 2, two high in round 3, none in round 4. Four rounds is enough to say the rate is converging rather than stationary, which is the first evidence in this slice that the corrections are net-reducing defects rather than trading them.
+
+It does not change what remains unvalidated. Every round so far has been closed by reading, and the behavioural predictions above are still unrun.
+
