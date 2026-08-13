@@ -154,3 +154,37 @@ That matters more than the individual fixes, because it says something the slice
 - **`test_clause_one` passed for the wrong reason** and now cannot: fenced blocks are templates the command emits into someone else's file, so their content is not a declaration and their headings are not phase boundaries. The fence-aware version went red naming exactly `adopt.md` Phase C.
 - **No existing guard could have caught C2.** The citation resolves, so `test_pack_references_resolve` is satisfied; nothing goes unwritten, so `test_clause_one` is satisfied. The gap between *a reference that exists* and *a reference that is reached* has no mechanical check. **This is now the strongest argument for slice 13's `reviewer` gate.**
 - **X4 was a false claim I wrote**, not an omission: *"a plain identifier search is enough — a false 'resolved' is not possible."* Clause 5 applies to the pack's authors as much as to the pack.
+
+---
+
+## PR #4 review round 2 (2026-08-13)
+
+Cursor Bugbot on commit `cd1d46d` — the round-1 fix commits themselves, reviewed two minutes after the round-1 replies were posted. **4 findings, all verified against source, all real.** Codex did not re-review.
+
+### The theme
+
+**Round 1's fix was partial in the shape round 1 was fixing.** C2 said artifact discovery never runs; the fix wired § *Discover* into three call sites and closed it. Round 2 found that § *Confirm* still had no invoker anywhere on the feature path, § *Record* had none outside `/adopt`, and `/feature-start` Phase A still declared a `CLAUDE.md` write no step performed. See ADR-0009 § *A partial wiring reads as a complete one*.
+
+That is the second consecutive round where the defect recurred inside the correction written to close it. Worth stating plainly: **naming a rule is not implementing it, and this pack has now produced that evidence twice in two rounds against itself.**
+
+### Disposition
+
+| # | Reviewer | Finding | Fix |
+|---|---|---|---|
+| C5 | Cursor high | § *Confirm* / § *Record* never invoked on the feature path | `artifact-locations.md` gains § *Resolve* — one chain, one entry point; four call sites invoke it as a unit |
+| C4 | Cursor high | `/plan` Phase A ran discovery after its exemplar-scan consumers | Phase A reordered: `CLAUDE.md`, then both discoveries, then the reads that consume them |
+| C6 | Cursor med | Phase H staging enumeration omits Phase A's new write | `/feature-start` Phase H and `/plan` Phase G name **the phases to read**, not the files to stage |
+| C7 | Cursor med | 0.12.0 seeds `Summary:` blank against `/pr-review`'s hard stop | Migration entry gains a backfill step naming the pre-0.12.0 undated filename |
+
+### Found while fixing, not reported
+
+**`/feature-merge` never ran artifact discovery at all.** It writes the summary at "the location § *Discover* returned" (`:151`) and had no discovery step in its own invocation — C2 exactly, in a fifth site neither reviewer flagged in either round. It matters more than the count suggests: `/feature-merge` is the pack's **only** summary producer, so no earlier command settles that directory on its behalf, and the path it writes is the one `/pr-review` later hard-stops on. C7 and this are the same defect seen from the two ends.
+
+It now resolves in an Orient step ahead of the gates — placed there rather than beside the write so the user is never asked to settle a directory during closeout for a feature Gate 1 is about to send back.
+
+### What this round says about the guards
+
+- **Both round-2 high findings are clause 3 again**, and neither `test_clause_one` nor `test_pack_references_resolve` moved. The suite was green at 44 before the round and is green at 44 after. A test count is not a coverage claim.
+- **The structural fix is new and is the part worth keeping.** A reference whose sections form a chain now names the chain. `adr-registry.md` was checked and does *not* need this — its sections are separate operations at separate times, so subset-picking there is correct. That distinction is recorded in ADR-0009 so the next reference is written on the right side of it.
+- **`/plan` Phase G's enumeration had cited itself as the one that got it right** — "this list was correct and the equivalent list in `/feature-start` was not" — and had decayed within the same slice. Both now derive. An enumeration that documents the danger of enumerations is still an enumeration.
+- **Two consecutive rounds, both closed by reasoning, neither by execution.** Everything in slice 12 that has run is `test_clause_one`, `test_migrations_snapshot`, and `test_pack_references_resolve`. The behavioural predictions above remain unrun, and the `/feature-merge` Orient step added here is new unexecuted text on the `in-review` path that has still never executed.

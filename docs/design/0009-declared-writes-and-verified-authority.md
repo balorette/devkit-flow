@@ -7,6 +7,7 @@
 **Extends:** [ADR-0008](0008-step-invariants.md) — cited throughout, not amended.
 **Amended:** 2026-08-12 — clause 5 added at the owner's direction, generalizing a rule the pack already states fourteen times in ten formulations. See *Clause 5* and Decision 5.
 **Amended:** 2026-08-12 (second) — the PR #4 review found that clause 3's sweep shipped **consumers without a producer**. See *A citation is not a wiring*, below.
+**Amended:** 2026-08-13 (third) — the round-2 review found the *fix* for that finding partial in the same shape. See *A partial wiring reads as a complete one*, below.
 
 ---
 
@@ -160,6 +161,22 @@ The lesson is narrow and worth stating, because it is not the same lesson ADR-00
 > **Citing a procedure is not the same as invoking it.** A write site that names a discovered value reads as correct — the citation resolves, the reference exists, the test suite is green — while the value it names was never produced. A clause-3 sweep is complete only when something *runs* the discovery, something *defines* its answer for the unoccupied case, and something *persists* the result for consumers in later invocations.
 
 `tests/test_pack_references_resolve.py` cannot catch this: the citation *does* resolve. Nor can `test_clause_one.py`: nothing goes unwritten. The gap is between a reference that exists and a reference that is reached, and the pack currently has no mechanical check for it. That is a candidate for slice 13's `reviewer` gate — the cross-step lens no single component owns — and it is a better argument for that component than the one this ADR originally recorded.
+
+### A partial wiring reads as a complete one
+
+**Added 2026-08-13, after the round-2 review of PR #4.** The fix for the finding above wired `artifact-locations.md` § *Discover* into `pm` Orient, `/feature-start` Phase A, and `/plan` Phase A, and closed the finding. A second automated round then found that **the fix was itself partial in exactly the shape it was fixing**: § *Confirm* had no invoker anywhere on the feature path, § *Record* had none outside `/adopt`, and `/feature-start` Phase A still declared a `CLAUDE.md` write no step performed. A fourth site — `/feature-merge`, the pack's only summary producer — had not been wired at all and was found while fixing the other three, not reported by either reviewer.
+
+So the first correction stated the rule correctly and applied it as a patch list. **That is the same failure ADR-0008 named, recurring inside the correction written to close it** — which is the second time in two rounds, and is now the strongest available evidence that naming a rule does not implement it.
+
+The structural cause is worth stating separately from the instance:
+
+> **A reference whose sections form a chain must name the chain.** `artifact-locations.md` shipped five independent sections and let every caller choose which to run. Three callers chose independently and all three chose the same wrong subset — not because the sections were unclear, but because a caller reading five headings has no way to tell "these are five options" from "these are five steps." The fix is a single named entry point (§ *Resolve*) that is the unit of invocation, with the original sections retained as the detail each step points into.
+
+**This is not an argument against multi-section references.** `adr-registry.md` has a similar surface — *Discover*, *Allocate*, *Never cache the number*, *Where the location is recorded* — and does **not** have this defect, because its sections are genuinely separate operations performed at separate times: you discover at orient, and you allocate later and only if an ADR actually gets written, re-scanning at that point by that reference's own rule. Choosing a subset there is correct. The distinction is whether the sections are *alternatives and phases* or *links in one chain*, and only the latter needs an entry point.
+
+The narrow lesson, then, is about how the two rounds' defects present:
+
+> A *missing* wiring is invisible because the citation resolves. A *partial* wiring is invisible for a stronger reason: something demonstrably runs, the finding it closed is closed, and the diff shows work done at exactly the right sites. Verifying that a producer exists is not the same as verifying that it produces everything its consumers cite.
 
 ## What the clauses decide
 
