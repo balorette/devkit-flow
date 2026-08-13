@@ -45,7 +45,7 @@ PM skill orients (reads `CLAUDE.md`, `docs/domains/`, prior specs, the findings 
 
 If the framing confirmation surfaces a misunderstanding, restate and reconfirm. Do not proceed to brainstorm against a wrong frame.
 
-**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none — § *Resolve* stopped at the existing record, and the resolution is held for this invocation and consumed by later phases.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, for any type § *Resolve* settled here that the record did not already name. Otherwise none — every type this invocation needs was already recorded, and the resolution is held for this invocation and consumed by later phases.
 
 ### Phase B — Brainstorm
 

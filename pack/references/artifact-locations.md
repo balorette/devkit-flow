@@ -18,14 +18,18 @@ Note the asymmetry that made it findable: specs were fine on that project, becau
 
 **Run this, not its parts.** Once per invocation, before the first consumer, and independently **per artifact type** — a project commonly has plans and no specs.
 
+**Per artifact type means every step, not just the first.** A caller resolves the types it is going to write and leaves the rest alone, so a half-filled record is the expected input to this section rather than a broken one. Each type walks all three steps on its own: one type being already recorded says nothing about the others, and an exit taken for one must never be taken on behalf of another.
+
 1. **§ *Discover*.**
 2. **Act on what it returned**, per artifact type:
    - `"none found"` → **§ *Default***. Take the default path; no confirmation is needed for an unoccupied namespace.
    - a directory holding files the pack wrote → it is the pack's; use it.
    - a directory holding files the pack did not write → **§ *Confirm***. Ask. Do not resolve it by picking.
-3. **§ *Record* the outcome** — including when the outcome was a default. Skip only when step 1 stopped at an existing `CLAUDE.md` record: that is already a recorded resolution, and rewriting it is how a settled answer gets re-litigated.
+3. **§ *Record* the outcome, for every type this invocation resolved** — including when the outcome was a default. Skip a type step 1 found already recorded: that is a recorded resolution already, and rewriting it is how a settled answer gets re-litigated. Skipping the *record* for one type never skips the *chain* for another.
 
 **A caller that runs only § *Discover* has resolved nothing.** It holds a reading, not a decision. An occupied foreign directory has been *identified* and never *asked about* — so the pack writes into it, which is the harm above. A derived default has been *chosen* and never *persisted* — so the next invocation derives it again, and a later move of the directory reads as drift rather than as a decision.
+
+**A caller that runs the chain for one type and lets it exit for all of them has resolved nothing either**, and it is the harder case to see: something ran, a location came back, and the type that came back is genuinely settled. It is the *other* types that hold a reading — or hold nothing at all, while a write site cites them as though they were answered. Report per type; exit per type.
 
 That failure is not hypothetical and not visible in review: every write site here cites *the location this section returned*, and a citation resolves whether or not anything ran. **Cite this section; run this section.** If you are naming § *Discover* at a write site, you are naming the scan and not the answer.
 
@@ -33,7 +37,9 @@ That failure is not hypothetical and not visible in review: every write site her
 
 Run as step 1 of § *Resolve*, once per invocation, **before the first consumer**. Running it alone is not resolution — see § *Resolve*.
 
-1. **Read `CLAUDE.md` conventions first.** If artifact homes are recorded there, they are authoritative — use them and stop, and § *Resolve* stops with you. Any of `/adopt`, `/feature-start`, `/plan`, or `/feature-merge` may have written that record; which one did is irrelevant, and re-deriving what one of them settled is wasted motion that risks contradicting it.
+1. **Read `CLAUDE.md` conventions first — and read it per artifact type.** Every type the record names is authoritative: use it, and § *Resolve* is finished for that type. Any of `/adopt`, `/feature-start`, `/plan`, or `/feature-merge` may have written it; which one did is irrelevant, and re-deriving what one of them settled is wasted motion that risks contradicting it.
+
+   **Types the record does not name are not settled. Carry them into step 2.** A record naming specs and not plans is the ordinary state rather than a malformed one: only `/adopt` resolves all three at once, and the feature commands each resolve the types they write, so a project accumulates this record one type at a time. Treating any record as a whole-scan exit is the failure this step is written to avoid — it returns a settled answer for specs, no answer at all for plans, and never reaches § *Confirm* for the occupied `docs/plans/` that is the likeliest collision in this pack.
 2. **Otherwise scan** for existing artifact directories: `docs/specs/`, `docs/plans/`, `docs/summaries/`, and any directory under `docs/` or the repo root whose name contains `spec`, `plan`, `summary`, or `design`.
 3. **Rank by provenance, not by name.** A directory holding files the pack wrote is the pack's. A directory holding files it did not is the project's, whatever it happens to be called.
 
@@ -72,6 +78,8 @@ Do not resolve it by picking. The cost of guessing wrong is two vocabularies in 
 Record the resolved locations in `CLAUDE.md` conventions so the next invocation reads instead of re-deriving. This is the treatment the ADR registry already gets, for the same reason.
 
 **Every branch of § *Resolve* step 2 lands here** — a confirmed occupied directory, a directory recognized as the pack's own, and a default taken into an empty namespace. The default is the branch most easily skipped and the one that most needs recording: nobody was asked, so nothing feels decided, and an unrecorded default is re-derived by every later invocation until one of them derives differently.
+
+**Record names the types you resolved and claims nothing about the others.** Write the entry so a later reader can tell a type that was settled from a type that was never asked — an entry that reads as a complete answer to a partial question is worse than no entry, because § *Discover* step 1 treats what it names as authoritative. The types you leave out are the ones the next command is expected to resolve and record.
 
 **The location may be recorded. The path may not be reconstructed.** See § *Name*.
 

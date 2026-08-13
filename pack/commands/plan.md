@@ -49,9 +49,9 @@ Then read, in this order:
 
 If the spec's `owned_files` glob excludes a directory you'd expect the feature to touch, surface that as a likely spec gap — flag, don't silently widen scope.
 
-**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none — both results are held for this invocation and consumed by later phases.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, for any type § *Resolve* settled here that the record did not already name. Otherwise none — both results are held for this invocation and consumed by later phases.
 
-This phase writes on a first run and stays silent on every run after, because § *Resolve* step 3 skips a resolution `CLAUDE.md` already holds. `/plan` is usually the second command to run and usually finds the record `/feature-start` left — but "usually" is not "always": locations resolve **per artifact type**, so a project whose specs were settled at `/feature-start` can still reach `/plan` with its plans directory unresolved. Phase G derives its staging list from this declaration and will carry the write on the runs that produce one.
+`/plan` is usually the second command to run, so it usually finds the record `/feature-start` left — **and that record usually names specs and not plans.** § *Resolve* runs per artifact type and exits per artifact type: a settled `Specs:` entry does not settle plans, and does not stop the scan that reaches the plans question. Expect this phase to write on the run that first pins the plans directory, whether or not specs were pinned before it. Phase G derives its staging list from this declaration and carries the write on the runs that produce one.
 
 ### Phase B — Research (REQUIRED)
 

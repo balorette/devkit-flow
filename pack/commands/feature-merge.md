@@ -94,11 +94,13 @@ If any precondition fails, **stop and report**. Common cases:
 
 Run `.claude/references/artifact-locations.md` § *Resolve* in full and record the **summaries** directory for the rest of this invocation. The summary write below is a consumer of that result, and clause 3 puts the producer before every consumer.
 
-This command is the pack's **only** producer of a summary, so it is the only place the summaries directory is ever resolved — `/feature-start` and `/plan` resolve their own artifact types and can leave this one unsettled. Do not assume an earlier command answered it. In practice § *Resolve* step 1 usually finds the record they left and returns without asking; on the runs where it doesn't, this is where the question belongs.
+This command is the pack's **only** producer of a summary, so outside `/adopt` it is the only place the summaries directory is ever resolved. `/feature-start` and `/plan` resolve the types *they* write and leave this one alone — § *Resolve* runs and exits per artifact type, so the `CLAUDE.md` record they left almost certainly names specs and plans and says nothing about summaries.
+
+**Do not read that record as an answer to this question.** A record naming two types out of three is the ordinary state here, not a sign something went wrong, and summaries is the type most likely to be the missing one. Expect § *Resolve* to reach the scan for it on a project that has never merged a feature through the pack — and on a brownfield target, expect the scan to find something: `docs/summaries/` is an ordinary name, and § *Confirm* is why this step runs ahead of the gates rather than during closeout.
 
 Resolving here rather than beside the write is deliberate: it keeps every location question in front of the gates, so the user is never asked to settle a directory during closeout for a feature that Gate 1 is about to send back.
 
-**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, written by § *Resolve* step 3 when step 1 found nothing already recorded. Otherwise none.
+**Writes:** the `CLAUDE.md` conventions entry recording the artifact locations, for any type § *Resolve* settled here that the record did not already name. Otherwise none.
 
 ### The gates
 
