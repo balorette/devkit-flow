@@ -173,7 +173,15 @@ For each symbol, establish **that this name is defined, and where**:
 
 **Symbols the project does not own are `EXTERNAL`, not failures.** A signature naming `str`, `UUID`, `datetime`, `AsyncSession`, or `BaseModel` is naming the standard library or a declared dependency, and there is no project definition to find. This phase asks whether the plan's names match *the code this project owns*; a name that resolves outside the project has been answered, not left open.
 
-**`EXTERNAL` requires evidence, exactly like the other two states.** Cite where the name comes from — the import in the module the plan attributes it to, or the dependency in the project's manifest (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`). *"It looks like a library type"* is not evidence and is reported `UNRESOLVED`. This matters more than it appears: `EXTERNAL` is the state a hurried reader will reach for to clear a halt, and an `EXTERNAL` that nobody had to justify turns this phase back into the bare text search it was written to replace.
+**`EXTERNAL` requires evidence, exactly like the other two states** — and the evidence is *where the name comes from*, in one of three forms:
+
+- **A language built-in.** `str`, `int`, `list`, `dict`, `bool`, `bytes`, `None` in Python; `string`, `number`, `boolean` in TypeScript; and so on. The language is the evidence; there is nothing to cite and nothing to look up.
+- **A standard-library symbol** — name the stdlib module it comes from (`UUID` → `uuid`, `datetime` → `datetime`).
+- **A declared dependency** — cite the manifest entry (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`).
+
+**An import in an existing project module is confirming evidence, never a requirement.** A plan that introduces `src/recon/case.py` cannot cite an import in a file it has not created, and requiring one would fail exactly the plans this phase is most useful on. Where the module already exists, an import line is a good thing to quote; where it does not, the stdlib module or the manifest entry stands alone.
+
+*"It looks like a library type"* is still not evidence and is still reported `UNRESOLVED`. That is the whole guard: `EXTERNAL` is the state a hurried reader will reach for to clear a halt, and an `EXTERNAL` nobody had to place turns this phase back into the bare text search it was written to replace. Placing a name costs one line — naming the built-in, the stdlib module, or the manifest entry — and a name you cannot place in any of the three is precisely the name this phase exists to catch.
 
 An external name attributed to a *project* module stays `UNRESOLVED` — the module-mismatch rule above is unchanged, and "imported into that module" is not "defined by it" when the plan claims the latter.
 
@@ -181,7 +189,9 @@ Report:
 
 ```
 RESOLVED    ReconciliationCaseLayout        src/layouts.py:41
-EXTERNAL    UUID                            stdlib -- uuid, imported at src/recon/case.py:3
+EXTERNAL    str                             builtin
+EXTERNAL    UUID                            stdlib -- uuid (module src/recon/case.py is
+                                               introduced by this plan)
 EXTERNAL    AsyncSession                    dep -- sqlalchemy, pyproject.toml:24
 UNRESOLVED  CaseLayout                      -- nearest: ReconciliationCaseLayout
 UNRESOLVED  build_manifest_conflict_detail  -- no match

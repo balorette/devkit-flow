@@ -349,6 +349,19 @@ What that costs, none of which buys anything:
 
 **It is a contract change, so it wants an ADR, not a patch.** ADR-0006 established the registry's shape and `/adopt` records the mark today; `pack/MIGRATIONS.md` would need an entry telling existing installs the line is now inert. Deliberately kept out of PR #4, which was already three review rounds deep on unrelated work.
 
+### Slice 14 — 0.12.0 errata (partially shipped)
+
+Five findings from the **first 0.12.0 upgrade dogfood** on the brownfield target, 2026-08-14 — all landing on pack files, none on project code. Recorded in [`docs/validation/errata-0.12.0.md`](../validation/errata-0.12.0.md), planned in [`docs/plans/slice-14-0.12.0-errata.md`](../plans/slice-14-0.12.0-errata.md), issues #5–#9.
+
+**Shipped as 0.12.1:**
+
+- **F1 (#5)** — `/plan` Phase F3 gains an `EXTERNAL` state. It had offered only *correct the plan* or *mark it introduced*, so a signature naming `UUID` or `str` halted `/plan` on essentially any real plan.
+- **F3 (#7)** — the `engineer` skill gains its first four `**Writes:**` declarations and a derived staging list. The findings-ledger row was written in Red and staged in no substep, halting `/feature-merge` on its own clean-tree precondition.
+
+**Planned, unbuilt:** F2 (#6) `/feature-merge`'s merged-state check querying the current branch rather than `state.md`'s `PR:` — the one finding *reproduced in execution*; F4 (#8) a gate rerun authoring a second dated summary and overwriting the pointer; F5 (#9) § *Discover* being unable to report a tie between two pack-foreign directories. Plus two non-finding tasks: sweep the remaining commands under the round's **reconstruct-vs-read** lens, and settle with a measurement whether skills can come under `test_clause_one`.
+
+**Ordering against slice 13.** Slice 14 is findings-driven and comes first — its planned tasks are defects in shipped behaviour, where slice 13 is new components. It also **settled slice 13's sequencing question**: four PR review rounds on slice 12 produced eighteen findings, all closed by reading, and none surfaced any of these five. The most severe was in a phase slice 12 *added* as a correctness guard and reviewed twice under review. Execution runs before the `reviewer` gate is authored, because a reviewer built on unvalidated ground inherits whatever the ground is wrong about.
+
 ---
 
 ## Build order rationale

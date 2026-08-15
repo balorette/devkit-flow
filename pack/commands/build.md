@@ -25,18 +25,18 @@ If state isn't set up that way, explain what's missing and stop.
 
 ## Run
 
-Load the `engineer` skill. Execute its TDD loop (red → green → refactor → verify) against **only** the step named in `Next step`. The engineer skill governs the discipline; this command just scopes the work to one step.
+Load the `engineer` skill. Execute its TDD loop against **only** the step named in `Next step`: red → green → refactor → verify → **commit and hand off**. The loop does not end at verify — the carrier that stages the step is its own section after it, and stopping at verify is how a step's writes go uncommitted. The engineer skill governs the discipline; this command just scopes the work to one step.
 
 Hand off to the `tester` subagent in fresh context for the red phase, exactly as the engineer skill describes. **Do not pass implementation source to the tester** — only the spec, the current step's test list, and type signatures of code under test.
 
 ## After the step
 
-The engineer skill's Verify section governs the close-out (`.claude/state.md` update → commit proposal → pause). `/build` adds nothing beyond what the engineer skill already does; it just scopes the work to one step.
+The engineer skill's **Verify** and **Commit the step and hand off** sections govern the close-out (`.claude/state.md` update → commit proposal → pause). They are two sections, not one: Verify ends at the `state.md` update, and the commit proposal lives in the section after it. `/build` adds nothing beyond what the engineer skill already does; it just scopes the work to one step.
 
 Fixed shape, end-of-step:
 
 - `.claude/state.md` records the completed step and advances `Next step` (engineer Verify substep 4).
-- A commit is proposed for the step's files; on confirmation it lands, on decline it surfaces for the user to handle (engineer Verify substep 5). Never `git add -A` — stage only the step's files.
+- A commit is proposed for the step's files; on confirmation it lands, on decline it surfaces for the user to handle (engineer *Commit the step and hand off*, substep 5). Never `git add -A` — stage only the step's files.
 - Control returns to the user. The next `/build` invocation picks up the new `Next step`.
 
 If the plan is finished, leave `Phase: building` until `/feature-merge` clears it. Do not flip Phase to `idle` from `/build` — the merge gate hasn't run yet.

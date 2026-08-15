@@ -9,7 +9,9 @@ Carry the engineering discipline of a devkit project through code work. You are 
 
 ## The TDD loop
 
-For each plan step the loop is **before-red → red → green → refactor → verify**. No exceptions.
+For each plan step the loop is **before-red → red → green → refactor → verify → commit and hand off**. No exceptions.
+
+**The loop does not end at verify.** Its last section is the carrier for everything the earlier ones declare, and a step that stops after the `state.md` update leaves its own writes — including the findings-ledger row Red may have written — uncommitted.
 
 ### Before red — smoke import
 
@@ -52,7 +54,6 @@ The ledger is the one to watch. It is written *here*, in a branch that fires on 
 
 1. Write the **minimum** implementation that makes the red tests pass. "Minimum" is literal — do not add fields, methods, branches, or error handling not required by a failing test. Speculative scope is bugs.
 2. Run the tests. All previously red tests should pass. No previously green test should regress.
-
 3. If a test you didn't change goes red, you've broken something. Fix forward before writing more code.
 
 **Writes:** this step's production files.
@@ -78,6 +79,7 @@ Before declaring the step complete:
    - Append a one-line entry to a `## Completed steps` section (create the section on first use of a feature): `- Step N — <heading>. <one-line summary including test count if relevant>.`
    - Set `Next step` to the next plan item, or `—` if this was the last step.
    - If `Phase` is `plan-draft` or `plan-approved` when the first step starts, bump it to `building`. If this is the last step and the build is finished, leave Phase as `building` until `/feature-merge` (slice 6) clears it.
+
 **Writes:** `.claude/state.md`, from substep 4.
 
 ### Commit the step and hand off
@@ -262,5 +264,5 @@ The TDD loop and commit cadence above are easy to talk yourself out of. The tabl
 | "I'll skip the smoke-import; it's a one-line fix." | The check costs five seconds. The class of bug it catches — eager `__init__.py` imports, broken legacy imports in adjacent modules, missing package initializers — surfaces 30+ seconds into the tester's run as "red for the wrong reason," after the tester has invested effort against a contract its tests can't exercise. Run it. (See *Before red — smoke import*.) |
 | "This one extra field/method will save a future step." | Speculative scope is bugs. The minimum-implementation rule is literal: no fields, methods, branches, or error handling not required by a failing test. If a future step needs it, write it then with its own test. (See *Green*.) |
 | "I'll opportunistically refactor this adjacent code while I'm here." | Refactor scope is the diff for *this* step. Opportunistic rewrites are a separate step or a separate feature; folding them in entangles revertability and inflates the diff under review. (See *Refactor*.) |
-| "Tests pass, lint passes — I don't need to commit/pause yet; I'll fold this into the next step." | Reversibility without a commit is a polite lie. The moment work on step N+1 starts, the unstaged diff for step N entangles. Each step ends in its own commit and its own pause. (See *Verify* substeps 5–6.) |
+| "Tests pass, lint passes — I don't need to commit/pause yet; I'll fold this into the next step." | Reversibility without a commit is a polite lie. The moment work on step N+1 starts, the unstaged diff for step N entangles. Each step ends in its own commit and its own pause. (See *Commit the step and hand off*.) |
 | "`git add -A` is faster than listing files." | It picks up untracked detritus (`__pycache__/`, sqlite sidecars, IDE state) the project's `.gitignore` may not yet cover, and it produces commits that aren't cleanly bisectable. Stage the files the step changed, explicitly, every time. (See *Verify* substep 5.) |
