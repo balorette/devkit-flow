@@ -171,7 +171,7 @@ For each symbol, establish **that this name is defined, and where**:
 - Check it against **the module the plan says it lives in**. A symbol that exists somewhere else in the repo is not the symbol the plan named; that is a different defect wearing the same name, and it is the one most likely to survive review.
 - Where the plan names a method, confirm it on the type it was attributed to. A method that exists on a sibling class is a `RESOLVED` that will fail at red.
 
-**Symbols the project does not own are `EXTERNAL`, not failures.** A signature naming `str`, `UUID`, `datetime`, `AsyncSession`, or `BaseModel` is naming the standard library or a declared dependency, and there is no project definition to find. This phase asks whether the plan's names match *the code this project owns*; a name that resolves outside the project has been answered, not left open.
+**Symbols the project does not own are `EXTERNAL`, not failures.** A signature naming `str`, `UUID`, `datetime`, `AsyncSession`, or `BaseModel` is naming the language itself, the standard library, or a declared dependency, and there is no project definition to find. This phase asks whether the plan's names match *the code this project owns*; a name that resolves outside the project has been answered, not left open.
 
 **`EXTERNAL` requires evidence, exactly like the other two states** — and the evidence is *where the name comes from*, in one of three forms:
 
