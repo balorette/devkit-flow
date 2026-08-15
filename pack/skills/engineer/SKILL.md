@@ -44,17 +44,26 @@ Triage them per `.claude/references/findings-triage.md` (internal source):
 
 If the tester returns **findings and no tests**, that is a refusal, and it means the brief was unbuildable. Do not work around it and do not re-invoke with a looser brief — fix the contract.
 
+**Writes:** this step's test files · **the findings ledger, at its discovered path, when triage routes an out-of-scope finding to it.**
+
+The ledger is the one to watch. It is written *here*, in a branch that fires on some steps and not others, at a path outside the directories this step is otherwise touching — so it is invisible in the diff a reader skims before staging. Left uncommitted it survives `/build` as a dirty tracked file, and `/feature-merge`'s preconditions block on exactly that.
+
 ### Green
 
 1. Write the **minimum** implementation that makes the red tests pass. "Minimum" is literal — do not add fields, methods, branches, or error handling not required by a failing test. Speculative scope is bugs.
 2. Run the tests. All previously red tests should pass. No previously green test should regress.
+
 3. If a test you didn't change goes red, you've broken something. Fix forward before writing more code.
+
+**Writes:** this step's production files.
 
 ### Refactor
 
 Now that the suite is green, apply the SOLID checklist and the Clean Architecture rules (below) to the diff. Refactor only what is in scope for this step. Do not opportunistically rewrite adjacent code — that's a separate step or a separate feature.
 
 After the refactor, re-run the tests. Still green. If not, the refactor changed behavior — revert and try again.
+
+**Writes:** this step's production and test files — the same files Red and Green already declared, reshaped rather than added to.
 
 ### Verify
 
@@ -69,7 +78,17 @@ Before declaring the step complete:
    - Append a one-line entry to a `## Completed steps` section (create the section on first use of a feature): `- Step N — <heading>. <one-line summary including test count if relevant>.`
    - Set `Next step` to the next plan item, or `—` if this was the last step.
    - If `Phase` is `plan-draft` or `plan-approved` when the first step starts, bump it to `building`. If this is the last step and the build is finished, leave Phase as `building` until `/feature-merge` (slice 6) clears it.
-5. **Commit the step.** Propose a commit before pausing. Subject: `step N: <step heading>`. Body: one short paragraph — modules touched, test count delta, ADR refs if any. Stage *only* the files the step changed (production + tests + the state.md update from substep 4); list them explicitly to `git add`. Never `git add -A` / `git add .` — that picks up untracked detritus like `__pycache__/` and runtime artifacts the project's `.gitignore` may not yet cover. Wait for user confirmation. On confirm, commit. On decline (user wants to review further, fold into a later commit, or amend the plan first), leave the proposal visible and proceed to the pause without committing — `/checkpoint` is the right tool if the decline signals a real plan change.
+**Writes:** `.claude/state.md`, from substep 4.
+
+### Commit the step and hand off
+
+Substeps 5 and 6 of the loop. They carry their own heading because this is the **carrier** for everything Red, Green, Refactor, and Verify declared — and a carrier buried as a numbered item under a heading named for something else is a carrier nobody derives from. That is not hypothetical: this step's staging list went stale precisely while it was an unnamed substep.
+
+5. **Commit the step.** Propose a commit before pausing. Subject: `step N: <step heading>`. Body: one short paragraph — modules touched, test count delta, ADR refs if any.
+
+   **Stage the union of every `**Writes:**` declaration the substeps that ran produced** — read them off Red, Green, Refactor, and Verify rather than from a list maintained here. List them explicitly to `git add`; never `git add -A` / `git add .`, which picks up untracked detritus like `__pycache__/` and runtime artifacts the project's `.gitignore` may not yet cover.
+
+   **Red's findings-ledger row is the one this used to drop.** The list here previously read *"production + tests + the state.md update from substep 4"* — an enumeration written before the ledger existed and never grown to include it. A ledger row written and not staged survives `/build` as a dirty tracked file and halts `/feature-merge` on its own preconditions, so the build loop hands the closeout a tree it must refuse. `/plan` Phase G and `/feature-merge`'s closeout both abandoned hardcoded lists for this reason and both name the ledger as the item most easily dropped; this substep was the last enumeration in the set, and it failed in exactly the way they documented. Wait for user confirmation. On confirm, commit. On decline (user wants to review further, fold into a later commit, or amend the plan first), leave the proposal visible and proceed to the pause without committing — `/checkpoint` is the right tool if the decline signals a real plan change.
 6. Pause for the user. Silent unless something needs attention. Do not autonomously start the next step.
 
 ## SOLID checklist
