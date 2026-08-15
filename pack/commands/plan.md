@@ -171,10 +171,28 @@ For each symbol, establish **that this name is defined, and where**:
 - Check it against **the module the plan says it lives in**. A symbol that exists somewhere else in the repo is not the symbol the plan named; that is a different defect wearing the same name, and it is the one most likely to survive review.
 - Where the plan names a method, confirm it on the type it was attributed to. A method that exists on a sibling class is a `RESOLVED` that will fail at red.
 
+**Symbols the project does not own are `EXTERNAL`, not failures.** A signature naming `str`, `UUID`, `datetime`, `AsyncSession`, or `BaseModel` is naming the language itself, the standard library, or a declared dependency, and there is no project definition to find. This phase asks whether the plan's names match *the code this project owns*; a name that resolves outside the project has been answered, not left open.
+
+**`EXTERNAL` requires evidence, exactly like the other two states** — and the evidence is *where the name comes from*, in one of three forms:
+
+- **A language built-in.** `str`, `int`, `list`, `dict`, `bool`, `bytes`, `None` in Python; `string`, `number`, `boolean` in TypeScript; and so on. The language is the evidence; there is nothing to cite and nothing to look up.
+- **A standard-library symbol** — name the stdlib module it comes from (`UUID` → `uuid`, `datetime` → `datetime`).
+- **A declared dependency** — cite the manifest entry (`pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`).
+
+**An import in an existing project module is confirming evidence, never a requirement.** A plan that introduces `src/recon/case.py` cannot cite an import in a file it has not created, and requiring one would fail exactly the plans this phase is most useful on. Where the module already exists, an import line is a good thing to quote; where it does not, the stdlib module or the manifest entry stands alone.
+
+*"It looks like a library type"* is still not evidence and is still reported `UNRESOLVED`. That is the whole guard: `EXTERNAL` is the state a hurried reader will reach for to clear a halt, and an `EXTERNAL` nobody had to place turns this phase back into the bare text search it was written to replace. Placing a name costs one line — naming the built-in, the stdlib module, or the manifest entry — and a name you cannot place in any of the three is precisely the name this phase exists to catch.
+
+An external name attributed to a *project* module stays `UNRESOLVED` — the module-mismatch rule above is unchanged, and "imported into that module" is not "defined by it" when the plan claims the latter.
+
 Report:
 
 ```
 RESOLVED    ReconciliationCaseLayout        src/layouts.py:41
+EXTERNAL    str                             builtin
+EXTERNAL    UUID                            stdlib -- uuid (module src/recon/case.py is
+                                               introduced by this plan)
+EXTERNAL    AsyncSession                    dep -- sqlalchemy, pyproject.toml:24
 UNRESOLVED  CaseLayout                      -- nearest: ReconciliationCaseLayout
 UNRESOLVED  build_manifest_conflict_detail  -- no match
 UNRESOLVED  Config                          -- defined at src/app/config.py:8,
@@ -183,7 +201,9 @@ UNRESOLVED  Config                          -- defined at src/app/config.py:8,
 
 Where a name does not resolve, offer the nearest match if there is a plausible one. Most instances are a shortened or half-remembered form of a real symbol rather than an invention.
 
-**Halt on any UNRESOLVED.** Do not carry an unresolved name into Phase G. Either correct the plan, or — if the symbol is genuinely new code this plan introduces — mark it explicitly in the plan as *introduced by this plan*, so the next reader can tell a deliberate new name from a wrong one. That distinction is the entire output of this phase.
+**Halt on any UNRESOLVED.** `RESOLVED` and `EXTERNAL` both pass. Do not carry an unresolved name into Phase G. Either correct the plan, or — if the symbol is genuinely new code this plan introduces — mark it explicitly in the plan as *introduced by this plan*, so the next reader can tell a deliberate new name from a wrong one. That distinction is the entire output of this phase.
+
+**Three states, because two could not describe a real plan.** The first version of this phase offered only *correct the plan* or *mark it introduced*, and a Python signature naming `UUID` fits neither — so a literal reader had to halt on valid work or record a false provenance to escape. That version would have halted on the first step of essentially any plan written against a project with dependencies, which is every project. Found in execution on the first target that ran it, having survived five rounds of review of this file.
 
 **Symbols the plan introduces are not failures.** A plan for new code names things that do not exist yet, and that is correct. What this phase catches is a name that was *meant* to match existing code and doesn't.
 

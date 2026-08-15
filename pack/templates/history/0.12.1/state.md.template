@@ -1,0 +1,79 @@
+# Project state
+
+**Active feature:** none
+**Active branch:** main
+**Phase:** idle
+**Spec:** —
+**Plan:** —
+**Summary:** —
+**PR:** —
+**Gated baseline:** —
+**Next step:** —
+
+## Last merge
+
+(none yet)
+
+## Parked features
+
+(none)
+
+## Open questions
+
+- (none)
+
+---
+
+<!--
+This file is the working pointer for Claude Code's devkit pack. It changes
+constantly during feature work and is cleared at `/feature-merge`.
+
+Field meanings:
+  Active feature  short slug identifying the feature, or "none". The slug does
+                  NOT determine the spec path -- artifact files carry a date
+                  prefix (YYYY-MM-DD-<slug>.md) and live wherever discovery
+                  found. Read Spec / Plan below for actual paths.
+  Active branch   current git branch, or "main" when idle
+  Phase           one of: idle | spec-draft | spec-approved | plan-draft |
+                  plan-approved | building | checkpoint | merging | in-review
+  Spec / Plan     paths to the active spec and plan, or "—" when idle
+  Summary         path to the feature summary once /feature-merge writes
+                  it, or "—". Recorded because the filename carries a
+                  creation date a later invocation cannot compute --
+                  /pr-review amends this file days later. Cleared at
+                  closeout with the rest.
+  PR              URL or owner/repo#N while Phase is in-review; "—" otherwise.
+                  Set by /feature-merge when it opens the PR; cleared at
+                  closeout once the PR has merged.
+  Gated baseline  the last commit whose CONTENT passed gates 1-3 -- the tip
+                  before the state.md-only transition commit, set when the PR
+                  opens and after every successful gate rerun. /feature-merge
+                  diffs it against the PR tip, excluding this file, to decide
+                  whether a rerun needs the gates. Excluding it is required:
+                  writing this field commits it, so a plain SHA comparison
+                  would never match. Comparing local vs remote tips cannot
+                  work either -- /pr-review pushes its fixes and makes them
+                  agree.
+  Next step       short pointer to the next plan step when phase = building
+
+The Open questions section captures things deferred mid-feature that need
+the user's input. /checkpoint reads and helps resolve these.
+
+During Phase: in-review it holds review findings accepted for THIS
+feature and not yet fixed. It is cleared at /feature-merge, so anything
+deferred PAST this feature must go to the findings ledger instead --
+/pr-review routes cross-feature deferrals there as REV rows. Parking a
+durable finding here discards it at merge.
+
+Already-answered review threads are NOT tracked here; the forge itself is
+that ledger (a reply carrying the pack's marker means handled).
+
+The Parked features section tracks features whose branch exists but whose
+active state has been cleared so a different feature can run. The
+canonical way to park is `/checkpoint park` (slice 4) — the documenter
+skill proposes the state.md edit and the Parked-features entry.
+Manually: (a) reset Active feature to none and Phase to idle, (b) append
+one line under "Parked features" naming the branch and what was last
+completed. Resume by checking out the branch and re-populating the top
+fields.
+-->

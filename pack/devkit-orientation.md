@@ -64,7 +64,7 @@ Each workflow command proposes its own commit before pausing; you confirm or dec
 | Spec approved | you flip front-matter `status` to `approved` | `approve spec: <slug>` |
 | Plan drafted (+ any architect ADRs) | end of `/plan` | `plan: <slug> (draft, <N> steps)` |
 | Plan approved | you flip front-matter `status` to `approved` | `approve plan: <slug>` |
-| Each plan step | end of `/build` (engineer Verify substep 5) | `step N: <step heading>` |
+| Each plan step | end of `/build` (engineer *Commit the step and hand off*) | `step N: <step heading>` |
 | Each amendment | end of `/checkpoint` | `/checkpoint A: <description>` (or B/C/D variant) |
 | Summary + domain doc + state.md transition | inside `/feature-merge` | `/feature-merge: summary + state.md` |
 | PR opened (PR flow) | end of `/feature-merge` (your confirmation) | `/feature-merge: in-review (PR #<n>)` (stages `.claude/state.md` only) |
