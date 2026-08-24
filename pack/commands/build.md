@@ -46,6 +46,7 @@ If the plan is finished, leave `Phase: building` until `/feature-merge` clears i
 Stop and surface to the user (do not auto-recover) if:
 
 - The `tester` returns findings instead of tests.
+- The `tester` returns **nothing**, and `.claude/references/subagent-degraded-mode.md` § *Detect* has been worked without finding its output. Surface the trade named in § *Decide*; do not write the step's tests in the main loop without saying so and recording it.
 - Red tests pass on first run.
 - Green tests regress after a refactor and the cause is not obvious after working the engineer skill's *When something breaks* procedure. "Not obvious" means a stated hypothesis has failed, not that the answer wasn't immediate.
 - The linter or type-checker reports an issue that cannot be resolved within the current step.
