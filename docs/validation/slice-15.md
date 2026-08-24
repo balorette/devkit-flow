@@ -56,3 +56,30 @@ Each prediction is written **before** the corresponding pack content is authored
 **Task:** `/feature-merge` from a branch whose own PR differs from `state.md`'s `PR:`.
 **Predicted:** the recorded PR is queried; the feature's real state decides the path.
 **Before this change:** an argument-less `gh pr view` inspects whatever PR belongs to the current branch.
+
+---
+
+## Task 14 measurement — can skills come under `test_clause_one`?
+
+**Answer: no, not by widening the section split.** Recorded here so it is not re-measured.
+
+`pack_documents()` already globs `skills/*/SKILL.md`; what is scoped to commands is `phase_sections()`, which for a skill splits only on `Phase|Gate` headings. Widening it to split skills on `###` — the same treatment commands' `## Run` subsections get — flags **16 sections, of which 6 are real**: a 38% true-positive rate against the commands' 3-of-4.
+
+The file's own standard rejects that: *"a guard that cries wolf is a guard that gets an allowlist, and an allowlist here is the cached-discovery failure clause 3 forbids."*
+
+**Why the rate is structurally different, and not a tuning problem.** A command's `## Run` subsections are *steps* — they execute in order and each one does something. A skill's `###` subsections are a mix of procedure and reference material: `documenter`'s *The shape* describes a table's columns, *Two rules* states a policy, `pm`'s *The research phase* describes an activity with no durable output. Those are not under-declared steps; they are prose about artifacts, and a write-verb-plus-durable-target heuristic cannot tell them from steps because the prose legitimately names both.
+
+### The six true positives are a real finding, and they are not fixed here
+
+| File | Section | Writes, undeclared |
+|---|---|---|
+| `documenter` | *Pattern A — User-described change* | the amended spec / plan / ADR |
+| `documenter` | *Pattern C — Park transition* | `.claude/state.md`, the parked entry |
+| `documenter` | *Pattern D — On-demand reconciliation* | whatever the reconciliation applies |
+| `documenter` | *Domain doc updates* | `docs/domains/<domain>.md` |
+| `pm` | *4. Draft the spec* | the spec |
+| `pm` | *Producing the plan* | the plan |
+
+**This is errata F3's shape, in the two skills that write the most.** F3 was the `engineer` skill writing a findings-ledger row that no substep staged, which halted `/feature-merge` on its own clean-tree precondition. Every command that derives a staging list from `**Writes:**` declarations — `/feature-start` Phase H, `/plan` Phase G, `/feature-merge`'s closeout — is blind to these six.
+
+It is **clause-1 work, not ADR-0010 work**, and it is recorded rather than done because a measurement task that quietly grows six sections of new text is the scope creep the pack forbids elsewhere. Recommended as the next slice item, or as a task appended to this one deliberately.
