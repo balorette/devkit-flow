@@ -20,9 +20,12 @@ Proposing is not the same as escalating. `.claude/references/evidence-and-uncert
 Concretely:
 
 1. Identify which docs the change affects (see "What lives where" below).
-2. For each affected doc, produce a **proposed diff or a short summary** of what would change. Keep proposals concrete — exact lines or sections, not "I'll update the spec." If the change is small (≤ 5 lines per file), show the diff inline; if larger, describe sections affected with one-line summaries each.
-3. Surface the proposal to the user. Wait for confirmation. Apply only what's confirmed.
-4. If the user wants different wording or scope, iterate the proposal. Don't apply the first proposal and "iterate from there" — iterate the proposal.
+2. **Verify every load-bearing claim in the proposal before you show it.** A proposal asks whether to write something; it does not ask whether it is true, and the user reviewing it is the person least able to falsify a confident sentence you wrote. `.claude/references/evidence-and-uncertainty.md` § *Facts* is the rule: any assertion about the project carries its provenance — backed by `file:line`, or explicitly marked as inferred. Silence about provenance reads as verified.
+
+   **A claim quantified over the codebase gets searched, or it gets rewritten.** *"Every current caller is safe"*, *"no other path reaches this"*, *"all consumers were updated"* — each is a claim about files you have not read unless you went and read them. Run the search, cite what you found, or narrow the sentence to what you actually checked. A quantifier is the cheapest sentence to write and the most expensive to be wrong about: it merges, and every later feature is built on it.
+3. For each affected doc, produce a **proposed diff or a short summary** of what would change. Keep proposals concrete — exact lines or sections, not "I'll update the spec." If the change is small (≤ 5 lines per file), show the diff inline; if larger, describe sections affected with one-line summaries each.
+4. Surface the proposal to the user. Wait for confirmation. Apply only what's confirmed.
+5. If the user wants different wording or scope, iterate the proposal. Don't apply the first proposal and "iterate from there" — iterate the proposal.
 
 Edits to `.claude/state.md` are an exception: state.md is the working pointer, not a durable doc, and routine field updates (`Phase`, `Next step`) don't need confirmation. Substantive state.md changes (clearing Active feature, parking a feature, adding Open questions) still propose first.
 
@@ -259,6 +262,7 @@ The "propose before writing" discipline produces a round-trip per amendment. Tha
 | Excuse | Rebuttal |
 |---|---|
 | "This edit is so small / so obvious that I'll just apply it." | This is the exact failure mode the cardinal discipline exists to prevent. A silent edit you got wrong can be invisible for weeks; one round-trip is cheap by comparison. Propose every time, even for one-liners. (See *The cardinal discipline*.) |
+| "It's obviously true — I don't need to check it." | Obviousness is not provenance, and a reader cannot tell the two apart in a finished sentence. The false claim that shipped was obvious to the person who wrote it. One search costs a round-trip; a wrong durable claim costs every feature built on it. (See *The cardinal discipline*, step 2.) |
 | "The user didn't respond to my proposal, so they must be OK with it." | Stale proposals are common in long sessions. Silence is ambiguous; absence of objection is not consent. Ask before applying. (See *What you must not do* — fourth bullet.) |
 | "I'll rename this feature piecemeal — the spec filename now, branch and references later." | A feature rename is one operation touching the spec, plan, branch, state.md, and every reference. Piecemeal renames leave the project in a half-renamed state where future-you can't tell which name is canonical. Propose the whole sweep; do not do it in pieces. (See *What you must not do* — third bullet.) |
 | "The amendment is technically a different feature, but it's faster to amend the current spec than start a new one." | A rewrite of Problem and Scope means the feature changed identity. Park the current feature (or merge it as-is) and start the new one with `/feature-start <new-name>`. Don't quietly mutate a spec into something its title no longer describes. (See *When to escalate* — first bullet.) |
