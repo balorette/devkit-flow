@@ -197,8 +197,11 @@ One append-only table. A finding earns its own file only when a row cannot hold 
 |----|----------|----------|--------|--------|-------|
 | SEC-001 | security | medium | security-reviewer · notes-write | open | `src/notes/repo.py:88` |
 | CONF-001 | conformance | advisory | conformance-reviewer · notes-write | closed | spec §5.7 vs plan step 4 |
+| DEG-001 | degraded | — | engineer · notes-write step 3 | open | tester did not return; tests written in main loop |
 
-Categories map to producers: **`CONF`** (conformance-reviewer), **`SEC`** (security-reviewer), **`ARCH`** (an architect recommendation that produced no ADR), **`REV`** (external PR review).
+Categories map to producers: **`CONF`** (conformance-reviewer), **`SEC`** (security-reviewer), **`ARCH`** (an architect recommendation that produced no ADR), **`REV`** (external PR review), **`DEG`** (an assurance the pack advertises that did not hold for this feature — see `.claude/references/subagent-degraded-mode.md` § *Record*).
+
+A `DEG` row's Severity is `—` on purpose. A degradation is not a finding about the code; it is a fact about how much the record can be trusted, and grading it invites the arithmetic where two mediums make a high. What matters is that it is **open** — an open `DEG` row means an advertised guarantee did not hold and nobody has decided what to do about it. `/feature-merge` surfaces open `DEG` rows at the merge proposal and asks before proceeding.
 
 ### Two rules
 

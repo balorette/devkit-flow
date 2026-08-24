@@ -222,6 +222,10 @@ Carry the determined strategy into the proposal below.
 
 Once all docs are written and the strategy is determined (above), propose the merge mechanics.
 
+**Before proposing: read the findings ledger for open `DEG` rows on this feature.** If any exist, state each one — which assurance was reduced, why, and what was done instead — and ask whether to proceed. Do not fold it into the proposal as a bullet; it is a different question from *"shall I merge this"*, and it is the one the user is least likely to have been told about, because the run that produced it was a run where something went wrong.
+
+This is the pack's untracked-files rule applied to assurance: *don't silently proceed, and don't silently treat it as blocking.* The user is the only one who can weigh a harness flake against a release. What is not optional is that they are told at the moment the decision is made, rather than finding the row later.
+
 Propose, in one short message:
 - The merge command (e.g., `git checkout <mainline> && git merge --no-ff feature/<slug>` for a merge commit; or `git checkout <mainline> && git merge --squash feature/<slug> && git commit` for squash).
 - The post-merge cleanup (`git branch -d feature/<slug>` to delete the local branch after merge; or `git branch -m feature/<slug> archive/<slug>` to rename if the project archives rather than deletes).
@@ -232,6 +236,10 @@ Propose, in one short message:
 ### PR creation (PR flow)
 
 Replaces *Merge proposal* when flow detection selected PR flow. The summary doc is already written at this point — that is deliberate, and it is what the PR body is built from.
+
+**Before proposing: read the findings ledger for open `DEG` rows on this feature.** If any exist, state each one — which assurance was reduced, why, and what was done instead — and ask whether to proceed. Do not fold it into the proposal as a bullet; it is a different question from *"shall I merge this"*, and it is the one the user is least likely to have been told about, because the run that produced it was a run where something went wrong.
+
+This is the pack's untracked-files rule applied to assurance: *don't silently proceed, and don't silently treat it as blocking.* The user is the only one who can weigh a harness flake against a release. What is not optional is that they are told at the moment the decision is made, rather than finding the row later.
 
 Propose, in one short message:
 
