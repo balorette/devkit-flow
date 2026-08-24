@@ -844,6 +844,18 @@ git commit -m "fix: reconstruct-vs-read and assurance-decay sweep across untouch
 
 ---
 
+## Task 15b: The six skill declarations (added during execution)
+
+**Added at the owner's direction after Task 14's measurement**, which found the gap and recorded it rather than fixing it. Folded in here rather than deferred to a later slice because every command that derives a staging list from declarations was blind to all six, and that is errata F3's failure shape in the two skills that write the most.
+
+**Files:**
+- Modify: `pack/skills/documenter/SKILL.md` — *Pattern A*, *Pattern C*, *Pattern D*, *Domain doc updates*; new `## Who commits what you write`
+- Modify: `pack/skills/pm/SKILL.md` — *4. Draft the spec*, *Producing the plan*; new `## Who commits what you write`
+
+**What was verified before declaring** (clause 5, and the rule Task 13 had just added to `documenter` itself): each section was read before its declaration was written. Two results changed what got declared — *Pattern A* does **not** touch `.claude/state.md` in its own loop, and *Pattern D* writes **nothing**, so it declares `none` and names Pattern A as where a confirmed amendment actually lands.
+
+**Why each skill needed a carrier section.** `test_clause_one`'s second assertion requires any document containing a `**Writes:**` line to have a heading matching `commit|hand off`. Skills legitimately have neither — the invoking command carries every commit. Rather than claim the file-wide `**Clause 1 exception:**`, which would have skipped these documents from *both* assertions and undone the declarations' purpose, each skill gained a `## Who commits what you write` table naming the carrying command per artifact. The guard is satisfied by a true statement rather than by an exemption.
+
 # Phase E — release
 
 ## Task 16: Wire the new reference into the three places that list references

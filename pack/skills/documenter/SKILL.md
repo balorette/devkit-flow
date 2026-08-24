@@ -68,6 +68,9 @@ The user invokes `/checkpoint <description>` describing what changed (e.g., "the
 7. **Update state.md** to reflect the amendment (typically: log the change under "Open questions resolved" or similar; or update Next step if a plan step changed; or add a "Parked features" entry if parking).
 8. **Hand off** with a one-line summary of what changed and where.
 
+
+**Writes:** the durable docs the confirmed amendment touches — spec, plan, ADR, domain doc, or summary — including any `status:` front-matter change the lifecycle table above requires.
+
 ### Pattern B — Plan-time spec gap (the slice-3 forward-reference)
 
 When `/plan` (or any plan-time work) surfaces a gap in the spec — the spec assumes facts that don't hold, or names files/conventions that don't exist — the amendment proposal is shaped by the gap rather than by a user-described change.
@@ -94,6 +97,9 @@ Park is the wrong transition when:
 
 When parking, propose the state.md edit (it's substantive). Confirm. Apply.
 
+
+**Writes:** `.claude/state.md` — Active feature / Branch / Phase / Spec / Plan / Next step cleared to idle values, and an entry appended to *Parked features*.
+
 ### Pattern D — On-demand reconciliation
 
 `/checkpoint` (no description, no `park`) runs a lightweight drift check:
@@ -109,6 +115,9 @@ This is a lighter-weight pass than what the `doc-drift-detector` hook automates 
 ## Summary authoring (loaded by `/feature-merge`)
 
 At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
+
+
+**Writes:** none. This pass reports drift and stops; anything the user chooses to amend is applied under Pattern A and declared there. A reconciliation that writes is Pattern A wearing Pattern D's name.
 
 ### What goes in a summary
 
@@ -166,6 +175,9 @@ If the feature added, renamed, or shifted a domain concept, the merge also updat
 - The domain gained a new public concept that future features will reference (e.g., `Note` had `id/title/body`; this feature added a `WriteNoteResult` discriminated union — worth a one-paragraph mention in `docs/domains/notes.md`).
 
 If none of those apply, leave `docs/domains/` untouched. Don't generate a domain-doc entry just because a feature merged; that produces noise.
+
+
+**Writes:** `docs/domains/<domain>.md` for each domain the feature shifted, created if this feature is the first of its domain.
 
 ### Summaries are immutable after a few days
 
@@ -285,3 +297,16 @@ The "propose before writing" discipline produces a round-trip per amendment. Tha
 - Drift reconciliation (Pattern D) surfaces an inconsistency you can't tell is intentional (e.g., owned_files glob excludes a file the user clearly meant to include).
 
 The cost of asking is one round-trip. The cost of a wrong amendment is documentation that lies to future-you.
+
+## Who commits what you write
+
+You are a skill: you write durable docs, and you never stage or commit them. The carrier is always the command that loaded you, and each one derives its staging list from the `**Writes:**` declarations above rather than from a hardcoded file list.
+
+| What you wrote | Carried by |
+|---|---|
+| Pattern A amendments | `/checkpoint`'s commit proposal |
+| Pattern C's `state.md` park transition | `/checkpoint`'s commit proposal |
+| The summary, and any domain docs | `/feature-merge` → *Commit the closeout docs* |
+| Summary amendments during review | `/pr-review` → Phase D stage 4 |
+
+This table is why the declarations exist. A command reading them stages what you produced; a write you perform and do not declare is invisible to every one of them, survives the run uncommitted, and halts the next command on its own clean-tree precondition.
