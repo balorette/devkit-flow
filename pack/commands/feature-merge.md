@@ -233,6 +233,8 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Do not execute git merge ops without explicit go-ahead. Merge is the most irreversible action in this command; the friction is intentional.
 
+**Writes:** none — this section *reads* the findings ledger and proposes. Every artifact it names was written by an earlier section and staged by the closeout commit; the merge itself is the user's action.
+
 ### PR creation (PR flow)
 
 Replaces *Merge proposal* when flow detection selected PR flow. The summary doc is already written at this point — that is deliberate, and it is what the PR body is built from.
