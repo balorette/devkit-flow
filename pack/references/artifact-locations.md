@@ -45,7 +45,9 @@ Run as step 1 of § *Resolve*, once per invocation, **before the first consumer*
 2. **Otherwise scan** for existing artifact directories: `docs/specs/`, `docs/plans/`, `docs/summaries/`, and any directory under `docs/` or the repo root whose name contains `spec`, `plan`, `summary`, or `design`.
 3. **Rank by provenance, not by name.** A directory holding files the pack wrote is the pack's. A directory holding files it did not is the project's, whatever it happens to be called.
 
-Report exactly one of: a path per artifact type, or an explicit `"none found"`. **Silence is not a result** — a consumer cannot distinguish "no directory exists" from "discovery never ran," and those call for opposite behavior.
+Report exactly one of three, per artifact type: a path, an explicit `"none found"`, or an explicit **tie** — two or more candidate directories that provenance ranks identically. `"none found"` and a tie are both **answers**; silence is not. A consumer cannot distinguish "no directory exists" from "discovery never ran" from "discovery could not choose," and those call for three different behaviors.
+
+**A tie is reported, never broken.** Step 3 ranks by provenance, and provenance genuinely cannot separate two directories that both hold files the pack did not write. That is not a malformed project: it is the ordinary state of a brownfield target that keeps plans in more than one place, which is this reference's own motivating example one step further on. Name every tied candidate and what each holds, and route to § *Confirm* — which says outright *"do not resolve it by picking."* A tie reported as a path is a guess wearing a result's clothes.
 
 Discovery is **per artifact type**, not all-or-nothing. A project commonly has plans and no specs; report each independently.
 
