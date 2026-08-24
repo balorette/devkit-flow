@@ -83,3 +83,25 @@ The file's own standard rejects that: *"a guard that cries wolf is a guard that 
 **This is errata F3's shape, in the two skills that write the most.** F3 was the `engineer` skill writing a findings-ledger row that no substep staged, which halted `/feature-merge` on its own clean-tree precondition. Every command that derives a staging list from `**Writes:**` declarations — `/feature-start` Phase H, `/plan` Phase G, `/feature-merge`'s closeout — is blind to these six.
 
 It is **clause-1 work, not ADR-0010 work**, and it is recorded rather than done because a measurement task that quietly grows six sections of new text is the scope creep the pack forbids elsewhere. Recommended as the next slice item, or as a task appended to this one deliberately.
+
+---
+
+## Task 15 sweep — results
+
+**Lens 1, reconstruct-vs-read: clean.** Grepped every command, agent, and skill not touched by tasks 2–13 for branch inference, date construction, and argument-less forge queries. Three hits, all the ordinary English word *"today"*. The two real instances were the ones already known (#6's merged-state check, #8's summary filename) and both are fixed.
+
+**Lens 2, assurance decay: one fixed, one recorded.**
+
+### Fixed — `/plan` Phase F2 had G1's defect exactly
+
+Phase F2's blocking disposition said *"Either revise the plan, or amend the spec via `/checkpoint`"* — and nothing re-ran the conformance review afterwards. **That is clause 6a one component over**: a gate's verdict stops covering the artifact the moment the artifact is revised on that gate's own advice, and a fresh-context re-reader has no way to know the revision exists *because the reviewer asked for it*.
+
+It is the cheapest possible instance to fix — the reviewer takes two paths and has no codebase access — and it was found by applying the round's own lens to a component nobody had re-read under it. Fixed in this task.
+
+### Recorded — a `/checkpoint` spec amendment leaves the plan's conformance verdict stale
+
+`checkpoint.md` contains no mention of conformance. So an amendment to an **approved spec**, mid-build, leaves the plan's F2 verdict describing a spec that no longer exists — and the spec is *"the contract every later gate reads."*
+
+Not fixed here, because unlike Phase F2 it needs a design call rather than a sentence. Re-running conformance on every amendment is heavy: mid-build amendments are common, F2 needs a plan as well as a spec, and a mandatory subagent round-trip per `/checkpoint` would push users away from amending at all — which is the failure the amendment path exists to prevent.
+
+**Recommendation:** `/checkpoint` surfaces the staleness and recommends a re-run when the amendment touches something the plan depends on (a signature, a path, a stated value, a prohibition), rather than mandating one. That preserves the cheap-amendment property while ending the silent case. Needs a decision before it is written.
