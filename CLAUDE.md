@@ -36,7 +36,7 @@ History lives in git + `docs/validation/`. This section describes the pack as it
 - **Subagents:** `architect`, `tester`, `security-reviewer`, `conformance-reviewer`
 - **Skills:** `engineer`, `documenter`, `pm`, `grill-me`
 - **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review` (+ housekeeping: `/adopt`, `/claude-md-merge`)
-- **References:** `pack/references/` — `solid-checklist.md`, `clean-architecture-layers.md`, `security-categories.md`, `findings-triage.md`, `spec-and-plan-depth.md`, `claude-md-elements.md`
+- **References:** `pack/references/` — `adr-registry.md`, `artifact-locations.md`, `claude-md-elements.md`, `clean-architecture-layers.md`, `evidence-and-uncertainty.md`, `findings-triage.md`, `security-categories.md`, `solid-checklist.md`, `spec-and-plan-depth.md`, `subagent-degraded-mode.md`. `tests/test_reference_lists_current.py` keeps this line and README's from falling behind the directory.
 - **Migrations:** `pack/MIGRATIONS.md` — structural changes to the *seeded* files (`state.md`, `CLAUDE.md`), which the installer never rewrites
 - **Hook:** `doc-drift-detector` (`PostToolUse`; warns on edits outside the active spec's `owned_files`)
 - **Tests:** `tests/test_doc_drift_detector.py` (drift-hook behaviour) and `tests/test_pack_references_resolve.py` (no installed pack file may cite a path that won't resolve in a target — an enforced invariant, not a convention). Stdlib `unittest`, no pytest (the pack installs into arbitrary projects and can't assume a runner). Run with `python3 -m unittest discover -s tests`. Everything else in this repo is markdown, verified by behavioral prediction + fresh-session run per working principle 4.

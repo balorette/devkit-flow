@@ -20,7 +20,9 @@ docs/
   skills/, agents/,        the devkit pack itself
   commands/, hooks/
   references/              checklists loaded on demand (SOLID, Clean Arch, security
-                           categories, findings triage, spec/plan depth, CLAUDE.md elements)
+                           categories, findings triage, spec/plan depth, CLAUDE.md
+                           elements, ADR registry, artifact locations, evidence and
+                           uncertainty, subagent degraded mode)
 CLAUDE.md                  project index + project-specific conventions
 ```
 
