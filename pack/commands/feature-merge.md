@@ -160,7 +160,9 @@ The subagent returns a structured findings document with severity-bucketed entri
   **If the user chooses to fix any of them, the gate is no longer passed.** A fix produces code Gate 3 has never read, on the hunk the review just identified as the most security-relevant in the diff. Re-run from Gate 1 — fixes touch code, so tests and docs are in scope too — and re-run Gate 3 with the *grading* brief above. This holds at every severity: the severity threshold decides whether the merge **blocks**, and it has never been the right input to whether something has been **reviewed**. The gate that recommended the change is the one component guaranteed to have an opinion about whether the change did what it asked for, and it is the one nobody was asking.
 - **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Then re-run the full sequence from Gate 1, since fixes touch code, with Gate 3 carrying the grading brief. Same rule as the bullet above; the difference between the two branches is whether the merge was blocked in the meantime, not whether the fix gets reviewed.
 
-**Writes:** the findings ledger, when the review produces non-critical `SEC` rows.
+- **The subagent returns nothing:** Gate 3 has not run, and a gate cannot report a pass it did not compute. Work `.claude/references/subagent-degraded-mode.md` § *Detect*, then re-invoke — a fresh security pass is cheap relative to the assurance it carries. If the user chooses to proceed without it, that is § *Decide*'s trade and it costs a `DEG` row per § *Record*. **Do not record Gate 3 as passed.**
+
+**Writes:** the findings ledger — `SEC` rows when the review produces non-critical findings, and a `DEG` row if the review did not run.
 
 ### After all three gates pass — Summary and supersede
 
