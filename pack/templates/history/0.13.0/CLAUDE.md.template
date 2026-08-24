@@ -1,0 +1,29 @@
+# {{PROJECT_NAME}}
+
+{{ONE_LINE_PROJECT_DESCRIPTION}}
+
+## How to read this project
+
+This project uses the **devkit** skill-pack for Claude Code. The pack enforces a specific engineering shape: domain-driven feature breakdown, spec-first development, TDD, SOLID, Clean Architecture, branch-per-feature, and living documentation.
+
+> **devkit pack:** see `.claude/devkit-orientation.md` for the pack's workflow commands, memory layout, commit cadence, and automated guards. That file is pack-owned and updates with the pack; this file (`CLAUDE.md`) holds project-specific conventions that you own.
+
+Two sources of truth, addressed differently:
+
+- **`docs/`** is human-first and durable. It holds the project's real memory — feature specs, plans, architecture decisions, domain models, retrospectives. Read these to understand *what* the project is and *why* it's shaped this way.
+- **`.claude/state.md`** is machine-first and current. It points at the active feature, branch, phase, and spec. **Read this first to orient.**
+
+## Project conventions
+
+{{LIST_PROJECT_CONVENTIONS_HERE}}
+
+Fill in the things a fresh Claude Code session would otherwise have to infer: language + version, package manager, framework choices, test runner, code style rules, branch naming, anything else that's load-bearing.
+
+State your **merge flow** explicitly — direct merge to mainline, or pull request (and whether PRs open as drafts). `/feature-merge` reads this first; without it the pack has to infer from the repo or ask you every time.
+
+## When in doubt
+
+1. Read `.claude/state.md` for orientation.
+2. Read the active spec it points at.
+3. If still unclear, read the relevant `docs/domains/<domain>.md`.
+4. Surface ambiguity rather than guessing.

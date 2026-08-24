@@ -362,9 +362,9 @@ Five findings from the **first 0.12.0 upgrade dogfood** on the brownfield target
 
 **Ordering against slice 13.** Slice 14 is findings-driven and comes first — its planned tasks are defects in shipped behaviour, where slice 13 is new components. It also **settled slice 13's sequencing question**: four PR review rounds on slice 12 produced eighteen findings, all closed by reading, and none surfaced any of these five. The most severe was in a phase slice 12 *added* as a correctness guard and reviewed twice under review. Execution runs before the `reviewer` gate is authored, because a reviewer built on unvalidated ground inherits whatever the ground is wrong about.
 
-### Slice 15 — Re-gating, degraded mode, and verified claims (recorded, unplanned)
+### Slice 15 — Re-gating, degraded mode, and verified claims (shipped 0.13.0, unvalidated)
 
-Six gaps from the **first execution of the review-and-closeout half of the flow**, 2026-08-24 — `/pr-review`, `/feature-merge`'s `in-review` re-entry, and closeout, on PR #148 at 0.12.1. Recorded in [`docs/validation/flow-execution-0.12.1.md`](../validation/flow-execution-0.12.1.md), decided in [ADR-0010](0010-degradation-is-recorded.md). **No plan yet.**
+Six gaps from the **first execution of the review-and-closeout half of the flow**, 2026-08-24 — `/pr-review`, `/feature-merge`'s `in-review` re-entry, and closeout, on PR #148 at 0.12.1. Recorded in [`docs/validation/flow-execution-0.12.1.md`](../validation/flow-execution-0.12.1.md), decided in [ADR-0010](0010-degradation-is-recorded.md), planned in [`docs/plans/slice-15-degradation-is-recorded.md`](../plans/slice-15-degradation-is-recorded.md), **shipped as 0.13.0 with its predictions unrun.**
 
 **The four that share a theme, closed by [ADR-0010](0010-degradation-is-recorded.md) — clause 6 (a, b, c) plus clause 4 swept:**
 
