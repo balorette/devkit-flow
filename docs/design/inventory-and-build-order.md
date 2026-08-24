@@ -362,6 +362,30 @@ Five findings from the **first 0.12.0 upgrade dogfood** on the brownfield target
 
 **Ordering against slice 13.** Slice 14 is findings-driven and comes first — its planned tasks are defects in shipped behaviour, where slice 13 is new components. It also **settled slice 13's sequencing question**: four PR review rounds on slice 12 produced eighteen findings, all closed by reading, and none surfaced any of these five. The most severe was in a phase slice 12 *added* as a correctness guard and reviewed twice under review. Execution runs before the `reviewer` gate is authored, because a reviewer built on unvalidated ground inherits whatever the ground is wrong about.
 
+### Slice 15 — Re-gating, degraded mode, and verified claims (recorded, unplanned)
+
+Six gaps from the **first execution of the review-and-closeout half of the flow**, 2026-08-24 — `/pr-review`, `/feature-merge`'s `in-review` re-entry, and closeout, on PR #148 at 0.12.1. Recorded in [`docs/validation/flow-execution-0.12.1.md`](../validation/flow-execution-0.12.1.md), decided in [ADR-0010](0010-degradation-is-recorded.md). **No plan yet.**
+
+**The four that share a theme, closed by [ADR-0010](0010-degradation-is-recorded.md) — clause 6 (a, b, c) plus clause 4 swept:**
+
+- **G1 — a gate's own recommendation is never re-gated.** `/feature-merge` mandates a Gate 3 re-run only for *critical* findings. A fix written on Gate 3's own advice for a non-critical finding therefore ships un-reviewed — and did: the recommended mitigation was implemented, passed all four gates, and did not close the race it was added to close. Two-part fix: re-run Gate 3 after **any** accepted finding, and brief the reviewer that grading its own prior recommendation is a different task from reviewing a diff.
+- **G2 — no degraded-mode protocol when a subagent fails.** Three of four spawns misbehaved (idle without reporting, a thirty-minute-late return, a death mid-response). Nothing in `pack/` covers a subagent that does not answer; the nearest text covers one that answers *wrongly*. Both improvisations weakened advertised guarantees — the fresh-context TDD guarantee and Gate 3 — and nothing recorded the reduction.
+- **G3 — concurrent writers**, the direct consequence of G2: once the main loop assumes a subagent is dead and does the work, one file has two writers and the pack has no ownership concept.
+- **G6 — nothing verifies a claim written into a durable doc.** *Propose before writing* asks whether to write it, not whether it is true; a false *"every current caller is safe"* row passed through and merged. Structurally this is **ADR-0009 clause 4 implemented for exactly one artifact type** (plan signatures, `/plan` Phase F3) — the same one-instance shape clause 3 had.
+
+**The two point defects, no ADR needed:**
+
+- **G4** — `/pr-review` Phase D stage 4 (one metadata commit: summary + ledger + `state.md`) contradicts `/feature-merge`'s two-commit rule, which exists precisely because the discriminator excludes only `.claude/state.md`. Recommend `/pr-review` split unconditionally.
+- **G5** — replying through the API creates an **empty-bodied review submission** that satisfies neither skip condition, so the pack's own reply returns as a review item. Third occurrence of *"the pack's own actions are among the things that changed the state it is reading"*. Recommend a third skip condition: an item with an empty body carries no finding.
+
+**The round's keeper:** *a guarantee that degrades does not announce it — so the record keeps asserting the undegraded version.* Sibling to 0.12.0's *"a path that can be derived will be derived"* and the errata's *"a step reconstructs a value it should have read."*
+
+**What this round also settled.** Two standing predictions passed — **T18a** (a rerun against an unchanged PR ran no gates; unreachable since `Gated baseline` was introduced, and ADR-0008's highest-value dogfood target) and **T14a** (closeout on a head-deleting forge). Five behaviours are recorded as working, so the round is not only a defect list.
+
+**Ordering.** Slice 15 is findings-driven, like slice 14, and its G1 is the most severe defect the pack has produced to date: a shipped mitigation that did not mitigate. It does not displace slice 14's three unbuilt defects — one of them (#6) lives on the closeout path this run traversed and was hidden by the branch happening to be checked out.
+
+---
+
 ---
 
 ## Build order rationale

@@ -3,7 +3,7 @@
 **Slice:** 12 — declared writes, discovered locations, verified authority
 **Design:** [`docs/design/0009-declared-writes-and-verified-authority.md`](../design/0009-declared-writes-and-verified-authority.md)
 **Plan:** [`docs/plans/slice-12-declared-writes-and-verified-authority.md`](../plans/slice-12-declared-writes-and-verified-authority.md)
-**Status:** predictions recorded, **unrun**
+**Status:** **partially run.** T18a and T14a were exercised and **passed** on 2026-08-24 — see [`flow-execution-0.12.1.md`](flow-execution-0.12.1.md). T2's merge-time sibling passed during the 0.12.0 upgrade — see [`errata-0.12.0.md`](errata-0.12.0.md). **T1, T3, T14b, T14c and T18b remain unrun.**
 **Date:** 2026-08-12
 
 ---
@@ -54,9 +54,12 @@ The dogfood target is Enterprise API, which has an open PR (#141) from the run t
 
 > **UNRUN, and slice 12 does not change that.** These three are authored by reading. The `in-review` re-entry path remains the largest body of never-executed text in the pack, and the dogfood that settles it is: reopen the PR, push a review fix from a second clone, re-run.
 
+**Update (2026-08-24):** the `in-review` re-entry path and the closeout have now executed on PR #148. **T14a passed.** T14b and T14c were not exercised — neither condition arose. See [`flow-execution-0.12.1.md`](flow-execution-0.12.1.md).
+
 **T14a (pr140-2) — merged-state ordering.** On a forge that auto-deletes head branches, re-run `/feature-merge` after the PR merges.
 **Predicted:** closeout runs and clears state.
 **Before this change:** halts on precondition 2, because `git ls-remote` returns an empty result for the deleted ref and that reads as diverged.
+**Result (2026-08-24): passed.** The forge deleted the head ref, `git ls-remote` returned nothing, and the merged-state check ahead of precondition 2 is what let the closeout run and clear state.
 
 **T14b (pr140-1) — tip equality.** Push a commit to the PR from a second clone, then re-run `/feature-merge` locally.
 **Predicted:** halts, reporting that local is *behind* — naming the direction, not just the mismatch.
@@ -77,6 +80,8 @@ Recorded here because slice 11's predictions were never run and would otherwise 
 Reopen the Enterprise API PR, change nothing, re-run `/feature-merge`.
 
 **Predicted:** the content diff against `Gated baseline` is quiet and **no gates run** — no tests, no docs reconciliation, no fresh-context security review.
+
+**Result (2026-08-24): passed.** A rerun against an unchanged PR reported quiet and ran no gates.
 
 **Why it still matters:** this branch has been unreachable since `Gated baseline` was introduced, because writing the baseline commits it and a SHA comparison could therefore never match. ADR-0008 called this the highest-value thing for a dogfood to exercise, and it remains unexercised. Slice 12 changed the rerun path around it (the two-commit ordering), so the prediction now covers both.
 
