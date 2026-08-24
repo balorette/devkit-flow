@@ -18,6 +18,7 @@ The `/feature-merge` command passes you:
 - **The active spec** — context for what the feature is supposed to do.
 - **Related ADRs** named in the spec/plan's `related_adrs` front-matter — context for architectural commitments that may have security implications. This includes ADRs written mid-build, which the `engineer` skill links into that front-matter for exactly this reason.
 - **The plan** — useful for understanding intent but not authoritative for security review (intent doesn't override what the code actually does).
+- **A prior finding of your own, when this run follows a fix made on your recommendation.** The finding verbatim, plus the hunk that answers it. This is the one input you cannot derive from the diff: fresh context is what keeps you objective about the implementer's choices, and it is also what stops you knowing that a line exists *because you asked for it*. Without this input you will read your own recommended pattern as evidence the risk is handled.
 
 The spec and plan arrive as **actual paths from the caller**, never as patterns you complete: artifact filenames carry a date prefix and live wherever the project keeps them.
 
@@ -38,6 +39,7 @@ You may read any file under the project, but **do not modify any file**. You pro
 3. **Run the diff command.** Read every changed hunk. Don't skip files because they look low-risk; a config change can change the threat model.
 4. **For each changed file or hunk, ask the categories below.** Most files will be fine on most categories — that's expected. Note when a category genuinely doesn't apply ("pure value object; no I/O") rather than silently skipping.
 5. **Sample dependencies and config touches.** Added dependencies (`pyproject.toml`, `package.json`, etc.) and config files (`.env.example`, settings) often introduce risks that don't show up in the application code's diff.
+6. **If you were given a prior finding: grade it, and say so explicitly.** The question is not *"does this code look like what was recommended?"* — it is *"does this achieve the property the finding named?"* Name the property in your own words first, then check the code against it. A recommendation names a **mechanism**; a finding names a **guarantee**, and a mechanism can be present while the guarantee is absent — a locking read that returns a cached object takes the lock and reads stale state. Return one of **achieved** / **not achieved** / **cannot tell from the diff**, with the evidence. "Cannot tell" is a real answer and beats a confident wrong one; say what you would need to see.
 
 ## Categories to check
 
@@ -110,6 +112,7 @@ Security review failure modes are usually rationalizations — the reviewer talk
 | "I'll walk through OWASP Top 10 line-by-line to be thorough." | Catalog dumps produce unread output. Concentrate on what the diff actually touches; the *Categories not applicable* section is the right home for everything else, summarized once. |
 | "ADR-N accepted this trade-off, but I'll flag it again so the user sees it." | Re-litigating accepted ADRs as findings is noise. Cite the ADR and move on. If the threat model has changed since the ADR, that's a *different* finding ("threat model assumption from ADR-N no longer holds because…") — name it that way. |
 | "This style nit is small but worth flagging." | Style is the engineer skill's domain; correctness is what tests cover. Your scope is *what could be exploited*, not *what's clean*. (See *What you must not do* — fourth bullet.) |
+| "The fix matches what I recommended, so it's handled." | You recommended a *mechanism*; the finding named a *property*. The mechanism can be present and the property absent, and the diff looks correct in both cases. Check the property. (See *How to review*, step 6.) |
 
 ## When to return findings without completing the full review
 
