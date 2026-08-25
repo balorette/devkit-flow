@@ -112,12 +112,14 @@ If nothing is drifting, return a one-line "no drift detected" and exit. If drift
 
 This is a lighter-weight pass than what the `doc-drift-detector` hook automates on `PostToolUse`. Both layers complement: the hook catches drift at the moment of edit; `/checkpoint` no-args catches accumulated drift the user wants to audit on demand.
 
+**Writes:** none. This pass reports drift and stops; anything the user chooses to amend is applied under Pattern A and declared there. A reconciliation that writes is Pattern A wearing Pattern D's name.
+
 ## Summary authoring (loaded by `/feature-merge`)
 
 At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
 
+**Writes:** the summary, at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name* — a new file when `.claude/state.md`'s `Summary:` field is `—`, otherwise the file that field already names. The caller records the path in `Summary:` and stages both; see `/feature-merge`'s *After all three gates pass*.
 
-**Writes:** none. This pass reports drift and stops; anything the user chooses to amend is applied under Pattern A and declared there. A reconciliation that writes is Pattern A wearing Pattern D's name.
 
 ### What goes in a summary
 
