@@ -135,6 +135,8 @@ It answers one question — does the plan contradict the spec? — which is not 
 The reviewer returns findings at two severities:
 
 - **Blocking** — a direct contradiction: a stated value, path, name, signature, or prohibition differs. **Resolve before the plan is approved.** Either revise the plan, or amend the spec via `/checkpoint` if the plan's version is the one that's right. Do not approve and fix later: the spec is the contract every later gate reads.
+
+  **Then re-run this phase against what you actually changed.** The review you just received was computed against a plan that no longer exists, and the revision was made on the reviewer's own advice — which is the case a reviewer never sees, because a fresh-context pass reads the revised plan as though it had always said that. A conformance verdict covers the artifact it read, and the artifact changed. Re-running is cheap: two paths, no codebase access, no build state. Same rule `/feature-merge` Gate 3 applies to a fix made on a security finding, at plan time instead of merge time.
 - **Advisory** — the spec is silent and the plan chose. Surface to the user; the plan can be approved with these outstanding.
 
 Surface the full findings document either way, including a clean result. A conformance review that found nothing is information about the plan, not an empty formality.

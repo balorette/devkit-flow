@@ -20,9 +20,12 @@ Proposing is not the same as escalating. `.claude/references/evidence-and-uncert
 Concretely:
 
 1. Identify which docs the change affects (see "What lives where" below).
-2. For each affected doc, produce a **proposed diff or a short summary** of what would change. Keep proposals concrete — exact lines or sections, not "I'll update the spec." If the change is small (≤ 5 lines per file), show the diff inline; if larger, describe sections affected with one-line summaries each.
-3. Surface the proposal to the user. Wait for confirmation. Apply only what's confirmed.
-4. If the user wants different wording or scope, iterate the proposal. Don't apply the first proposal and "iterate from there" — iterate the proposal.
+2. **Verify every load-bearing claim in the proposal before you show it.** A proposal asks whether to write something; it does not ask whether it is true, and the user reviewing it is the person least able to falsify a confident sentence you wrote. `.claude/references/evidence-and-uncertainty.md` § *Facts* is the rule: any assertion about the project carries its provenance — backed by `file:line`, or explicitly marked as inferred. Silence about provenance reads as verified.
+
+   **A claim quantified over the codebase gets searched, or it gets rewritten.** *"Every current caller is safe"*, *"no other path reaches this"*, *"all consumers were updated"* — each is a claim about files you have not read unless you went and read them. Run the search, cite what you found, or narrow the sentence to what you actually checked. A quantifier is the cheapest sentence to write and the most expensive to be wrong about: it merges, and every later feature is built on it.
+3. For each affected doc, produce a **proposed diff or a short summary** of what would change. Keep proposals concrete — exact lines or sections, not "I'll update the spec." If the change is small (≤ 5 lines per file), show the diff inline; if larger, describe sections affected with one-line summaries each.
+4. Surface the proposal to the user. Wait for confirmation. Apply only what's confirmed.
+5. If the user wants different wording or scope, iterate the proposal. Don't apply the first proposal and "iterate from there" — iterate the proposal.
 
 Edits to `.claude/state.md` are an exception: state.md is the working pointer, not a durable doc, and routine field updates (`Phase`, `Next step`) don't need confirmation. Substantive state.md changes (clearing Active feature, parking a feature, adding Open questions) still propose first.
 
@@ -65,6 +68,9 @@ The user invokes `/checkpoint <description>` describing what changed (e.g., "the
 7. **Update state.md** to reflect the amendment (typically: log the change under "Open questions resolved" or similar; or update Next step if a plan step changed; or add a "Parked features" entry if parking).
 8. **Hand off** with a one-line summary of what changed and where.
 
+
+**Writes:** the durable docs the confirmed amendment touches — spec, plan, ADR, domain doc, or summary — including any `status:` front-matter change the lifecycle table above requires.
+
 ### Pattern B — Plan-time spec gap (the slice-3 forward-reference)
 
 When `/plan` (or any plan-time work) surfaces a gap in the spec — the spec assumes facts that don't hold, or names files/conventions that don't exist — the amendment proposal is shaped by the gap rather than by a user-described change.
@@ -91,6 +97,9 @@ Park is the wrong transition when:
 
 When parking, propose the state.md edit (it's substantive). Confirm. Apply.
 
+
+**Writes:** `.claude/state.md` — Active feature / Branch / Phase / Spec / Plan / Next step cleared to idle values, and an entry appended to *Parked features*.
+
 ### Pattern D — On-demand reconciliation
 
 `/checkpoint` (no description, no `park`) runs a lightweight drift check:
@@ -103,9 +112,14 @@ If nothing is drifting, return a one-line "no drift detected" and exit. If drift
 
 This is a lighter-weight pass than what the `doc-drift-detector` hook automates on `PostToolUse`. Both layers complement: the hook catches drift at the moment of edit; `/checkpoint` no-args catches accumulated drift the user wants to audit on demand.
 
+**Writes:** none. This pass reports drift and stops; anything the user chooses to amend is applied under Pattern A and declared there. A reconciliation that writes is Pattern A wearing Pattern D's name.
+
 ## Summary authoring (loaded by `/feature-merge`)
 
 At merge time, you are also the **author** of the feature's summary — its retrospective — written at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*. Summary authoring is distinct from the amendment patterns above: you're writing fresh content (not amending), and the source of truth is the feature's git history + the docs that lived through the feature, not a user-described change.
+
+**Writes:** the summary, at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name* — a new file when `.claude/state.md`'s `Summary:` field is `—`, otherwise the file that field already names. The caller records the path in `Summary:` and stages both; see `/feature-merge`'s *After all three gates pass*.
+
 
 ### What goes in a summary
 
@@ -164,6 +178,9 @@ If the feature added, renamed, or shifted a domain concept, the merge also updat
 
 If none of those apply, leave `docs/domains/` untouched. Don't generate a domain-doc entry just because a feature merged; that produces noise.
 
+
+**Writes:** `docs/domains/<domain>.md` for each domain the feature shifted, created if this feature is the first of its domain.
+
 ### Summaries are immutable after a few days
 
 Per the discipline at the top of this skill, summaries are not edited beyond a brief window post-merge for late-discovered context. Get them right at merge time; treat them as history once they're a week old. If a follow-up feature reveals the summary was wrong, the right answer is to address it in the follow-up's summary, not retroactively rewrite history.
@@ -197,8 +214,11 @@ One append-only table. A finding earns its own file only when a row cannot hold 
 |----|----------|----------|--------|--------|-------|
 | SEC-001 | security | medium | security-reviewer · notes-write | open | `src/notes/repo.py:88` |
 | CONF-001 | conformance | advisory | conformance-reviewer · notes-write | closed | spec §5.7 vs plan step 4 |
+| DEG-001 | degraded | — | engineer · notes-write step 3 | open | tester did not return; tests written in main loop |
 
-Categories map to producers: **`CONF`** (conformance-reviewer), **`SEC`** (security-reviewer), **`ARCH`** (an architect recommendation that produced no ADR), **`REV`** (external PR review).
+Categories map to producers: **`CONF`** (conformance-reviewer), **`SEC`** (security-reviewer), **`ARCH`** (an architect recommendation that produced no ADR), **`REV`** (external PR review), **`DEG`** (an assurance the pack advertises that did not hold for this feature — see `.claude/references/subagent-degraded-mode.md` § *Record*).
+
+A `DEG` row's Severity is `—` on purpose. A degradation is not a finding about the code; it is a fact about how much the record can be trusted, and grading it invites the arithmetic where two mediums make a high. What matters is that it is **open** — an open `DEG` row means an advertised guarantee did not hold and nobody has decided what to do about it. `/feature-merge` surfaces open `DEG` rows at the merge proposal and asks before proceeding.
 
 ### Two rules
 
@@ -256,6 +276,7 @@ The "propose before writing" discipline produces a round-trip per amendment. Tha
 | Excuse | Rebuttal |
 |---|---|
 | "This edit is so small / so obvious that I'll just apply it." | This is the exact failure mode the cardinal discipline exists to prevent. A silent edit you got wrong can be invisible for weeks; one round-trip is cheap by comparison. Propose every time, even for one-liners. (See *The cardinal discipline*.) |
+| "It's obviously true — I don't need to check it." | Obviousness is not provenance, and a reader cannot tell the two apart in a finished sentence. The false claim that shipped was obvious to the person who wrote it. One search costs a round-trip; a wrong durable claim costs every feature built on it. (See *The cardinal discipline*, step 2.) |
 | "The user didn't respond to my proposal, so they must be OK with it." | Stale proposals are common in long sessions. Silence is ambiguous; absence of objection is not consent. Ask before applying. (See *What you must not do* — fourth bullet.) |
 | "I'll rename this feature piecemeal — the spec filename now, branch and references later." | A feature rename is one operation touching the spec, plan, branch, state.md, and every reference. Piecemeal renames leave the project in a half-renamed state where future-you can't tell which name is canonical. Propose the whole sweep; do not do it in pieces. (See *What you must not do* — third bullet.) |
 | "The amendment is technically a different feature, but it's faster to amend the current spec than start a new one." | A rewrite of Problem and Scope means the feature changed identity. Park the current feature (or merge it as-is) and start the new one with `/feature-start <new-name>`. Don't quietly mutate a spec into something its title no longer describes. (See *When to escalate* — first bullet.) |
@@ -278,3 +299,16 @@ The "propose before writing" discipline produces a round-trip per amendment. Tha
 - Drift reconciliation (Pattern D) surfaces an inconsistency you can't tell is intentional (e.g., owned_files glob excludes a file the user clearly meant to include).
 
 The cost of asking is one round-trip. The cost of a wrong amendment is documentation that lies to future-you.
+
+## Who commits what you write
+
+You are a skill: you write durable docs, and you never stage or commit them. The carrier is always the command that loaded you, and each one derives its staging list from the `**Writes:**` declarations above rather than from a hardcoded file list.
+
+| What you wrote | Carried by |
+|---|---|
+| Pattern A amendments | `/checkpoint`'s commit proposal |
+| Pattern C's `state.md` park transition | `/checkpoint`'s commit proposal |
+| The summary, and any domain docs | `/feature-merge` → *Commit the closeout docs* |
+| Summary amendments during review | `/pr-review` → Phase D stage 4 |
+
+This table is why the declarations exist. A command reading them stages what you produced; a write you perform and do not declare is invisible to every one of them, survives the run uncommitted, and halts the next command on its own clean-tree precondition.

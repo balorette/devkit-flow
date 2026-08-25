@@ -22,6 +22,21 @@ Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guara
 
 ---
 
+## 0.13.0
+
+**No seeded-file changes.** `state.md.template` and `CLAUDE.md.template` are byte-identical to 0.12.0 — verified by diff against `pack/templates/history/0.12.0/`, not from recollection. Existing installs need no hand edit for this release.
+
+Recorded explicitly rather than omitted. A missing section is indistinguishable from a forgotten one, and a forgotten one is exactly how 0.10.0's entry shipped incomplete. This release's own subject is that a silent absence reads as an assurance.
+
+What *did* change is pack-tracked and arrives by re-running `install.sh`:
+
+- **Gate 3 re-runs after any accepted finding**, at any severity, and `security-reviewer` is briefed when it is grading its own prior recommendation.
+- **`pack/references/subagent-degraded-mode.md`** (new) — what to do when a subagent does not return, and who owns a file while it might still be alive. Cited by `engineer`, `/build`, and `/feature-merge`.
+- **A `DEG` findings-ledger row type**, surfaced at the merge proposal and asked about before proceeding. If your project keeps its findings in a system the pack adopted rather than `docs/findings.md`, `DEG` rows follow that system's conventions like every other row.
+- **`documenter` verifies claims before proposing them** — a claim quantified over the codebase gets searched or rewritten.
+- **Four defect fixes**: the merged-state check reads `state.md`'s `PR:`; a gate rerun amends the recorded summary instead of writing a second; `/pr-review` splits its metadata commit; an empty-bodied review submission is skipped as content-free.
+- **`/plan` Phase F2 re-runs** after a blocking conformance finding is resolved.
+
 ## 0.12.0
 
 ### `.claude/state.md`

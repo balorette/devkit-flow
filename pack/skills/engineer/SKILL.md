@@ -46,7 +46,9 @@ Triage them per `.claude/references/findings-triage.md` (internal source):
 
 If the tester returns **findings and no tests**, that is a refusal, and it means the brief was unbuildable. Do not work around it and do not re-invoke with a looser brief — fix the contract.
 
-**Writes:** this step's test files · **the findings ledger, at its discovered path, when triage routes an out-of-scope finding to it.**
+**If the tester returns nothing at all, that is not a refusal — it is a missing answer**, and the two call for opposite responses. A refusal means the brief was unbuildable and the contract needs fixing. Silence means you do not yet know what happened. Work `.claude/references/subagent-degraded-mode.md` § *Detect* before concluding anything, and § *Ownership* before writing to any path the tester was asked to produce. If you proceed without the tester, fresh context is spent — § *Decide* is the trade, and § *Record* is the `DEG` row it costs.
+
+**Writes:** this step's test files · **the findings ledger, at its discovered path, when triage routes an out-of-scope finding to it, or when § *Record* requires a `DEG` row.**
 
 The ledger is the one to watch. It is written *here*, in a branch that fires on some steps and not others, at a path outside the directories this step is otherwise touching — so it is invisible in the diff a reader skims before staging. Left uncommitted it survives `/build` as a dirty tracked file, and `/feature-merge`'s preconditions block on exactly that.
 

@@ -4,7 +4,7 @@
 **Design:** `docs/design/0003-pr-lifecycle-and-findings-triage.md`
 **Plan:** `docs/plans/slice-8-pr-lifecycle.md`
 **Dogfood target:** not yet assigned — requires a GitHub-remote project with reviewers
-**Status:** **authoring complete; dogfood pending.** Mechanical checks pass. No behavioral prediction has been run.
+**Status:** **authoring complete; first execution 2026-08-24, predictions still unrecorded.** Mechanical checks pass. `/pr-review` ran end to end on PR #148 against a real external reviewer and produced three of the six gaps in [`flow-execution-0.12.1.md`](flow-execution-0.12.1.md) — but **no prediction below was individually observed**. T6b in particular is not satisfied by the run having gone well: silence about a prediction is not a pass.
 **Date:** 2026-07-30 (authoring)
 
 ## Executive summary

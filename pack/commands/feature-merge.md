@@ -21,10 +21,10 @@ In **local-merge flow**, one invocation completes the feature lifecycle (or halt
 | `building` / `merging`, local-merge flow | The original path: gates 1–3 → summary → merge proposal → user merges → clear state. |
 | `building` / `merging`, PR flow | Gates 1–3 → summary → push → `gh pr create` → set `Phase: in-review` and `PR:`. **Do not clear state.** |
 | `in-review`, PR open, **gated content unchanged** | Report review status and open-thread count. Point at `/pr-review`. Run no gates — this content already passed them. |
-| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen. **Commit whatever the gates wrote first** (Gate 2's reconciliation, Gate 3's `SEC` rows — see each gate's `**Writes:**`), *then* update `Gated baseline` and commit `.claude/state.md` alone, and push. Two commits, in that order — see *Why two commits* below. Do **not** re-create the PR. |
+| `in-review`, PR open, **gated content changed** | Re-run gates 1–3 — the PR carries changes no gate has seen. **Commit whatever the gates wrote first** (Gate 2's reconciliation, Gate 3's `SEC` rows — see each gate's `**Writes:**`), *then* update `Gated baseline` and commit `.claude/state.md` alone, and push. Open `DEG` rows are surfaced before the baseline moves, and a Gate 3 that did not run leaves it where it stands — see *Update `Gated baseline`* below. Two commits, in that order — see *Why two commits* below. Do **not** re-create the PR. |
 | `in-review`, PR merged | Closeout only (see *After the merge*). **Skip the gates**; the merge already happened. |
 
-**Check merged state first, before any other precondition.** Read `gh pr view --json state,mergedAt`. If the PR has merged, skip to closeout (*After the merge*) — the *remote-agreement* preconditions below apply only while the PR is still **open**, and applying them to a merged PR breaks the closeout path outright.
+**Check merged state first, before any other precondition — and check it against the PR this feature recorded.** Read `.claude/state.md`'s `PR:` field, **normalize it**, then `gh pr view <normalized> --json state,mergedAt`. `state.md` documents that field as *URL or `owner/repo#N`*, and `gh pr view` accepts `<number> | <url> | <branch>` — so the `owner/repo#N` form the template explicitly permits is read as a **branch name in the current repository**, and the check fails on a value the pack told the user to write. `owner/repo#N` becomes `gh pr view N -R owner/repo`; a URL and a bare number pass through unchanged. With no argument, `gh pr view` reports *"the pull request that belongs to the current branch"*, which is a different question: on a head-deleting forge the closeout commonly runs from mainline, where no PR belongs to the branch at all, and from an unrelated branch it returns that branch's PR and decides this feature's path from it. The field holding the correct answer already exists — read it before using it, rather than reconstructing it from whatever is checked out. If `PR:` is unset, fall back to branch inference and say so. Normalize here rather than narrowing the template: `state.md` is **seeded**, so a shape change reaches existing installs only through `MIGRATIONS.md` and by hand, and an install that already recorded `owner/repo#N` would keep failing until someone edited it. If the PR has merged, skip to closeout (*After the merge*) — the *remote-agreement* preconditions below apply only while the PR is still **open**, and applying them to a merged PR breaks the closeout path outright.
 
 **One precondition still applies on the merged path: the tracked worktree must be clean.** Closeout runs `git checkout <mainline>` as its first act, and a dirty tracked tree either aborts that checkout on an overlap or carries unrelated modifications onto mainline. Neither is a state transition anyone can complete safely. Check `git diff --quiet && git diff --cached --quiet` before the checkout; if it fails, halt and report what is uncommitted rather than proceeding. Untracked files are surfaced and asked about, as everywhere else.
 
@@ -35,6 +35,7 @@ The failure is specific enough to be worth naming. Forges that delete the head b
 With the PR confirmed open, the `in-review` rows have their own preconditions, checked **before** the discriminator runs:
 
 1. `PR:` is set in state.md, or a PR is discoverable for the current branch.
+   The merged-state check above reads this same field earlier and does not depend on this list — that check runs before the PR is known to be open, which is exactly when the current branch is least likely to be the feature's.
 2. **Local and remote agree.** No uncommitted changes to tracked files, and local `HEAD` **equals** the OID `git ls-remote origin <branch>` reports — not merely "is not ahead of" it. Use `git ls-remote`, **not** `gh pr view --json headRefOid`: the API can serve a stale `headRefOid` for a moment after a push (see `/pr-review`'s push-verification step for the same distinction), which risks a false negative on a genuinely diverged branch, and `git ls-remote` reads the ref directly.
 
    **Equality, because a directional check misses the common direction.** When another clone or the web UI pushes to the PR, local is *behind*, and a "not ahead" test passes. `git fetch` then makes the new tip available without moving `HEAD`, so the discriminator reads the PR's new content while gates 1–3 run against stale local content — and the state-only push that follows is a non-fast-forward. The stated rationale for this precondition is exactly that failure in mirror image: the discriminator reasons about the PR's remote content, and that framing is only correct when local and remote already agree. One-directional agreement is not agreement. On a mismatch, halt and report **which direction**; when local is behind, the fix is to update the checkout before re-running.
@@ -70,7 +71,7 @@ This is the same reasoning the closeout commit already applies one section down,
 
 Which flow applies is settled by *Flow detection* below (`CLAUDE.md` convention → infer from the repo → ask). The gates are identical in both flows, so that determination can wait until the proposal — but `Phase: in-review` only ever occurs in PR flow, so the last three rows need no detection.
 
-Merged-state detection is `gh pr view --json state,mergedAt`. If `gh` fails or is unauthenticated, **ask the user whether the PR merged** — do not guess, and do not treat a failed call as "not merged."
+Merged-state detection is `gh pr view <the normalized recorded PR> --json state,mergedAt` — the argument is not optional here; see the merged-state precondition above for why the current branch is the wrong question and how the recorded value is normalized. If `gh` fails or is unauthenticated, **ask the user whether the PR merged** — do not guess, and do not treat a failed call as "not merged."
 
 The numbered preconditions below apply to the two `building` / `merging` rows; the `in-review` rows' preconditions are above.
 
@@ -150,19 +151,30 @@ Invoke the `security-reviewer` subagent in fresh context. Pass:
 - Path to the active spec.
 - Paths to related ADRs from the spec/plan front-matter.
 - Path to the active plan (intent context only; not authoritative for security).
+- **When this run follows a fix made on Gate 3's own recommendation:** the prior finding, verbatim, and the commit or hunk that answers it. Say plainly that the reviewer is **grading its own prior recommendation**, and that the question is whether the mitigation achieves the property the finding named — not whether the code matches what was recommended. This input is what fresh context cannot supply: the reviewer has no way to know a hunk exists *because* Gate 3 asked for it, and will otherwise read the recommended pattern in the diff as evidence that the risk is handled.
 
 The subagent returns a structured findings document with severity-bucketed entries (critical / high / medium / low / informational).
 
-- **Zero critical findings:** Gate 3 passes. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
-- **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Re-run Gate 3 (or the full sequence from Gate 1, since fixes touch code) after resolution.
+- **Zero critical findings:** Gate 3 passes *as of the diff it just read*. Surface the full findings document to the user — they need to know the medium/low/informational items even though they don't block. **Record each of them as a `SEC` row in the findings ledger** (see the documenter skill's *The findings ledger* — its location is discovered, not assumed). The summary keeps its *Security review notes* section and cross-references the row IDs rather than restating them. Without the ledger these findings ship and are never seen again; the summary is a document nobody reopens.
 
-**Writes:** the findings ledger, when the review produces non-critical `SEC` rows.
+  **If the user chooses to fix any of them, the gate is no longer passed.** A fix produces code Gate 3 has never read, on the hunk the review just identified as the most security-relevant in the diff. Re-run from Gate 1 — fixes touch code, so tests and docs are in scope too — and re-run Gate 3 with the *grading* brief above. This holds at every severity: the severity threshold decides whether the merge **blocks**, and it has never been the right input to whether something has been **reviewed**. The gate that recommended the change is the one component guaranteed to have an opinion about whether the change did what it asked for, and it is the one nobody was asking.
+
+  **Then reconcile the row the fix answers.** That finding is already a `SEC` row, and *"rows are never closed automatically"* (see the documenter skill's *The findings ledger*) — so **propose** its closure and let the user confirm, carrying the grading verdict as the evidence: closed when the reviewer confirms the mitigation achieves the property the finding named, retained with the reviewer's reason when it does not. Without this, a fix the gate itself confirmed proceeds to merge while durable state still says the risk is open, and the ledger's readers — `pm`, at the next `/feature-start` in this area — are told to treat a resolved finding as prior art.
+
+  **A repeated finding updates its row; it does not get a second one.** The recording rule above is written for findings a review produced for the first time. Applied unconditionally to a re-run it appends a duplicate, splitting one unresolved risk across two ids with no link between them — which is how a ledger stops being worth reading, and the file's own standard is that *a ledger nobody reads is worse than none.*
+- **One or more critical findings:** halt. Surface the findings. User addresses (either by fixing the code, amending the spec/plan via `/checkpoint`, or — rarely — formally accepting the risk with an ADR that downgrades the finding). Then re-run the full sequence from Gate 1, since fixes touch code, with Gate 3 carrying the grading brief. Same rule as the bullet above; the difference between the two branches is whether the merge was blocked in the meantime, not whether the fix gets reviewed.
+
+- **The subagent returns nothing:** Gate 3 has not run, and a gate cannot report a pass it did not compute. Work `.claude/references/subagent-degraded-mode.md` § *Detect*, then re-invoke — a fresh security pass is cheap relative to the assurance it carries. If the user chooses to proceed without it, that is § *Decide*'s trade and it costs a `DEG` row per § *Record*. **Do not record Gate 3 as passed.**
+
+**Writes:** the findings ledger — `SEC` rows when the review produces non-critical findings, proposed closures and status updates to `SEC` rows a re-run graded, and a `DEG` row if the review did not run.
 
 ### After all three gates pass — Summary and supersede
 
 Load the `documenter` skill again. Run the "Summary authoring" pattern (see the documenter skill):
 
-1. Write the summary per the documenter's summary checklist, at the summaries directory the Orient step above resolved, named per that reference's § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
+1. **If `.claude/state.md`'s `Summary:` field is `—`, write the summary** per the documenter's summary checklist, at the summaries directory the Orient step above resolved, named per that reference's § *Name*. Include the security-reviewer's non-critical findings in the "Security review notes" section. **Record the path it was written to in `.claude/state.md`'s `Summary:` field** — the filename carries this invocation's date, and `/pr-review` amends the file in a session that may be days later and cannot recompute it.
+
+   **If `Summary:` already names a file, amend that file — do not author a second one.** A gate rerun on `in-review` reaches this step with a summary already written, at a filename carrying the *first* invocation's date. Authoring again produces a second dated file and overwrites the pointer, which strands the reviewed summary at a path nothing names and leaves `/pr-review` amending a document the PR body was never built from. Read the field, open that file, and propose the delta.
 2. Update `docs/domains/<domain>.md` if the feature shifted domain vocabulary (per the documenter's "Domain doc updates" guidance). If `docs/domains/` doesn't exist and the feature is the project's first in a domain, create it.
 3. **Supersede mechanic.** If the feature's spec lists `supersedes:` in its front-matter (or the work-in-progress conversation has identified parked features this merge absorbs), update `.claude/state.md`'s Parked features section: change each superseded entry's note to `superseded by <this-feature> (merged YYYY-MM-DD)`. The parked branch is **not** deleted — it remains for historical reference and possible cherry-pick — but it's clearly marked closed.
 
@@ -214,6 +226,10 @@ Carry the determined strategy into the proposal below.
 
 Once all docs are written and the strategy is determined (above), propose the merge mechanics.
 
+**Before proposing: read the findings ledger for open `DEG` rows on this feature.** If any exist, state each one — which assurance was reduced, why, and what was done instead — and ask whether to proceed. Do not fold it into the proposal as a bullet; it is a different question from *"shall I merge this"*, and it is the one the user is least likely to have been told about, because the run that produced it was a run where something went wrong.
+
+This is the pack's untracked-files rule applied to assurance: *don't silently proceed, and don't silently treat it as blocking.* The user is the only one who can weigh a harness flake against a release. What is not optional is that they are told at the moment the decision is made, rather than finding the row later.
+
 Propose, in one short message:
 - The merge command (e.g., `git checkout <mainline> && git merge --no-ff feature/<slug>` for a merge commit; or `git checkout <mainline> && git merge --squash feature/<slug> && git commit` for squash).
 - The post-merge cleanup (`git branch -d feature/<slug>` to delete the local branch after merge; or `git branch -m feature/<slug> archive/<slug>` to rename if the project archives rather than deletes).
@@ -221,9 +237,15 @@ Propose, in one short message:
 
 **Wait for user confirmation.** Do not execute git merge ops without explicit go-ahead. Merge is the most irreversible action in this command; the friction is intentional.
 
+**Writes:** none — this section *reads* the findings ledger and proposes. Every artifact it names was written by an earlier section and staged by the closeout commit; the merge itself is the user's action.
+
 ### PR creation (PR flow)
 
 Replaces *Merge proposal* when flow detection selected PR flow. The summary doc is already written at this point — that is deliberate, and it is what the PR body is built from.
+
+**Before proposing: read the findings ledger for open `DEG` rows on this feature.** If any exist, state each one — which assurance was reduced, why, and what was done instead — and ask whether to proceed. Do not fold it into the proposal as a bullet; it is a different question from *"shall I merge this"*, and it is the one the user is least likely to have been told about, because the run that produced it was a run where something went wrong.
+
+This is the pack's untracked-files rule applied to assurance: *don't silently proceed, and don't silently treat it as blocking.* The user is the only one who can weigh a harness flake against a release. What is not optional is that they are told at the moment the decision is made, rather than finding the row later.
 
 Propose, in one short message:
 
@@ -238,6 +260,12 @@ On confirmation: push, create the PR, then set `.claude/state.md` to `Phase: in-
 **Then commit and push that transition.** Subject: `/feature-merge: in-review (PR #<n>)`, staging `.claude/state.md` only. It is written *after* the closeout commit and after the push, so without this step the tracked file is left dirty and the remote branch still says `Phase: building` with no PR and no baseline. Review is explicitly asynchronous — another session, clone, or worktree resuming the feature would read `building`, take the PR-creation path a second time, and open a duplicate PR. A later closeout in the original worktree can also fail outright, because checking out mainline over a dirty tracked `state.md` is exactly what its own preconditions forbid.
 
 Report the PR URL and point at `/pr-review`.
+
+**Before the baseline moves: read the findings ledger for open `DEG` rows on this feature.** Same question and same discipline as the two proposals above — state each one, which assurance was reduced, why, and what was done instead, and ask whether to proceed.
+
+**This is the path where the question is most likely to go unasked**, because neither proposal runs on it: a rerun against an already-open PR never reaches *Merge proposal* (the merge is not this command's to propose while the PR is open) and never reaches *PR creation* (the PR exists). Without this step a rerun can record a degradation, advance the baseline, and push, having told nobody — which is the failure clause 6b exists to prevent, reproduced on the one path that skips both of its surfacing sites.
+
+**If the degradation is Gate 3 itself not returning, the baseline does not advance.** That is what *"Do not record Gate 3 as passed"* means here, stated as a transition rather than a prohibition: the baseline is *the last commit whose content passed gates 1–3*, and content no reviewer read did not pass them. Commit and push whatever the other gates wrote, leave `Gated baseline` where it stands, and say so — the discriminator will then send the next invocation back through the gates, which is the cheap outcome and gives Gate 3 another chance to run. Advancing it instead freezes the gap into the record, and *a stale baseline is worse than none.*
 
 Update `Gated baseline` after **every** successful gate rerun — to the tip as it stands once any fix commits are in and before the `state.md`-only transition commit. Same rule as at PR creation: the baseline is the last commit whose content was gated, never the SHA that happened to be checked out when the gates started.
 

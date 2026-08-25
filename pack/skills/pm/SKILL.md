@@ -123,6 +123,9 @@ When in doubt, scope to the directories the feature genuinely owns and let `/che
 
 **Tone:** the spec is a contract. Prefer concrete tables over prose. Cite specific endpoints, file paths, field names, error codes — not "we'll have an upload endpoint" but `POST /api/import/goodreads/upload` with the actual request and response shapes. Imprecision in the spec becomes ambiguity in the plan and bugs in the build.
 
+
+**Writes:** the spec, at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*.
+
 ### 5. Present for review
 
 Hand the spec to the user for review. The spec stays in `status: draft` until the user approves it. Approval moves the front-matter to `status: approved`; that transition is the gate `/plan` checks before it will run.
@@ -339,6 +342,9 @@ Sections (per the typical-plan checklist in `.claude/references/spec-and-plan-de
 
 The plan stays `status: draft` until the user approves it by editing the front-matter. That transition is the gate `/build` checks.
 
+
+**Writes:** the plan, at the location `.claude/references/artifact-locations.md` § *Resolve* returned and named per its § *Name*.
+
 ### What you hand to /plan when you're done
 
 - The plan file exists at the path `state.md`'s `Plan:` field names, with `status: draft`.
@@ -368,3 +374,14 @@ The plan stays `status: draft` until the user approves it by editing the front-m
 - **At plan time:** a spec acceptance criterion has no obvious step to map to, and you suspect the spec itself is incomplete. Don't paper over by drafting an interpretation — surface the gap to the user. The spec might need amendment via `/checkpoint`.
 
 The cost of one extra round-trip is one extra round-trip. The cost of a wrong contract is every downstream step.
+
+## Who commits what you write
+
+You are a skill: you write the spec and the plan, and you never stage or commit either. The carrier is the command that loaded you, and each derives its staging list from the `**Writes:**` declarations above.
+
+| What you wrote | Carried by |
+|---|---|
+| The spec | `/feature-start` → Phase H |
+| The plan | `/plan` → Phase G |
+
+A write you perform and do not declare is invisible to that derivation: it survives the run uncommitted and halts the next command on its clean-tree precondition.
