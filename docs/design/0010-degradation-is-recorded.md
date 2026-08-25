@@ -112,4 +112,4 @@ What this round does reinforce is the ordering the errata settled: **execution f
 
 ## Relationship to slice 14
 
-Slice 14's three unbuilt defects stand. Note that **#6** — the merged-state check querying the current branch rather than `state.md`'s `PR:` — lives on the closeout path this run traversed successfully. It succeeded because the branch happened to be checked out, which is exactly the condition that hides it.
+Slice 14's three unbuilt defects stand. *(As built: slice 15 shipped all three in 0.13.0. The sentence records the position at decision time; the disposition is here so the claim does not outlive it.)* Note that **#6** — the merged-state check querying the current branch rather than `state.md`'s `PR:` — lives on the closeout path this run traversed successfully. It succeeded because the branch happened to be checked out, which is exactly the condition that hides it.
