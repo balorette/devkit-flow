@@ -62,14 +62,18 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _platform import find_bash  # noqa: E402  (path set above)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACK = REPO_ROOT / "pack"
 LIB = REPO_ROOT / "install_lib.py"
 INSTALL = REPO_ROOT / "install.sh"
 VERSION_FILE = REPO_ROOT / "VERSION"
 
-HAVE_BASH = shutil.which("bash") is not None
-needs_bash = unittest.skipUnless(HAVE_BASH, "install.sh requires bash")
+BASH = find_bash()
+HAVE_BASH = BASH is not None
+needs_bash = unittest.skipUnless(HAVE_BASH, "install.sh requires bash (Git Bash on Windows)")
 
 
 def git(*args: str, cwd: Path) -> None:
@@ -96,7 +100,7 @@ def run_install(root: Path, target: Path, *flags: str) -> subprocess.CompletedPr
     Bytes, not text: the CRLF defect is erased by universal-newlines decoding.
     """
     return subprocess.run(
-        ["bash", str(root / "install.sh"), str(target),
+        [BASH, str(root / "install.sh"), str(target),
          "--project-name", "p", "--description", "d", *flags],
         capture_output=True, check=False, stdin=subprocess.DEVNULL,
     )
@@ -174,7 +178,7 @@ class TestInterpreterResolution(unittest.TestCase):
             proc = subprocess.run(
                 # Absolute path: the stripped PATH must not hide bash from
                 # the harness, only Python from the installer.
-                [shutil.which("bash"), str(root / "install.sh"), str(target),
+                [BASH, str(root / "install.sh"), str(target),
                  "--project-name", "p", "--description", "d", "--dry-run"],
                 capture_output=True, check=False, stdin=subprocess.DEVNULL, env=env,
             )
@@ -308,10 +312,13 @@ class TestEndToEndInstall(unittest.TestCase):
 
     def test_no_installed_path_contains_a_control_character(self):
         """The assertion the Windows run needed and nothing was making."""
-        bad = [
-            str(p) for p in (self.target / ".claude").rglob("*")
-            if any(ord(ch) < 32 for ch in p.name)
-        ]
+        installed = list((self.target / ".claude").rglob("*"))
+        # Without this, a failed install leaves nothing to scan and the guard
+        # passes vacuously — which is exactly what happened on the first
+        # Windows CI run, where it was the only green test in its class.
+        self.assertTrue(
+            installed, "nothing was installed, so this guard proved nothing")
+        bad = [str(p) for p in installed if any(ord(ch) < 32 for ch in p.name)]
         self.assertEqual(bad, [], f"installed paths carry control characters: {bad}")
 
     def test_manifest_is_well_formed(self):
