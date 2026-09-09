@@ -51,3 +51,108 @@ Two real process gaps found:
 One design-taste observation, not a bug: for a genuinely tiny feature (2 source files, ~30 lines of real code), the full-depth workflow produced a ~100-line spec, ~90-line plan, 3 subagent calls, and 7 commits. The "minimum-viable" carve-out only covers literal one-liners and pure refactors, so anything with any new functionality — however small — gets the full typical-depth treatment. That's presumably the right default for real features, but worth asking your brother whether there's an intentionally smaller tier for trivial ones, or whether the assumption is that devkit users are always operating at a scale where that overhead pays for itself.
 
 Bottom line: once the two Windows bugs are patched, the workflow doesn't just install — it actually works as designed, including the parts that are hardest to get right (fresh-context adversarial review). The one real gap found in a live run is small and specific enough to hand him directly.
+
+---
+
+## Disposition (2026-09-09)
+
+Recorded after the review pass. Every claim above was checked against the code
+before anything was changed; all four installer claims reproduced.
+
+**A note on the source text.** Parts 1 and 2 above are transcribed as received
+and are corrupted in several places — the bug-2 fix snippet breaks mid-line
+(`sys.stdout.reconfigure(newline` with no argument), and there are chewed
+fragments (`"a false A, the whole statement'sfailing exit status"`,
+`"windows-lateste a real user hit them"`). Looks like a terminal-capture
+artifact. The findings were reconstructable; a clean copy is still worth
+requesting before this is cited as the record.
+
+### Shipped in 0.13.1
+
+| # | Finding | Fix |
+|---|---|---|
+| 1 | `python3` hard-coded at `install.sh:155, 202, 348, 538` | Interpreter resolved once, up front: `python3` → `python` → `py -3`, each probed for **>= 3.7** so an old Linux `python` (Python 2) is rejected with a clear message instead of an obscure `SyntaxError` later |
+| 2 | CRLF from `install_lib.py` corrupts every installed filename | LF forced on the producer (`sys.stdout.reconfigure(newline="\n")`) **and** stripped on the consumer (`line="${line%$'\r'}"` in the plan loop, plus `INSTALLED_VERSION`, which drives mode selection) |
+| 3 | `mark_hook_exec`'s bare `&&` kills the script silently | Wrapped in `if`. `set -e` exempts a failure *inside* an AND-list but not the *call* to a function that returns non-zero — verified both halves empirically |
+| 4 | **New, found while building the CI:** no `.gitattributes` | `* text=auto eol=lf`. Git for Windows defaults to `core.autocrlf=true`, so a Windows clone rewrote `install.sh` itself and bash died at line 1 — upstream of all three fixes above |
+| Gap 1 | Fresh install leaves a dirty tree; `/feature-start:21` requires a clean one | Closing message now names the commit, in update mode too. README says it as well |
+| — | No CI | `.github/workflows/tests.yml` — Linux + Windows, py3.9 / py3.11 |
+
+**Corrections to the proposed fixes**, both of which matter if applied verbatim:
+
+- `command -v "py -3"` cannot work — `command -v` resolves a command *name*,
+  not a name plus arguments, so that branch never fires.
+- `sys.stdout.reconfigure(...)` alone is one-sided. It is the right primary
+  fix and does cover all four call sites at once, but the bash loop is the
+  consumer and a CR reaching it becomes a filename. Both sides are now fixed.
+
+### The keeper
+
+**A guard can be structurally blind to the defect it appears to cover.**
+
+The obvious lesson — "no CI, so bugs shipped" — is true but not the sharp one.
+The suite that existed *could not have caught any of these even if it had been
+run on Windows*:
+
+- `tests/test_install_plan.py` reads `install_lib.py` through
+  `subprocess.run(..., text=True)`, and universal-newlines mode rewrites
+  `\r\n` to `\n` before any assertion sees it. **A CRLF producer is invisible
+  to a text-mode consumer.** Verified directly rather than assumed.
+- Its only `install.sh` invocation is `--dry-run`, which returns roughly sixty
+  lines before `mark_hook_exec` is ever reached.
+
+So `tests/test_installer_portability.py` reads raw **bytes**, builds its own
+CRLF producer via a stub `install_lib.py` so the bash-side strip is tested on
+every platform rather than only on Windows, and runs the **first non-dry-run
+install this suite has ever had**. All four guards were confirmed red against
+the unfixed code first, and the static one was mutation-tested afterward.
+
+This is a sibling of slice 15's *a guarantee that degrades does not announce
+it*: the assurance a green suite advertises was never the assurance it
+provided, and nothing said so.
+
+### Deferred — the substantive half, not authored
+
+Both are the round's real content, and both are clause-shaped rather than
+point fixes:
+
+1. **Triage has three routes and no receipt.** `engineer` Red routes a tester
+   finding to fix-now / `/checkpoint` amendment / findings ledger, and nothing
+   confirms it landed in any of them. The reported case — `python -m unitconv`
+   having no entry point — was flagged unprompted, routed nowhere, and
+   surfaced only because Gate 2 happened to run the spec's literal examples by
+   hand rather than trusting green tests.
+2. **Acceptance mapping maps a criterion to a *step*, not to a test that
+   exercises it as written.** `pm/SKILL.md:303-320` was fully green while the
+   feature's own literal acceptance example was broken, because the step's
+   tests called `main()` directly. Strictly sharper than the slice-1 Finding 4
+   it descends from: that was *no test*; this is *a test that does not
+   exercise the criterion*.
+
+Structurally these are ADR-0009 clause 4 and ADR-0010 clause 6 — an
+observation with no forced landing spot, and a claim declared satisfied with
+no verification pass.
+
+### Noted, no change
+
+The depth-tier observation is a legitimate design question, not a defect. The
+minimum-viable carve-out (`pack/references/spec-and-plan-depth.md:35-41`) is
+defined by *change shape* — one-liners, contained refactors, doc-only — so a
+~30-line CLI drew the full typical-depth treatment. Whether a third tier
+defined by *risk* belongs there is open. The current default is deliberate:
+the pack's whole evidence base is that the cheap-looking step is where defects
+hide. Unchanged pending a second opinion from real use.
+
+### Recorded as working
+
+Worth keeping, since a findings list is not the whole result — and this is the
+first assessment by someone with no stake in the design:
+
+- The plan's *Framework constraints* research step caught `argparse`'s
+  `type=float` silently substituting its own error text for the spec's
+  contracted string, **before any code was written**.
+- `conformance-reviewer` read the resulting manual-parsing workaround as
+  spec-serving rather than flagging it as a deviation.
+- `security-reviewer` held `inf`/`nan` parsing and unbounded input length at
+  informational, correctly declining to inflate severity against the spec's
+  stated local-single-user threat model.

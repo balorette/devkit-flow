@@ -6,11 +6,15 @@ It composes Claude Code's native primitives — subagents, skills, slash command
 
 ## Status
 
-**v0.x — feature-complete, lightly dogfooded.** All six core slices are written and have been exercised end-to-end on one project ([Enterprise Agent](#dogfood-target)). A seventh "commit discipline" polish pass landed afterward and is not yet dogfood-validated. The pack works today for someone who reads through this README and the design docs; it has not yet been installed by a stranger on a fresh second project, which is the real "stands on its own" test. Treat it accordingly.
+**v0.x — feature-complete, lightly dogfooded.** All six core slices are written and have been exercised end-to-end on one project ([Enterprise Agent](#dogfood-target)). A seventh "commit discipline" polish pass landed afterward and is not yet dogfood-validated.
+
+**A stranger has now installed it once** (2026-09-09, on Windows, by a non-engineer) and run a small CLI feature through the entire flow — spec, plan, TDD steps, three fresh-context subagents, three-gate merge. That run found four installer defects and two process gaps; the installer defects are fixed in 0.13.1 and the process gaps are open. The report is `docs/validation/user-feedback.md`. So the "stands on its own" test has been run once and mostly passed — the workflow held, the installer did not.
 
 The honest caveats:
 
-- One-project dogfood. Behavior on radically different stacks (non-Python, Windows, monorepos, etc.) is unverified.
+- Two-project dogfood, one of them a single small feature. Behavior on radically different stacks (non-Python, monorepos, etc.) is still unverified.
+- **Windows:** the installer's four known Windows defects are fixed and CI now runs the suite on `windows-latest`, but no *workflow* command has been exercised on Windows.
+- Two known process gaps, both open: a tester's finding can be triaged nowhere and silently vanish between build steps, and acceptance mapping maps a criterion to a step rather than to a test that exercises it as written. See `docs/validation/user-feedback.md`.
 - Slice-7 commit-proposal substeps haven't been exercised by a real `/build` invocation yet.
 - Install scripting is new (this release); the manual install path the Enterprise Agent dogfood used is what's actually battle-tested.
 - A handful of polish items are tracked in the design notes (see `docs/validation/slice-6.md` Findings 5–7); they don't block use, but they're real.
@@ -18,8 +22,8 @@ The honest caveats:
 ## Requirements
 
 - **Claude Code** (CLI, desktop, or IDE extension — anything that loads `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, and `.claude/hooks/`).
-- **Python 3** — the drift-detection hook is stdlib-only Python.
-- **Bash** — the installer is a bash script.
+- **Python 3.7+** — the drift-detection hook and the installer's helper are stdlib-only Python. The installer accepts `python3`, `python`, or `py -3`, so a python.org Windows install (which provides `python.exe` and `py.exe` but no `python3.exe`) works without a shim.
+- **Bash** — the installer is a bash script. On Windows, Git Bash.
 - **git** — every workflow command assumes a git repo with a mainline branch (`main` or `master`).
 
 ## Install
@@ -40,6 +44,13 @@ Flags:
 - `--claude-md-only` — skip the pack file install; only re-run the CLAUDE.md handling step (preview + Y/n prompt to add the orientation reference). For richer reconciliation — heading renames, semantic equivalence, partial overlap — use the `/claude-md-merge` slash command from a Claude Code session instead.
 
 Target dir defaults to the current directory if omitted. The script is idempotent — re-running it on an already-installed target switches to update mode (see below).
+
+**Commit the install before you run anything.** `/feature-start`'s first precondition is a clean working tree, and the files the installer just wrote are what's dirtying it — so without this, your first workflow command fails on your previous command's output. The installer prints the exact commands; the short version:
+
+```bash
+cd /path/to/your/project
+git add .claude CLAUDE.md && git commit -m "chore: install devkit"
+```
 
 ### What `install.sh` does (fresh install)
 
