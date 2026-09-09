@@ -151,8 +151,53 @@ CLAUDE_DIR="$TARGET/.claude"
 MANIFEST="$CLAUDE_DIR/.devkit-manifest.json"
 VERSION_STAMP="$CLAUDE_DIR/.devkit-version"
 
+# --- Resolve a Python interpreter ----------------------------------------------
+# `python3` is not a universal name. A python.org Windows install provides
+# python.exe and py.exe and never python3.exe, so hard-coding the name killed
+# this installer on a standard Windows setup — with a "get it from the
+# Microsoft Store" message that blames PATH for a binary that does not exist
+# under that name. Resolve once here; every call below uses "${PY[@]}".
+#
+# The version probe matters as much as the name: on older Linux `python` is
+# Python 2, and accepting it would trade a clear failure here for an obscure
+# SyntaxError inside install_lib.py later.
+#
+# The floor is set by the *shipped hook*, not by this script.
+# `doc-drift-detector.py` calls `str.removeprefix`, which is 3.9+, so a 3.7
+# that satisfies install_lib.py would install a pack whose hook raises
+# AttributeError on its first owned_files glob. Keep this in step with the
+# floor job in .github/workflows/tests.yml — that job is what actually
+# exercises it.
+PY=()
+_py_usable() {
+  "$@" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' \
+    >/dev/null 2>&1
+}
+for _cand in "python3" "python" "py -3"; do
+  # shellcheck disable=SC2086  # deliberate split: "py -3" is command + arg
+  if _py_usable $_cand; then
+    # shellcheck disable=SC2206
+    PY=($_cand)
+    break
+  fi
+done
+unset -f _py_usable
+unset _cand
+if [[ ${#PY[@]} -eq 0 ]]; then
+  echo "error: no Python interpreter found (tried python3, python, py -3)." >&2
+  echo "       The devkit installer needs Python 3.9 or newer." >&2
+  echo "       On Windows, a python.org install provides python.exe and" >&2
+  echo "       py.exe but not python3.exe — either name works here; make" >&2
+  echo "       sure one of them is on PATH." >&2
+  exit 1
+fi
+
 # --- Detect mode ---------------------------------------------------------------
-INSTALLED_VERSION="$(python3 "$LIB" manifest-read "$MANIFEST" 2>/dev/null || true)"
+INSTALLED_VERSION="$("${PY[@]}" "$LIB" manifest-read "$MANIFEST" 2>/dev/null || true)"
+# Command substitution strips a trailing newline but not a trailing CR, and
+# this value drives fresh-vs-update mode selection and every version
+# comparison below — a stray CR here misclassifies the whole run.
+INSTALLED_VERSION="${INSTALLED_VERSION%$'\r'}"
 if [[ -n "$INSTALLED_VERSION" ]]; then
   MODE="update"
 else
@@ -194,17 +239,29 @@ ensure_gitignore_line() {
 install_or_merge_settings() {
   local settings="$CLAUDE_DIR/settings.json"
   local fragment="$PACK_DIR/hooks/settings.json.fragment"
+  # The hook must run under the interpreter we just resolved. Shipping a
+  # literal `python3` in the fragment would reproduce, at every PostToolUse,
+  # exactly the failure the probe above fixes at install time — and reproduce
+  # it *silently*, since a hook that cannot start produces no output. Fixing
+  # the installer alone would have moved the defect from install time to
+  # normal use rather than removing it.
+  #
+  # Substituted in place rather than via a temp file: `mktemp` would be one
+  # more tool to depend on, and both consumers can take the interpreter
+  # directly.
   if [[ ! -f "$settings" ]]; then
-    copy_file "$fragment" "$settings"
+    mkdir -p "$(dirname "$settings")"
+    sed "s|{{PYTHON}}|${PY[*]}|g" "$fragment" > "$settings"
     echo "    + .claude/settings.json (created from fragment)"
     return 0
   fi
-  python3 - "$settings" "$fragment" <<'PY'
+  "${PY[@]}" - "$settings" "$fragment" "${PY[*]}" <<'PYEOF'
 import json, sys, pathlib
 settings_path = pathlib.Path(sys.argv[1])
 fragment_path = pathlib.Path(sys.argv[2])
+python_cmd = sys.argv[3]
 settings = json.loads(settings_path.read_text())
-fragment = json.loads(fragment_path.read_text())
+fragment = json.loads(fragment_path.read_text().replace("{{PYTHON}}", python_cmd))
 def hook_id(entry):
     cmds = tuple((h.get("type"), h.get("command")) for h in entry.get("hooks", []))
     return (entry.get("matcher"), cmds)
@@ -218,7 +275,7 @@ for event, entries in fragment.get("hooks", {}).items():
             existing.append(entry); changed = True
 if changed:
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
-PY
+PYEOF
   echo "    ~ .claude/settings.json (hook entries merged if missing)"
 }
 
@@ -242,9 +299,18 @@ stamp_state_md() {
 }
 
 # Set hook executable bit.
+#
+# The `if` is load-bearing, not style. As `[[ -f "$hook" ]] && chmod +x "$hook"`
+# this was the function's last command, so a false test became the function's
+# return status — and while `set -e` exempts a failing command *inside* an
+# AND-list, it does not exempt the *call* to a function that returns non-zero.
+# A missing hook therefore killed the whole installer with exit 1 and no
+# output. Any future missing-file case would do the same.
 mark_hook_exec() {
   local hook="$CLAUDE_DIR/hooks/doc-drift-detector.py"
-  [[ -f "$hook" ]] && chmod +x "$hook"
+  if [[ -f "$hook" ]]; then
+    chmod +x "$hook"
+  fi
 }
 
 # --- CLAUDE.md handling -------------------------------------------------------
@@ -345,7 +411,7 @@ fi
 
 # --- Compute plan (both modes) -------------------------------------------------
 # For fresh install the plan is mostly "NEW" entries; for update it's mixed.
-PLAN="$(python3 "$LIB" plan "$PACK_DIR" "$TARGET" "$MANIFEST" "$PACK_VERSION")"
+PLAN="$("${PY[@]}" "$LIB" plan "$PACK_DIR" "$TARGET" "$MANIFEST" "$PACK_VERSION")"
 
 # --- Categorize plan -----------------------------------------------------------
 # Pre-init as empty arrays (set -u + bash 3.2 trips on `declare -a` alone).
@@ -353,6 +419,12 @@ FILES_UPDATE=(); FILES_SKIP=(); FILES_NEW=(); FILES_UNCHANGED=(); FILES_UNMANAGE
 TEMPLATES_CHANGED=(); TEMPLATES_UNCHANGED=()
 
 while IFS= read -r line; do
+  # Strip a trailing CR before anything reads the payload. install_lib.py now
+  # forces LF (see its __main__ block), so this is defence in depth rather
+  # than the primary fix — but this loop is the consumer, and a CR that
+  # reaches it becomes a literal carriage return in an installed *filename*,
+  # which is silent and near-undiagnosable. Belongs on both sides.
+  line="${line%$'\r'}"
   [[ -z "$line" ]] && continue
   verb="${line%% *}"
   payload="${line#* }"
@@ -535,7 +607,7 @@ ensure_gitignore_line "__pycache__/"
 ensure_gitignore_line "*.pyc"
 
 # --- Write manifest + version stamp --------------------------------------------
-python3 "$LIB" manifest-write "$PACK_DIR" "$TARGET" "$MANIFEST" "$PACK_VERSION"
+"${PY[@]}" "$LIB" manifest-write "$PACK_DIR" "$TARGET" "$MANIFEST" "$PACK_VERSION"
 printf '%s\n' "$PACK_VERSION" > "$VERSION_STAMP"
 
 # --- Done ----------------------------------------------------------------------
@@ -578,6 +650,28 @@ echo "     or skills -- the slash-command index is built at startup."
 echo "     Changed bodies of existing commands and skills load fresh at"
 echo "     invocation time; those need no restart."
 step=$((step + 1))
+# Commit the install before anything else. `/feature-start`'s very first
+# precondition is a clean working tree, and this installer's own output is what
+# dirties it — so a new user's first command failed on the files the previous
+# command had just written. Applies to updates too, which write just as much.
+if [[ -d "$TARGET/.git" ]]; then
+  commit_paths=".claude"
+  # Every path this installer writes has to be named here, or the command
+  # leaves the tree dirty and `/feature-start` fails anyway — which is the
+  # exact failure this guidance exists to prevent. `.gitignore` is the easy
+  # one to forget: `ensure_gitignore_line` creates or appends to it on a
+  # fresh target, well away from the .claude/ writes above.
+  # Only name a file if it exists — `git add` on a missing pathspec is fatal,
+  # and the user may have declined the CLAUDE.md step entirely.
+  if [[ -f "$TARGET/CLAUDE.md" ]]; then commit_paths="$commit_paths CLAUDE.md"; fi
+  if [[ -f "$TARGET/.gitignore" ]]; then commit_paths="$commit_paths .gitignore"; fi
+  echo "  $step. Commit what this installer just wrote — /feature-start's first"
+  echo "     precondition is a clean working tree, and these files are what is"
+  echo "     dirtying it:"
+  echo "       git -C \"$TARGET\" add $commit_paths"
+  echo "       git -C \"$TARGET\" commit -m \"chore: install devkit $PACK_VERSION\""
+  step=$((step + 1))
+fi
 if [[ "$MODE" == "fresh" ]]; then
   echo "  $step. Existing codebase? Run /adopt first to build the baseline domain"
   echo "     docs + CLAUDE.md conventions, then /feature-start \"<short description>\"."

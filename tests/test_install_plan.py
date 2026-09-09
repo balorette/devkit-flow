@@ -23,10 +23,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _platform import find_bash  # noqa: E402  (path set above)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACK = REPO_ROOT / "pack"
 LIB = REPO_ROOT / "install_lib.py"
 INSTALL = REPO_ROOT / "install.sh"
+
+# Not the literal "bash": on Windows that resolves to the System32 WSL
+# launcher, which exits 1 with "no installed distributions". See _platform.
+BASH = find_bash()
 
 
 def git(*args: str, cwd: Path) -> str:
@@ -107,6 +114,7 @@ class TestNoManifestIsUnmanaged(unittest.TestCase):
         self.assertNotIn("UNMANAGED", b)
 
 
+@unittest.skipUnless(BASH, "install.sh requires bash (Git Bash on Windows)")
 class TestMainlineDetection(unittest.TestCase):
     """`--mainline` must not default to whatever branch happens to be checked out."""
 
@@ -124,7 +132,7 @@ class TestMainlineDetection(unittest.TestCase):
 
     def _detected_mainline(self, repo: Path) -> str:
         out = subprocess.run(
-            ["bash", str(INSTALL), str(repo), "--dry-run",
+            [BASH, str(INSTALL), str(repo), "--dry-run",
              "--project-name", "p", "--description", "d"],
             capture_output=True, text=True, check=False, stdin=subprocess.DEVNULL).stdout
         for line in out.splitlines():
@@ -151,7 +159,7 @@ class TestMainlineDetection(unittest.TestCase):
         repo = self._repo()
         git("checkout", "-qb", "feature/x", cwd=repo)
         out = subprocess.run(
-            ["bash", str(INSTALL), str(repo), "--dry-run", "--mainline", "trunk",
+            [BASH, str(INSTALL), str(repo), "--dry-run", "--mainline", "trunk",
              "--project-name", "p", "--description", "d"],
             capture_output=True, text=True, check=False, stdin=subprocess.DEVNULL).stdout
         self.assertIn("trunk", [l.split(":", 1)[1].strip() for l in out.splitlines() if "Mainline" in l])

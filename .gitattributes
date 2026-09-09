@@ -1,0 +1,16 @@
+# Line endings are a correctness concern in this repo, not a style preference.
+#
+# Git for Windows installs with core.autocrlf=true by default, so a Windows
+# clone would rewrite install.sh into the working tree with CRLF. bash then
+# fails on the first line with `$'\r': command not found` — before any of the
+# installer's own Windows handling is even reached. The same conversion would
+# break the doc-drift hook, which Claude Code executes directly.
+#
+# Forcing LF in the working tree on every platform is the fix. Both files are
+# read by interpreters that treat CR as content, never by Notepad.
+
+* text=auto eol=lf
+
+*.sh      text eol=lf
+*.py      text eol=lf
+*.fragment text eol=lf

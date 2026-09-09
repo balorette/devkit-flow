@@ -248,4 +248,14 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
+    # Force LF on stdout. Python's text mode translates "\n" -> os.linesep on
+    # write, so on Windows every plan line arrived at install.sh as CRLF; its
+    # parsing loop kept the CR and every installed file was created with a
+    # literal carriage return in its name. stdout is a machine interface here
+    # (bash parses it into paths), so it must not be platform-sensitive.
+    #
+    # stderr is left alone deliberately — it carries human-readable messages
+    # and native line endings are correct there.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(newline="\n")  # type: ignore[union-attr]
     sys.exit(main(sys.argv))

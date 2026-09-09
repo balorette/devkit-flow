@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/doc-drift-detector.py"
+            "command": "{{PYTHON}} .claude/hooks/doc-drift-detector.py"
           }
         ]
       }

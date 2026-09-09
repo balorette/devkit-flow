@@ -1,0 +1,60 @@
+name: tests
+
+# Why this exists, and why it is a matrix rather than a single job.
+#
+# Three defects shipped in 0.13.0 and were found by a first-time user on
+# Windows: `python3` hard-coded as an interpreter name, CRLF from Python's
+# text-mode stdout corrupting every installed filename, and a `set -e` trap
+# that turned the resulting missing file into a silent exit 1. A real test
+# suite already existed; nothing ran it, and nothing ran it anywhere but the
+# author's machine.
+#
+# The Windows leg is the point. Two of the three defects are unreachable on
+# Linux by construction — `python3` exists, and Python emits LF — so a
+# Linux-only job would report green on a broken installer indefinitely.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # a Windows-only failure must not hide a Linux one
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.11"
+          # The floor install.sh probes for. Guards against syntax that
+          # quietly raises the real minimum above what the error message says.
+          - os: ubuntu-latest
+            python: "3.9"
+          - os: windows-latest
+            python: "3.11"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The installer inspects git history to detect a target's mainline
+          # branch; a shallow clone is enough, but line endings are not
+          # negotiable — a CRLF checkout of install.sh would itself fail.
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Show environment
+        shell: bash
+        run: |
+          python --version
+          bash --version | head -1
+          git --version
+
+      - name: Run the suite
+        shell: bash
+        run: python -m unittest discover -s tests -v
