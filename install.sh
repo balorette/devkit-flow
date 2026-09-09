@@ -73,41 +73,6 @@ fi
 
 PACK_VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
 
-# --- Resolve a Python interpreter ----------------------------------------------
-# `python3` is not a universal name. A python.org Windows install provides
-# python.exe and py.exe and never python3.exe, so hard-coding the name killed
-# this installer on a standard Windows setup — with a "get it from the
-# Microsoft Store" message that blames PATH for a binary that does not exist
-# under that name. Resolve once here; every call below uses "${PY[@]}".
-#
-# The version probe matters as much as the name: on older Linux `python` is
-# Python 2, and accepting it would trade a clear failure here for an obscure
-# SyntaxError inside install_lib.py later. 3.7 is the floor —
-# `from __future__ import annotations` and `sys.stdout.reconfigure`.
-PY=()
-_py_usable() {
-  "$@" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 7) else 1)' \
-    >/dev/null 2>&1
-}
-for _cand in "python3" "python" "py -3"; do
-  # shellcheck disable=SC2086  # deliberate split: "py -3" is command + arg
-  if _py_usable $_cand; then
-    # shellcheck disable=SC2206
-    PY=($_cand)
-    break
-  fi
-done
-unset -f _py_usable
-unset _cand
-if [[ ${#PY[@]} -eq 0 ]]; then
-  echo "error: no Python interpreter found (tried python3, python, py -3)." >&2
-  echo "       The devkit installer needs Python 3.7 or newer." >&2
-  echo "       On Windows, a python.org install provides python.exe and" >&2
-  echo "       py.exe but not python3.exe — either name works here; make" >&2
-  echo "       sure one of them is on PATH." >&2
-  exit 1
-fi
-
 # --- Parse args ----------------------------------------------------------------
 TARGET=""
 PROJECT_NAME=""
@@ -186,6 +151,47 @@ CLAUDE_DIR="$TARGET/.claude"
 MANIFEST="$CLAUDE_DIR/.devkit-manifest.json"
 VERSION_STAMP="$CLAUDE_DIR/.devkit-version"
 
+# --- Resolve a Python interpreter ----------------------------------------------
+# `python3` is not a universal name. A python.org Windows install provides
+# python.exe and py.exe and never python3.exe, so hard-coding the name killed
+# this installer on a standard Windows setup — with a "get it from the
+# Microsoft Store" message that blames PATH for a binary that does not exist
+# under that name. Resolve once here; every call below uses "${PY[@]}".
+#
+# The version probe matters as much as the name: on older Linux `python` is
+# Python 2, and accepting it would trade a clear failure here for an obscure
+# SyntaxError inside install_lib.py later.
+#
+# The floor is set by the *shipped hook*, not by this script.
+# `doc-drift-detector.py` calls `str.removeprefix`, which is 3.9+, so a 3.7
+# that satisfies install_lib.py would install a pack whose hook raises
+# AttributeError on its first owned_files glob. Keep this in step with the
+# floor job in .github/workflows/tests.yml — that job is what actually
+# exercises it.
+PY=()
+_py_usable() {
+  "$@" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' \
+    >/dev/null 2>&1
+}
+for _cand in "python3" "python" "py -3"; do
+  # shellcheck disable=SC2086  # deliberate split: "py -3" is command + arg
+  if _py_usable $_cand; then
+    # shellcheck disable=SC2206
+    PY=($_cand)
+    break
+  fi
+done
+unset -f _py_usable
+unset _cand
+if [[ ${#PY[@]} -eq 0 ]]; then
+  echo "error: no Python interpreter found (tried python3, python, py -3)." >&2
+  echo "       The devkit installer needs Python 3.9 or newer." >&2
+  echo "       On Windows, a python.org install provides python.exe and" >&2
+  echo "       py.exe but not python3.exe — either name works here; make" >&2
+  echo "       sure one of them is on PATH." >&2
+  exit 1
+fi
+
 # --- Detect mode ---------------------------------------------------------------
 INSTALLED_VERSION="$("${PY[@]}" "$LIB" manifest-read "$MANIFEST" 2>/dev/null || true)"
 # Command substitution strips a trailing newline but not a trailing CR, and
@@ -233,17 +239,29 @@ ensure_gitignore_line() {
 install_or_merge_settings() {
   local settings="$CLAUDE_DIR/settings.json"
   local fragment="$PACK_DIR/hooks/settings.json.fragment"
+  # The hook must run under the interpreter we just resolved. Shipping a
+  # literal `python3` in the fragment would reproduce, at every PostToolUse,
+  # exactly the failure the probe above fixes at install time — and reproduce
+  # it *silently*, since a hook that cannot start produces no output. Fixing
+  # the installer alone would have moved the defect from install time to
+  # normal use rather than removing it.
+  #
+  # Substituted in place rather than via a temp file: `mktemp` would be one
+  # more tool to depend on, and both consumers can take the interpreter
+  # directly.
   if [[ ! -f "$settings" ]]; then
-    copy_file "$fragment" "$settings"
+    mkdir -p "$(dirname "$settings")"
+    sed "s|{{PYTHON}}|${PY[*]}|g" "$fragment" > "$settings"
     echo "    + .claude/settings.json (created from fragment)"
     return 0
   fi
-  "${PY[@]}" - "$settings" "$fragment" <<'PYEOF'
+  "${PY[@]}" - "$settings" "$fragment" "${PY[*]}" <<'PYEOF'
 import json, sys, pathlib
 settings_path = pathlib.Path(sys.argv[1])
 fragment_path = pathlib.Path(sys.argv[2])
+python_cmd = sys.argv[3]
 settings = json.loads(settings_path.read_text())
-fragment = json.loads(fragment_path.read_text())
+fragment = json.loads(fragment_path.read_text().replace("{{PYTHON}}", python_cmd))
 def hook_id(entry):
     cmds = tuple((h.get("type"), h.get("command")) for h in entry.get("hooks", []))
     return (entry.get("matcher"), cmds)
@@ -638,9 +656,15 @@ step=$((step + 1))
 # command had just written. Applies to updates too, which write just as much.
 if [[ -d "$TARGET/.git" ]]; then
   commit_paths=".claude"
-  # Only name CLAUDE.md if it exists: `git add` on a missing pathspec is fatal,
+  # Every path this installer writes has to be named here, or the command
+  # leaves the tree dirty and `/feature-start` fails anyway — which is the
+  # exact failure this guidance exists to prevent. `.gitignore` is the easy
+  # one to forget: `ensure_gitignore_line` creates or appends to it on a
+  # fresh target, well away from the .claude/ writes above.
+  # Only name a file if it exists — `git add` on a missing pathspec is fatal,
   # and the user may have declined the CLAUDE.md step entirely.
   if [[ -f "$TARGET/CLAUDE.md" ]]; then commit_paths="$commit_paths CLAUDE.md"; fi
+  if [[ -f "$TARGET/.gitignore" ]]; then commit_paths="$commit_paths .gitignore"; fi
   echo "  $step. Commit what this installer just wrote — /feature-start's first"
   echo "     precondition is a clean working tree, and these files are what is"
   echo "     dirtying it:"

@@ -197,6 +197,85 @@ class TestInterpreterResolution(unittest.TestCase):
                 f"got: {combined[:400]!r}")
 
 
+class TestInterpreterReachesTheHook(unittest.TestCase):
+    r"""Resolving the interpreter for the *installer* is only half the job.
+
+    PR #12 review, P1: the installer probed for `python3` / `python` / `py -3`
+    and then installed a settings.json whose hook command was the literal
+    `python3 .claude/hooks/doc-drift-detector.py`. On the python.org Windows
+    setup this whole round exists to support, the install then *succeeded*
+    while the drift hook failed to start at every PostToolUse -- silently,
+    because a hook that cannot launch produces no output. The defect had
+    moved from install time to normal use rather than being removed.
+    """
+
+    FRAGMENT = PACK / "hooks" / "settings.json.fragment"
+
+    def test_fragment_does_not_hardcode_an_interpreter(self):
+        command = json.loads(self.FRAGMENT.read_text())["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
+        self.assertIn("{{PYTHON}}", command,
+                      "the fragment must defer the interpreter to install time")
+        self.assertNotIn("python3", command,
+                         "a literal python3 here is the installer's own bug, relocated")
+
+    @needs_bash
+    def test_installed_hook_command_has_no_unsubstituted_placeholder(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td).resolve()
+            target = make_target(tmp)
+            proc = run_install(REPO_ROOT, target)
+            self.assertEqual(proc.returncode, 0, "install failed")
+            settings = json.loads((target / ".claude" / "settings.json").read_text())
+        command = settings["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
+        self.assertNotIn("{{PYTHON}}", command,
+                         f"placeholder survived into the installed hook: {command!r}")
+        self.assertTrue(command.endswith(".claude/hooks/doc-drift-detector.py"),
+                        f"hook command mangled by substitution: {command!r}")
+        # Whatever it resolved to must actually run Python here.
+        interpreter = command[: -len(" .claude/hooks/doc-drift-detector.py")]
+        probe = subprocess.run(interpreter.split() + ["-c", "print(1)"],
+                               capture_output=True, check=False)
+        self.assertEqual(probe.returncode, 0,
+                         f"installed hook interpreter {interpreter!r} does not run")
+
+
+class TestDeclaredPythonFloor(unittest.TestCase):
+    """The declared floor must be the floor CI actually exercises.
+
+    PR #12 review, P2: the probe accepted 3.7, but the shipped hook calls
+    `str.removeprefix` (3.9+), so a 3.7 machine passed the installer's check
+    and then got a hook that raises AttributeError on its first owned_files
+    glob. The CI floor job is the only thing that runs the hook's tests under
+    the oldest supported interpreter -- so if these two numbers drift apart,
+    the floor stops being tested and this class stops meaning anything.
+    """
+
+    WORKFLOW = REPO_ROOT / ".github" / "workflows" / "tests.yml"
+
+    def _probe_floor(self) -> tuple[int, int]:
+        m = re.search(r"version_info >= \((\d+), (\d+)\)", INSTALL.read_text())
+        self.assertIsNotNone(m, "no version probe found in install.sh")
+        return int(m.group(1)), int(m.group(2))
+
+    def test_ci_runs_the_declared_floor(self):
+        major, minor = self._probe_floor()
+        versions = re.findall(r'python:\s*"(\d+)\.(\d+)"', self.WORKFLOW.read_text())
+        self.assertTrue(versions, "no python versions found in the workflow matrix")
+        lowest = min((int(a), int(b)) for a, b in versions)
+        self.assertEqual(
+            lowest, (major, minor),
+            f"install.sh declares a {major}.{minor} floor but CI's oldest job is "
+            f"{lowest[0]}.{lowest[1]} -- the declared floor is untested",
+        )
+
+    def test_readme_states_the_same_floor(self):
+        major, minor = self._probe_floor()
+        self.assertIn(
+            f"Python {major}.{minor}+", (REPO_ROOT / "README.md").read_text(),
+            f"README must advertise the {major}.{minor} floor install.sh enforces",
+        )
+
+
 class TestLineEndings(unittest.TestCase):
     r"""CRLF must not reach a filename. Tested from both sides."""
 

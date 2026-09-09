@@ -22,7 +22,7 @@ The honest caveats:
 ## Requirements
 
 - **Claude Code** (CLI, desktop, or IDE extension — anything that loads `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, and `.claude/hooks/`).
-- **Python 3.7+** — the drift-detection hook and the installer's helper are stdlib-only Python. The installer accepts `python3`, `python`, or `py -3`, so a python.org Windows install (which provides `python.exe` and `py.exe` but no `python3.exe`) works without a shim.
+- **Python 3.9+** — the drift-detection hook and the installer's helper are stdlib-only Python. The floor is set by the hook, which uses `str.removeprefix`. The installer accepts `python3`, `python`, or `py -3`, so a python.org Windows install (which provides `python.exe` and `py.exe` but no `python3.exe`) works without a shim.
 - **Bash** — the installer is a bash script. On Windows, Git Bash.
 - **git** — every workflow command assumes a git repo with a mainline branch (`main` or `master`).
 
@@ -49,8 +49,10 @@ Target dir defaults to the current directory if omitted. The script is idempoten
 
 ```bash
 cd /path/to/your/project
-git add .claude CLAUDE.md && git commit -m "chore: install devkit"
+git add .claude CLAUDE.md .gitignore && git commit -m "chore: install devkit"
 ```
+
+(`.gitignore` is in there because the installer appends `__pycache__/` and `*.pyc` to it. Leave it out and the tree is still dirty.)
 
 ### What `install.sh` does (fresh install)
 
@@ -117,7 +119,7 @@ Use `--dry-run` first if you want to see exactly what would change before commit
 
 ### Manual install fallback
 
-If the script doesn't fit your environment, copy `pack/skills/*`, `pack/agents/*`, `pack/commands/*`, and `pack/references/*` into the target's `.claude/` subdirectories; copy `pack/hooks/doc-drift-detector.py` to `.claude/hooks/` and `chmod +x` it; create or merge `.claude/settings.json` from `pack/hooks/settings.json.fragment`; copy `pack/state.md.template` to `.claude/state.md`; and start `CLAUDE.md` from `pack/CLAUDE.md.template`. Skipping the manifest is fine; you just lose customization detection on future updates.
+If the script doesn't fit your environment, copy `pack/skills/*`, `pack/agents/*`, `pack/commands/*`, and `pack/references/*` into the target's `.claude/` subdirectories; copy `pack/hooks/doc-drift-detector.py` to `.claude/hooks/` and `chmod +x` it; create or merge `.claude/settings.json` from `pack/hooks/settings.json.fragment`, replacing its `{{PYTHON}}` placeholder with whatever launches Python 3.9+ on your machine (`python3`, `python`, or `py -3`); copy `pack/state.md.template` to `.claude/state.md`; and start `CLAUDE.md` from `pack/CLAUDE.md.template`. Skipping the manifest is fine; you just lose customization detection on future updates.
 
 ## What you get
 
