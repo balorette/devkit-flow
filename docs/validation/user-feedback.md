@@ -156,3 +156,45 @@ first assessment by someone with no stake in the design:
 - `security-reviewer` held `inf`/`nan` parsing and unbounded input length at
   informational, correctly declining to inflate severity against the spec's
   stated local-single-user threat model.
+
+### Owner addendum: code quality (2026-09-24)
+
+The owner raised this while reviewing the round. **The run did not raise it.**
+The report shows no evidence of the problem, and nobody reviewed the ~30 lines
+the run produced for it. It is recorded here because this round was the first
+time someone other than the author judged the pack's output. That prompts a
+question the pack cannot answer: is the code it writes any good, beyond
+passing?
+
+The goal: code produced by the `engineer` skill is clean, consistent with the
+code around it, no more complex than the problem needs, and well documented.
+Checked against 0.13.1, the pack enforces correctness (TDD) and structure
+(SOLID, Clean Architecture), and nothing else:
+
+- **Simplicity has a rule for scope but none for structure.** Green's
+  *minimum* rule forbids speculative fields and branches
+  (`engineer/SKILL.md:57`). Refactor then applies only SOLID and layering, and
+  the checklist's Open/Closed question (*"could a future variant be added by
+  extension?"*) lets back in, as structure, the speculation Green forbids.
+  Nothing asks what makes an abstraction worth having.
+- **Consistency is planned but never checked.** Each step names its
+  *Conventions applied* (`:213`). At build time, nothing but the lint gate
+  compares the diff to them.
+- **Style is handed to a component that has no style guidance.**
+  `security-reviewer.md:32` says *"Style is the engineer skill's domain."* The
+  engineer skill has no style guidance at build time.
+- **Nobody owns code-level documentation.** `documenter` owns project memory,
+  and `/adopt` excludes API docs and READMEs. No survey records a docstring
+  convention, so even a step that asked for docs would have no convention to
+  follow.
+
+This is related to the keeper above. Three green gates look like an assurance
+about code quality, but none of them checks it. Gate 3 is told to ignore
+style, and the other two never look.
+
+The build-time half changes the engineer skill's contract and needs an ADR.
+The review half belongs to slice 13's `reviewer`, because needless complexity
+builds up across steps: each step can be minimal while their sum is not.
+Tracking issue:
+[#13](https://github.com/balorette/devkit-flow/issues/13), which holds the
+full citations and a suggested shape.
