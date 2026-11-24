@@ -15,7 +15,7 @@
 | `security-reviewer` | Invoked by `/feature-merge` as gate 3 | Diff of the feature branch vs main, active spec, `docs/adr/` | Review notes (structured findings + severity) to the calling context | Fresh context. No prior conversation about the implementation choices |
 | `conformance-reviewer` | Invoked by `/plan` (Phase F2) before the plan is approved | Approved spec + draft plan **only** — no source; it has neither `Bash` nor `Glob` | Contradictions by severity (blocking / advisory) to the calling context | Fresh context. The plan's author is anchored on choices just made; a contradiction between contract and proposal is invisible to whoever introduced it. Catching it pre-approval costs a plan revision instead of a build |
 
-### Skills (4)
+### Skills (5)
 
 | Name | Trigger | Reads | Writes | Notes |
 |---|---|---|---|---|
@@ -23,6 +23,7 @@
 | `documenter` | Loaded by `/checkpoint`, `/feature-merge`; on-demand when hook surfaces drift | All of `docs/`, `.claude/state.md`, current diff | Spec amendments, plan amendments, ADRs, summaries, domain doc updates, state.md | Always proposes before writing. Never auto-edits docs without user confirmation. Owns the doc-currency invariant in practice |
 | `pm` | Loaded by `/feature-start` for brainstorm + decomposition; by `/plan` for plan generation | `docs/domains/`, `docs/specs/` (for shape consistency), user input | Spec drafts, plan drafts, state.md updates | Owns the brainstorm-to-spec dialogue pattern and the domain-decomposition heuristic. Invokes architect when design questions surface |
 | `grill-me` | Auto-invoked by `/feature-start` (brainstorm) and `/plan` when user-facing decisions surface; on request ("grill me", "stress-test this") | The plan or design under discussion; the codebase, when a question can be answered by exploring instead of asking | Nothing — it interviews; the caller writes | No isolated context needed, so a skill rather than a subagent. Walks parents before children and reflects each answer back; silent inference is the failure mode it exists to prevent |
+| `ste-writing` | Load when writing or editing agent instructions, plans, specs, PR bodies, or agent reports. Not for chat replies or operator UI copy | `.claude/references/writing-style.md`, `.claude/references/agent-report.md`, and the project glossary when one exists | Nothing — it constrains prose; the caller writes the file | Two modes (Strict and STE-flavored) at about the 80% level of ASD-STE100. No linter. A project glossary overrides generic synonym collapse |
 
 ### Slash commands (6)
 

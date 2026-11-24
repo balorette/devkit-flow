@@ -8,6 +8,8 @@ This project uses the **devkit** skill-pack for Claude Code. The pack enforces a
 
 > **devkit pack:** see `.claude/devkit-orientation.md` for the pack's workflow commands, memory layout, commit cadence, and automated guards. That file is pack-owned and updates with the pack; this file (`CLAUDE.md`) holds project-specific conventions that you own.
 
+When you write agent instructions, plans, specs, PR bodies, or agent reports, follow `.claude/references/writing-style.md`. Do not use that style for chat replies or for operator UI copy.
+
 Two sources of truth, addressed differently:
 
 - **`docs/`** is human-first and durable. It holds the project's real memory — feature specs, plans, architecture decisions, domain models, retrospectives. Read these to understand *what* the project is and *why* it's shaped this way.
