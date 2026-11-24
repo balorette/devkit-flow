@@ -22,7 +22,8 @@ docs/
   references/              checklists loaded on demand (SOLID, Clean Arch, security
                            categories, findings triage, spec/plan depth, CLAUDE.md
                            elements, ADR registry, artifact locations, evidence and
-                           uncertainty, subagent degraded mode)
+                           uncertainty, subagent degraded mode, writing style,
+                           agent report)
 CLAUDE.md                  project index + project-specific conventions
 ```
 

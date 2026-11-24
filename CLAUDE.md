@@ -19,7 +19,7 @@ If a question can be answered from those four docs, answer it from those four do
 
 **Subagents (3):** `architect`, `tester`, `security-reviewer` — each gets fresh context because isolation is load-bearing for what they do.
 
-**Skills (4):** `engineer`, `documenter`, `pm`, `grill-me` — instructions the main thread follows; no isolated context needed.
+**Skills (5):** `engineer`, `documenter`, `pm`, `grill-me`, `ste-writing` — instructions the main thread follows; no isolated context needed.
 
 **Slash commands (5):** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`.
 
@@ -34,9 +34,9 @@ History lives in git + `docs/validation/`. This section describes the pack as it
 ### Shipped
 
 - **Subagents:** `architect`, `tester`, `security-reviewer`, `conformance-reviewer`
-- **Skills:** `engineer`, `documenter`, `pm`, `grill-me`
+- **Skills:** `engineer`, `documenter`, `pm`, `grill-me`, `ste-writing`
 - **Slash commands:** `/feature-start`, `/plan`, `/build`, `/checkpoint`, `/feature-merge`, `/pr-review` (+ housekeeping: `/adopt`, `/claude-md-merge`)
-- **References:** `pack/references/` — `adr-registry.md`, `artifact-locations.md`, `claude-md-elements.md`, `clean-architecture-layers.md`, `evidence-and-uncertainty.md`, `findings-triage.md`, `security-categories.md`, `solid-checklist.md`, `spec-and-plan-depth.md`, `subagent-degraded-mode.md`. `tests/test_reference_lists_current.py` keeps this line and README's from falling behind the directory.
+- **References:** `pack/references/` — `adr-registry.md`, `agent-report.md`, `artifact-locations.md`, `claude-md-elements.md`, `clean-architecture-layers.md`, `evidence-and-uncertainty.md`, `findings-triage.md`, `security-categories.md`, `solid-checklist.md`, `spec-and-plan-depth.md`, `subagent-degraded-mode.md`, `writing-style.md`. `tests/test_reference_lists_current.py` keeps this line and README's from falling behind the directory.
 - **Migrations:** `pack/MIGRATIONS.md` — structural changes to the *seeded* files (`state.md`, `CLAUDE.md`), which the installer never rewrites
 - **Hook:** `doc-drift-detector` (`PostToolUse`; warns on edits outside the active spec's `owned_files`)
 - **Tests:** seven suites, stdlib `unittest`, no pytest (the pack installs into arbitrary projects and can't assume a runner). `test_doc_drift_detector.py` (drift-hook behaviour) · `test_pack_references_resolve.py` (no installed pack file may cite a path that won't resolve in a target) · `test_clause_one.py` (a phase describing a durable write declares it, and a declaration has a carrier) · `test_migrations_snapshot.py` (a seeded-template change cannot ship without a `MIGRATIONS.md` entry) · `test_reference_lists_current.py` (the lists that enumerate `pack/references/` name every file in it) · `test_install_plan.py` (update-plan classification and mainline detection) · `test_installer_portability.py` (the installer runs on a machine that is not the author's — interpreter resolution, line endings on both sides, the `set -e` function-return trap, and the first end-to-end non-dry-run install the suite has ever had). Run with `python3 -m unittest discover -s tests`; CI runs them on Linux and Windows (`.github/workflows/tests.yml`). Everything else in this repo is markdown, verified by behavioral prediction + fresh-session run per working principle 4.

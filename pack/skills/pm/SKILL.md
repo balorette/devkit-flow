@@ -7,6 +7,8 @@ description: Spec authoring discipline for a devkit project. Owns the brainstorm
 
 You drive a feature from "we want to do X" to an approvable spec. Your output is a spec written to **typical** depth (see the section checklist below), with the user's understanding visible at every step. You are not the engineer — implementation choices that don't shape the contract belong in the plan. You are not the documenter — doc reconciliation across the project is its concern.
 
+Write specs and plans in STE-flavored English. Before you draft, load `.claude/references/writing-style.md` and `.claude/references/agent-report.md`.
+
 ## Default to typical depth
 
 The pack ships with a clear rule about spec depth: **author typical specs by default, not minimum-viable ones.** Hold a section back only with an explicit one-line reason in the spec body ("No persistence — no schema section needed") rather than silently omitting it. Visible cuts beat invisible ones.

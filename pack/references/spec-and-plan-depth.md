@@ -1,6 +1,6 @@
 # Spec and plan depth
 
-Used by: `pm` skill (spec drafting + plan drafting), `documenter` skill (amendment depth).
+Used by: `pm` skill (spec drafting + plan drafting), `documenter` skill (amendment depth), `ste-writing` skill.
 
 Default to **typical** depth, not minimum-viable. Use the checklists below. Hold a section back only with an explicit one-line reason in the artifact itself — *"No persistence, so no schema section"* — rather than omitting it silently. **Visible cuts beat invisible ones:** a reader can evaluate a stated omission and cannot evaluate one they never see.
 
@@ -18,8 +18,23 @@ The failure this prevents is subtle. A thin spec looks finished. Nothing about i
 - **Integration / wiring** — how the layers compose at runtime, where config flows in, how the feature plugs into existing entry points.
 - **Testing strategy** — per layer: real values vs fakes vs mocks, and what each layer actually exercises.
 - **Risks / known trade-offs** — concurrency, performance at scale, temporary couplings, deferred follow-ups.
-- **Acceptance criteria** — checkable, and covering the edge cases the spec itself describes.
+- **Acceptance criteria** — one EARS sentence each, covering the edge cases the spec describes. See *Normative language* below for the EARS patterns and the keyword limits.
 - **Open questions** — anything not yet decided.
+
+## Normative language
+
+Write each acceptance criterion in EARS form (Alistair Mavin). Use one pattern.
+
+1. When <trigger>, the <system> shall <response>.
+2. While <state>, the <system> shall <response>.
+3. If <unwanted condition>, then the <system> shall <response>.
+4. Where <feature>, the <system> shall <response>.
+
+Put the uppercase keywords MUST, SHALL, SHOULD, and MAY only in a section named Requirements. Those keywords follow RFC 2119. Do not put them in Problem, Scope, Risks, or other narrative sections.
+
+The EARS patterns use lowercase shall inside an acceptance criterion. That pattern does not allow MUST or SHALL in narrative prose.
+
+When the spec needs those keywords beyond the EARS criteria, add a Requirements section. When the spec has no Requirements section, do not place the uppercase keywords in another section.
 
 ## Plan section checklist (typical)
 

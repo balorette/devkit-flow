@@ -22,6 +22,32 @@ Naming the hunk closes the other half. `tests/test_migrations_snapshot.py` guara
 
 ---
 
+## 0.14.0
+
+### `CLAUDE.md`
+
+- **Template hunk:** one new paragraph in `## How to read this project`, directly after the `devkit pack` blockquote. Nothing is replaced.
+
+  Add this paragraph:
+
+  ```
+  When you write agent instructions, plans, specs, PR bodies, or agent reports, follow `.claude/references/writing-style.md`. Do not use that style for chat replies or for operator UI copy.
+  ```
+
+  Leave every other line in that section alone.
+
+  Without it, a session that loads `CLAUDE.md` has no pointer to the writing standard. Chat replies stay outside that standard. The paragraph names the files it covers and the texts it leaves out.
+
+`state.md` did not change in 0.14.0. Leave `.claude/state.md` alone for this release.
+
+Pack-tracked files arrive when you re-run `install.sh`. This release adds:
+
+- **`pack/skills/ste-writing/SKILL.md`** (new). Strict and STE-flavored modes, the always-rules, the self-check, and short examples.
+- **`pack/references/writing-style.md`** (new). The same rules, loaded by `pm` and `documenter`.
+- **`pack/references/agent-report.md`** (new). Headings for a PR body and an agent report.
+- **`pack/references/spec-and-plan-depth.md`**. Acceptance criteria use EARS. RFC 2119 keywords stay in a section named Requirements.
+- **`pm` and `documenter`**. One new line each, pointing at the two new references. `/feature-merge` maps the feature summary into `agent-report.md`. What shipped becomes Summary and Actions taken.
+
 ## 0.13.0
 
 **No seeded-file changes.** `state.md.template` and `CLAUDE.md.template` are byte-identical to 0.12.0 — verified by diff against `pack/templates/history/0.12.0/`, not from recollection. Existing installs need no hand edit for this release.
