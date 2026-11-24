@@ -31,7 +31,9 @@ jobs:
             python: "3.11"
           # The floor install.sh probes for. Guards against syntax that
           # quietly raises the real minimum above what the error message says.
-          - os: ubuntu-latest
+          # ubuntu-latest is 26.04, and setup-python publishes no 3.9 build
+          # for that image, so this job stays on 24.04.
+          - os: ubuntu-24.04
             python: "3.9"
           - os: windows-latest
             python: "3.11"
