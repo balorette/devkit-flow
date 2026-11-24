@@ -46,7 +46,7 @@ Pack-tracked files arrive when you re-run `install.sh`. This release adds:
 - **`pack/references/writing-style.md`** (new). The same rules, loaded by `pm` and `documenter`.
 - **`pack/references/agent-report.md`** (new). Headings for a PR body and an agent report.
 - **`pack/references/spec-and-plan-depth.md`**. Acceptance criteria use EARS. RFC 2119 keywords stay in a section named Requirements.
-- **`pm` and `documenter`**. One new line each, pointing at the two new references.
+- **`pm` and `documenter`**. One new line each, pointing at the two new references. `/feature-merge` maps the feature summary into `agent-report.md`. What shipped becomes Summary and Actions taken.
 
 ## 0.13.0
 

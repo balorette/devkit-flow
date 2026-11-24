@@ -191,9 +191,13 @@ Per the discipline at the top of this skill, summaries are not edited beyond a b
 
 `/feature-merge` builds the pull-request body from the summary you just wrote. That is *why* the summary is authored before the PR opens rather than at merge time — reviewers should have the contract in front of them, not have to go looking for it.
 
-Assemble: the **What shipped** section verbatim, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths.
+Map the summary into `.claude/references/agent-report.md`. Those headings are the only PR body order.
 
-Do **not** include **Followups** or **Security review notes**. Followups invite scope debate inside the review — the reviewer starts arguing about work that was deliberately deferred. Security findings are for the user's judgment, not broadcast to the reviewer pool.
+- **What shipped** becomes **Summary** and **Actions taken**. Summary is 2 or 3 sentences from that section. State what changed and why. Actions taken lists the concrete changes in that section.
+- Fill every other heading from text the summary already states. **Followups** go under **Not done / follow-ups**. When a heading has nothing to map, write "None".
+- Do not copy **Security review notes** into the PR body.
+- Do not add a fact the summary did not state.
+- After the headings, add links to the spec and the plan. Read the paths from `state.md`'s `Spec:` and `Plan:` fields. Add any related ADR paths.
 
 The summary stays live during review. When an accepted finding changes shipped behavior, `/pr-review` proposes the **What shipped** amendment as part of its batch. The propose-before-writing discipline holds during the review window; it is not suspended for it.
 

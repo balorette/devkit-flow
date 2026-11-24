@@ -250,7 +250,7 @@ This is the pack's untracked-files rule applied to assurance: *don't silently pr
 Propose, in one short message:
 
 - The push (`git push -u origin feature/<slug>`).
-- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance: the summary's *What shipped* section, then links to the spec and plan at their actual paths (from `state.md`'s `Spec:` / `Plan:` fields) and any related ADR paths. Reviewers should arrive with the contract in front of them.
+- The `gh pr create` invocation, with `--title` from the spec's title and `--body-file` pointing at a temp file assembled per the `documenter` skill's *The summary as PR body* guidance. That guidance maps the summary into `.claude/references/agent-report.md`. Reviewers should arrive with the contract in front of them.
 - Whether the PR is a draft. Default is not-draft; honor a `CLAUDE.md` convention if one states otherwise.
 
 **Wait for user confirmation.** Opening a PR is outward-facing — it notifies reviewers and is visible to the whole team.

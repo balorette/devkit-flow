@@ -8,7 +8,9 @@ Do not drop a heading. When a heading has no content, write "None".
 Do not add a fact that the source did not state.
 Keep every hedge.
 
-The feature summary that `/feature-merge` stores is a different document. The `documenter` skill defines the summary sections. When you write the PR body, use the headings below. Do not copy security findings into the PR body. The `documenter` skill forbids that.
+These headings are the only order for a PR body and for an agent report.
+
+`/feature-merge` maps the feature summary into these headings. The `documenter` skill states that map. What shipped becomes Summary and Actions taken. Do not copy security findings into the PR body. After the headings, add links to the spec, the plan, and any related ADR.
 
 ## Summary
 
